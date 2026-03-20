@@ -1,0 +1,354 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <title>Finance Management &amp; Monitoring System — Product Architecture &amp; Execution Flow</title>
+  <desc>High-level product architecture diagram with layered bands, main apps, section homes, core screens, highlighted execution loops, and context/oversight.</desc>
+
+  <defs>
+    <!-- Background -->
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="1600" y2="900" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0B0F14"/>
+      <stop offset="0.55" stop-color="#0A0E15"/>
+      <stop offset="1" stop-color="#070A0F"/>
+    </linearGradient>
+    <radialGradient id="vignette" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(820 360) rotate(90) scale(520 920)">
+      <stop offset="0" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.35"/>
+    </radialGradient>
+
+    <!-- Subtle grid -->
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#111827" stroke-opacity="0.55" stroke-width="1"/>
+    </pattern>
+
+    <!-- Glows -->
+    <filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur"/>
+      <feColorMatrix in="blur" type="matrix"
+        values="1 0 0 0 0
+                0 0.8 0 0 0
+                0 0 1 0 0
+                0 0 0 0.45 0" result="glow"/>
+      <feMerge>
+        <feMergeNode in="glow"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="loopGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="7" result="b"/>
+      <feColorMatrix in="b" type="matrix"
+        values="0.5 0 0 0 0.1
+                0 0.4 0 0 0.1
+                0 0 1 0 0.35
+                0 0 0 0.55 0" result="g"/>
+      <feMerge>
+        <feMergeNode in="g"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <!-- Node styles -->
+    <linearGradient id="nodeFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#121826"/>
+      <stop offset="1" stop-color="#0F172A"/>
+    </linearGradient>
+    <linearGradient id="nodeFillMuted" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0F1625"/>
+      <stop offset="1" stop-color="#0B1220"/>
+    </linearGradient>
+    <linearGradient id="nodeFillAccent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1A1732"/>
+      <stop offset="0.55" stop-color="#12163A"/>
+      <stop offset="1" stop-color="#0F1B2E"/>
+    </linearGradient>
+
+    <!-- Stroke colors -->
+    <linearGradient id="strokeAccent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#7C3AED"/>
+      <stop offset="0.55" stop-color="#6366F1"/>
+      <stop offset="1" stop-color="#38BDF8"/>
+    </linearGradient>
+
+    <!-- Arrow marker -->
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0 0L10 5L0 10Z" fill="#334155" fill-opacity="0.9"/>
+    </marker>
+    <marker id="arrowAccent" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0 0L10 5L0 10Z" fill="#7C3AED"/>
+    </marker>
+
+    <style>
+      .tTitle { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial; font-size: 22px; font-weight: 650; fill: #E5E7EB; letter-spacing: 0.2px; }
+      .tSub { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial; font-size: 13px; font-weight: 500; fill: #94A3B8; letter-spacing: 0.2px; }
+      .tBand { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial; font-size: 12px; font-weight: 650; fill: #64748B; letter-spacing: 2px; }
+      .tNode { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial; font-size: 13px; font-weight: 620; fill: #E5E7EB; }
+      .tNodeSmall { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial; font-size: 12px; font-weight: 600; fill: #E5E7EB; }
+      .tNodeMuted { fill: #CBD5E1; font-weight: 600; }
+      .tTiny { font-size: 11px; font-weight: 600; fill: #C7D2FE; opacity: 0.95; }
+      .strokeMuted { stroke: #334155; stroke-opacity: 0.75; }
+      .strokeMuted2 { stroke: #1F2A3A; stroke-opacity: 0.9; }
+      .strokeAccent { stroke: url(#strokeAccent); stroke-opacity: 0.95; }
+      .line { fill: none; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+      .lineThin { fill: none; stroke-width: 1.1; stroke-linecap: round; stroke-linejoin: round; }
+      .dash { stroke-dasharray: 4 5; }
+      .bandSep { stroke: #111827; stroke-opacity: 0.85; stroke-width: 1; }
+      .node { fill: url(#nodeFill); stroke: #263041; stroke-width: 1; }
+      .nodeMuted { fill: url(#nodeFillMuted); stroke: #223044; stroke-width: 1; }
+      .nodeAccent { fill: url(#nodeFillAccent); stroke: url(#strokeAccent); stroke-width: 1.2; }
+      .pill { rx: 16; ry: 16; }
+      .round { rx: 14; ry: 14; }
+      .chip { rx: 18; ry: 18; }
+      .softShadow { filter: drop-shadow(0px 6px 18px rgba(0,0,0,0.35)); }
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect x="0" y="0" width="1600" height="900" fill="url(#bgGrad)"/>
+  <rect x="0" y="0" width="1600" height="900" fill="url(#grid)" opacity="0.22"/>
+  <rect x="0" y="0" width="1600" height="900" fill="url(#vignette)"/>
+
+  <!-- Title -->
+  <g transform="translate(40 34)">
+    <text class="tTitle">Finance Management &amp; Monitoring System</text>
+    <text class="tSub" y="26">Product Architecture &amp; Execution Flow</text>
+  </g>
+
+  <!-- Band geometry -->
+  <!-- Layout constants (manual): left label col = 170, content from x=230..1560 -->
+  <!-- Bands y positions -->
+  <!-- band 1 y=90..150, 2 y=150..220, 3 y=220..300, 4 y=300..390, 5 y=390..560, 6 y=560..740, 7 y=740..860 -->
+
+  <!-- Band separators -->
+  <g opacity="0.95">
+    <line class="bandSep" x1="40" y1="90" x2="1560" y2="90"/>
+    <line class="bandSep" x1="40" y1="150" x2="1560" y2="150"/>
+    <line class="bandSep" x1="40" y1="220" x2="1560" y2="220"/>
+    <line class="bandSep" x1="40" y1="300" x2="1560" y2="300"/>
+    <line class="bandSep" x1="40" y1="390" x2="1560" y2="390"/>
+    <line class="bandSep" x1="40" y1="560" x2="1560" y2="560"/>
+    <line class="bandSep" x1="40" y1="740" x2="1560" y2="740"/>
+    <line class="bandSep" x1="40" y1="860" x2="1560" y2="860"/>
+  </g>
+
+  <!-- Left labels -->
+  <g>
+    <text class="tBand" x="60" y="126">ENTRY</text>
+    <text class="tBand" x="60" y="196">NAVIGATION</text>
+    <text class="tBand" x="60" y="266">MAIN APPS</text>
+    <text class="tBand" x="60" y="352">SECTION HOMES</text>
+    <text class="tBand" x="60" y="472">MAIN WORK SCREENS</text>
+    <text class="tBand" x="60" y="654">EXECUTION LOOPS</text>
+    <text class="tBand" x="60" y="814">CONTEXT / OVERSIGHT</text>
+  </g>
+
+  <!-- Nodes -->
+  <!-- Layer 1 -->
+  <g class="softShadow">
+    <rect class="nodeAccent pill" x="720" y="104" width="160" height="34"/>
+    <text class="tNode" x="800" y="126" text-anchor="middle">User</text>
+  </g>
+
+  <!-- Layer 2 -->
+  <g class="softShadow">
+    <rect class="nodeAccent pill" x="690" y="172" width="220" height="38"/>
+    <text class="tNode" x="800" y="196" text-anchor="middle">Finance Launcher</text>
+  </g>
+
+  <!-- Layer 3: Main Apps -->
+  <g class="softShadow">
+    <rect class="node round" x="380" y="242" width="200" height="40"/>
+    <text class="tNode" x="480" y="267" text-anchor="middle">Overview</text>
+
+    <rect class="nodeAccent round" x="620" y="242" width="200" height="40"/>
+    <text class="tNode" x="720" y="267" text-anchor="middle">Revenue</text>
+
+    <rect class="nodeAccent round" x="860" y="242" width="200" height="40"/>
+    <text class="tNode" x="960" y="267" text-anchor="middle">Spend</text>
+
+    <rect class="node round" x="1100" y="242" width="200" height="40"/>
+    <text class="tNode" x="1200" y="267" text-anchor="middle">Control</text>
+  </g>
+
+  <!-- Layer 4: Section Homes -->
+  <g class="softShadow">
+    <rect class="node round" x="380" y="324" width="200" height="42"/>
+    <text class="tNode" x="480" y="350" text-anchor="middle">Finance Home</text>
+
+    <rect class="node round" x="620" y="324" width="200" height="42"/>
+    <text class="tNode" x="720" y="350" text-anchor="middle">Revenue Home</text>
+
+    <rect class="node round" x="860" y="324" width="200" height="42"/>
+    <text class="tNode" x="960" y="350" text-anchor="middle">Spend Home</text>
+
+    <rect class="node round" x="1100" y="324" width="200" height="42"/>
+    <text class="tNode" x="1200" y="350" text-anchor="middle">Control Home</text>
+  </g>
+
+  <!-- Layer 5: Main Work Screens (columns) -->
+  <g class="softShadow">
+    <!-- Overview -->
+    <rect class="nodeMuted pill" x="360" y="414" width="240" height="34"/>
+    <text class="tNodeSmall tNodeMuted" x="480" y="436" text-anchor="middle">Alerts / Exceptions</text>
+    <rect class="nodeMuted pill" x="360" y="456" width="240" height="34"/>
+    <text class="tNodeSmall tNodeMuted" x="480" y="478" text-anchor="middle">Recent Activity</text>
+
+    <!-- Revenue -->
+    <rect class="node pill" x="600" y="406" width="240" height="32"/>
+    <text class="tNodeSmall" x="720" y="427" text-anchor="middle">Drafts</text>
+    <rect class="node pill" x="600" y="442" width="240" height="32"/>
+    <text class="tNodeSmall" x="720" y="463" text-anchor="middle">Draft Builder</text>
+    <rect class="node pill" x="600" y="478" width="240" height="32"/>
+    <text class="tNodeSmall" x="720" y="499" text-anchor="middle">Invoices</text>
+    <rect class="nodeMuted pill" x="600" y="514" width="240" height="32"/>
+    <text class="tNodeSmall tNodeMuted" x="720" y="535" text-anchor="middle">Invoice Detail</text>
+    <rect class="node pill" x="600" y="550" width="240" height="32"/>
+    <text class="tNodeSmall" x="720" y="571" text-anchor="middle">Collections</text>
+
+    <!-- Spend -->
+    <rect class="node pill" x="840" y="406" width="240" height="32"/>
+    <text class="tNodeSmall" x="960" y="427" text-anchor="middle">Requests</text>
+    <rect class="nodeMuted pill" x="840" y="442" width="240" height="32"/>
+    <text class="tNodeSmall tNodeMuted" x="960" y="463" text-anchor="middle">Request Detail</text>
+    <rect class="node pill" x="840" y="478" width="240" height="32"/>
+    <text class="tNodeSmall" x="960" y="499" text-anchor="middle">Supplier Bills</text>
+    <rect class="nodeMuted pill" x="840" y="514" width="240" height="32"/>
+    <text class="tNodeSmall tNodeMuted" x="960" y="535" text-anchor="middle">Supplier Bill Detail</text>
+    <rect class="node pill" x="840" y="550" width="240" height="32"/>
+    <text class="tNodeSmall" x="960" y="571" text-anchor="middle">Payments Queue</text>
+
+    <!-- Control -->
+    <rect class="nodeMuted pill" x="1080" y="418" width="240" height="34"/>
+    <text class="tNodeSmall tNodeMuted" x="1200" y="440" text-anchor="middle">Budgets</text>
+    <rect class="nodeMuted pill" x="1080" y="460" width="240" height="34"/>
+    <text class="tNodeSmall tNodeMuted" x="1200" y="482" text-anchor="middle">Employee Costs</text>
+    <rect class="nodeMuted pill" x="1080" y="502" width="240" height="34"/>
+    <text class="tNodeSmall tNodeMuted" x="1200" y="524" text-anchor="middle">Audit Trail</text>
+  </g>
+
+  <!-- Layer 6: Execution loops -->
+  <!-- Revenue loop cluster -->
+  <g filter="url(#loopGlow)">
+    <path class="line strokeAccent" d="M735 610 C 820 605, 845 655, 800 700 C 765 735, 685 735, 650 700 C 605 655, 630 605, 715 610" opacity="0.9"/>
+  </g>
+  <g class="softShadow">
+    <rect class="nodeAccent chip" x="620" y="604" width="190" height="36" filter="url(#softGlow)"/>
+    <text class="tNodeSmall" x="715" y="627" text-anchor="middle">Billable Work</text>
+
+    <rect class="nodeAccent chip" x="820" y="632" width="190" height="36" filter="url(#softGlow)"/>
+    <text class="tNodeSmall" x="915" y="655" text-anchor="middle">Invoice Draft</text>
+
+    <rect class="nodeAccent chip" x="800" y="694" width="210" height="36" filter="url(#softGlow)"/>
+    <text class="tNodeSmall" x="905" y="717" text-anchor="middle">Issued Receivable</text>
+
+    <rect class="nodeAccent chip" x="600" y="694" width="230" height="36" filter="url(#softGlow)"/>
+    <text class="tNodeSmall" x="715" y="717" text-anchor="middle">Collections Follow-up</text>
+
+    <rect class="nodeAccent chip" x="690" y="744" width="200" height="36" filter="url(#softGlow)"/>
+    <text class="tNodeSmall" x="790" y="767" text-anchor="middle">Collected Cash</text>
+  </g>
+
+  <!-- Spend loop cluster -->
+  <g filter="url(#loopGlow)">
+    <path class="line strokeAccent" d="M985 610 C 1070 605, 1095 655, 1050 700 C 1015 735, 935 735, 900 700 C 855 655, 880 605, 965 610" opacity="0.9"/>
+  </g>
+  <g class="softShadow">
+    <rect class="nodeAccent chip" x="870" y="604" width="210" height="36" filter="url(#softGlow)"/>
+    <text class="tNodeSmall" x="975" y="627" text-anchor="middle">Purchase Request</text>
+
+    <rect class="nodeAccent chip" x="1080" y="632" width="240" height="36" filter="url(#softGlow)"/>
+    <text class="tNodeSmall" x="1200" y="655" text-anchor="middle">Approved Commitment</text>
+
+    <rect class="nodeAccent chip" x="1058" y="694" width="200" height="36" filter="url(#softGlow)"/>
+    <text class="tNodeSmall" x="1158" y="717" text-anchor="middle">Supplier Bill</text>
+
+    <rect class="nodeAccent chip" x="850" y="694" width="200" height="36" filter="url(#softGlow)"/>
+    <text class="tNodeSmall" x="950" y="717" text-anchor="middle">Payment Queue</text>
+
+    <rect class="nodeAccent chip" x="940" y="744" width="210" height="36" filter="url(#softGlow)"/>
+    <text class="tNodeSmall" x="1045" y="767" text-anchor="middle">Paid Cash Out</text>
+  </g>
+
+  <!-- Loop direction hints (tiny) -->
+  <g opacity="0.85">
+    <text class="tTiny" x="814" y="604">Revenue loop</text>
+    <text class="tTiny" x="1076" y="604">Spend loop</text>
+  </g>
+
+  <!-- Layer 7: Context / Oversight nodes -->
+  <g class="softShadow">
+    <rect class="nodeMuted pill" x="340" y="774" width="190" height="34"/>
+    <text class="tNodeSmall tNodeMuted" x="435" y="796" text-anchor="middle">Budget Signals</text>
+
+    <rect class="nodeMuted pill" x="540" y="774" width="220" height="34"/>
+    <text class="tNodeSmall tNodeMuted" x="650" y="796" text-anchor="middle">Employee Cost Visibility</text>
+
+    <rect class="nodeMuted pill" x="770" y="774" width="170" height="34"/>
+    <text class="tNodeSmall tNodeMuted" x="855" y="796" text-anchor="middle">Audit Events</text>
+
+    <rect class="nodeMuted pill" x="950" y="774" width="170" height="34"/>
+    <text class="tNodeSmall tNodeMuted" x="1035" y="796" text-anchor="middle">Client Context</text>
+
+    <rect class="nodeMuted pill" x="1130" y="774" width="170" height="34"/>
+    <text class="tNodeSmall tNodeMuted" x="1215" y="796" text-anchor="middle">Vendor Context</text>
+
+    <rect class="nodeMuted pill" x="1310" y="774" width="250" height="34"/>
+    <text class="tNodeSmall tNodeMuted" x="1435" y="796" text-anchor="middle">Contract / Terms Context</text>
+  </g>
+
+  <!-- Connectors -->
+  <g>
+    <!-- User -> Launcher -->
+    <path class="line strokeAccent" d="M800 138 L800 172" marker-end="url(#arrowAccent)"/>
+
+    <!-- Launcher -> Main apps fan-out -->
+    <path class="line strokeAccent" d="M800 210 C800 226, 720 226, 720 242" opacity="0.95"/>
+    <path class="line strokeAccent" d="M800 210 C800 226, 960 226, 960 242" opacity="0.95"/>
+    <path class="line strokeAccent" d="M800 210 C800 226, 480 226, 480 242" opacity="0.75"/>
+    <path class="line strokeAccent" d="M800 210 C800 226, 1200 226, 1200 242" opacity="0.75"/>
+
+    <!-- Main apps -> Section homes -->
+    <path class="lineThin strokeMuted" d="M480 282 L480 324" marker-end="url(#arrow)"/>
+    <path class="lineThin strokeMuted" d="M720 282 L720 324" marker-end="url(#arrow)"/>
+    <path class="lineThin strokeMuted" d="M960 282 L960 324" marker-end="url(#arrow)"/>
+    <path class="lineThin strokeMuted" d="M1200 282 L1200 324" marker-end="url(#arrow)"/>
+
+    <!-- Section homes -> Main screens (top of each column) -->
+    <path class="lineThin strokeMuted" d="M480 366 L480 414" marker-end="url(#arrow)"/>
+    <path class="lineThin strokeMuted" d="M720 366 L720 406" marker-end="url(#arrow)"/>
+    <path class="lineThin strokeMuted" d="M960 366 L960 406" marker-end="url(#arrow)"/>
+    <path class="lineThin strokeMuted" d="M1200 366 L1200 418" marker-end="url(#arrow)"/>
+
+    <!-- Revenue screens -> Revenue loop (highlight connections) -->
+    <path class="line strokeAccent" d="M720 582 C720 592, 715 595, 715 604" opacity="0.9"/>
+    <path class="line strokeAccent" d="M720 438 C720 500, 715 545, 715 604" opacity="0.55"/>
+    <path class="line strokeAccent" d="M720 474 C720 520, 735 560, 915 632" opacity="0.5"/>
+    <path class="line strokeAccent" d="M720 510 C720 545, 810 585, 905 694" opacity="0.45"/>
+    <path class="line strokeAccent" d="M720 582 C720 600, 710 620, 715 694" opacity="0.4"/>
+
+    <!-- Spend screens -> Spend loop (highlight connections) -->
+    <path class="line strokeAccent" d="M960 582 C960 592, 975 595, 975 604" opacity="0.9"/>
+    <path class="line strokeAccent" d="M960 438 C960 500, 970 545, 975 604" opacity="0.55"/>
+    <path class="line strokeAccent" d="M960 510 C960 540, 1010 575, 1158 694" opacity="0.45"/>
+    <path class="line strokeAccent" d="M960 582 C960 602, 960 620, 950 694" opacity="0.4"/>
+
+    <!-- Control oversight -> both loops -->
+    <path class="lineThin strokeMuted dash" d="M1200 452 C1130 520, 1040 560, 915 632" marker-end="url(#arrow)" opacity="0.9"/>
+    <path class="lineThin strokeMuted dash" d="M1200 494 C1165 560, 1100 600, 1158 694" marker-end="url(#arrow)" opacity="0.85"/>
+    <path class="lineThin strokeMuted dash" d="M1200 536 C1140 600, 1010 630, 950 694" marker-end="url(#arrow)" opacity="0.85"/>
+
+    <!-- Context feeds upward into control + lightly into loops -->
+    <path class="lineThin strokeMuted2" d="M435 774 C520 710, 650 690, 715 694" opacity="0.55"/>
+    <path class="lineThin strokeMuted2" d="M650 774 C760 705, 875 690, 915 632" opacity="0.55"/>
+    <path class="lineThin strokeMuted2" d="M855 774 C980 705, 1120 690, 1158 694" opacity="0.55"/>
+    <path class="lineThin strokeMuted2" d="M1215 774 C1220 700, 1210 610, 1200 536" opacity="0.55"/>
+    <path class="lineThin strokeMuted2" d="M1435 774 C1360 700, 1260 640, 1200 494" opacity="0.45"/>
+  </g>
+
+  <!-- Subtle legend (minimal) -->
+  <g opacity="0.9" transform="translate(40 872)">
+    <rect x="0" y="-18" width="1520" height="1" fill="#0B1220" opacity="0.6"/>
+    <circle cx="14" cy="0" r="5" fill="#7C3AED" opacity="0.95"/>
+    <text class="tSub" x="28" y="5">Highlighted execution loops</text>
+    <circle cx="220" cy="0" r="5" fill="#334155" opacity="0.95"/>
+    <text class="tSub" x="234" y="5">Secondary/oversight connections</text>
+  </g>
+</svg>
