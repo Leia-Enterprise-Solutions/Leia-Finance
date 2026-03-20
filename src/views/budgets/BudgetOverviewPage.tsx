@@ -17,6 +17,11 @@ function remaining(l: BudgetLine) {
   return l.budgeted - Math.max(l.committed, l.actualPaid);
 }
 
+function variance(l: BudgetLine) {
+  // Blueprint UI: variance indicator based on committed + actual paid vs budgeted.
+  return l.committed + l.actualPaid - l.budgeted;
+}
+
 export function BudgetOverviewPage() {
   const navigate = useNavigate();
   const loc = useLocation();
@@ -54,8 +59,12 @@ export function BudgetOverviewPage() {
           <p>Budgeted vs committed vs actual paid with clear signal (healthy / warning / breach).</p>
         </div>
         <div className="row">
-          <button className="btn">New version</button>
-          <button className="btn primary">Publish</button>
+          <button className="btn" disabled>
+            Version management (prototype)
+          </button>
+          <button className="btn primary" disabled>
+            Publish (prototype)
+          </button>
         </div>
       </div>
 
@@ -103,6 +112,7 @@ export function BudgetOverviewPage() {
                 <th className="num">Committed</th>
                 <th className="num">Actual paid</th>
                 <th className="num">Remaining</th>
+                <th className="num">Variance</th>
                 <th>Signal</th>
               </tr>
             </thead>
@@ -116,6 +126,13 @@ export function BudgetOverviewPage() {
                   <td className="num">{formatCurrency(l.committed, l.currency)}</td>
                   <td className="num">{formatCurrency(l.actualPaid, l.currency)}</td>
                   <td className="num">{formatCurrency(remaining(l), l.currency)}</td>
+                  <td className="num">
+                    {(() => {
+                      const v = variance(l);
+                      const pct = l.budgeted !== 0 ? (v / l.budgeted) * 100 : 0;
+                      return `${formatCurrency(v, l.currency)} (${pct.toFixed(1)}%)`;
+                    })()}
+                  </td>
                   <td>
                     <Chip tone={toneForSignal(l.signal)}>{l.signal}</Chip>
                   </td>
@@ -123,7 +140,7 @@ export function BudgetOverviewPage() {
               ))}
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="muted" style={{ padding: 16 }}>
+                  <td colSpan={9} className="muted" style={{ padding: 16 }}>
                     No budget lines found for this selection.
                   </td>
                 </tr>

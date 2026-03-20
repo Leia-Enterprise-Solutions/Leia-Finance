@@ -41,7 +41,7 @@ export function ExpensesBySupplierPieChart() {
   const { total, slices } = React.useMemo(() => buildSlices(), []);
 
   return (
-    <div style={{ width: "100%", minWidth: 0 }}>
+    <div style={{ width: "100%", minWidth: 0, height: "100%", display: "flex", flexDirection: "column", gap: 8 }}>
       <div className="row" style={{ justifyContent: "space-between", marginBottom: 10 }}>
         <div className="muted" style={{ fontSize: 12 }}>
           Σύνολο εξόδων
@@ -49,7 +49,8 @@ export function ExpensesBySupplierPieChart() {
         <div style={{ fontWeight: 700 }}>{formatCurrency(total)}</div>
       </div>
 
-      <div style={{ width: "100%", height: 260, minWidth: 0, minHeight: 0 }}>
+      {/* Pie chart cap is applied only via `.overview-piechart-cap` CSS (pie-only max-height). */}
+      <div className="overview-piechart-cap" style={{ width: "100%", height: "100%", flex: 1, minWidth: 0, minHeight: 0 }}>
         <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
           <PieChart>
             <Tooltip
@@ -80,7 +81,7 @@ export function ExpensesBySupplierPieChart() {
         </ResponsiveContainer>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 8, marginTop: 8 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 8 }}>
         {slices.slice(0, 6).map((s, idx) => (
           <div key={s.supplier} className="row" style={{ justifyContent: "space-between" }}>
             <div className="row" style={{ gap: 10, minWidth: 0 }}>

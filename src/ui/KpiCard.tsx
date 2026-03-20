@@ -16,7 +16,7 @@ type KpiCardProps = {
 
 const PRESET_CHANGE: Record<ReturnType<typeof useDateRange>["range"]["preset"], number> = {
   month: -0.06,
-  quarter: -0.03,
+  last_month: -0.05,
   ytd: 0.02,
   lytd: 0.04
 };

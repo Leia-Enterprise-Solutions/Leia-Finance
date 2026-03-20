@@ -16,16 +16,6 @@ function endOfMonth(d: Date) {
   return new Date(d.getFullYear(), d.getMonth() + 1, 0);
 }
 
-function quarterStart(d: Date) {
-  const q = Math.floor(d.getMonth() / 3);
-  return new Date(d.getFullYear(), q * 3, 1);
-}
-
-function quarterEnd(d: Date) {
-  const s = quarterStart(d);
-  return new Date(s.getFullYear(), s.getMonth() + 3, 0);
-}
-
 export function computePreset(preset: DateRangePreset, now = new Date()): DateRangeState {
   const today = startOfDay(now);
   switch (preset) {
@@ -34,10 +24,12 @@ export function computePreset(preset: DateRangePreset, now = new Date()): DateRa
       const end = endOfDay(endOfMonth(today));
       return { preset, label: "Τρέχων μήνας", start, end };
     }
-    case "quarter": {
-      const start = quarterStart(today);
-      const end = endOfDay(quarterEnd(today));
-      return { preset, label: "Τρέχον τρίμηνο", start, end };
+    case "last_month": {
+      const prev = new Date(today);
+      prev.setMonth(prev.getMonth() - 1);
+      const start = startOfMonth(prev);
+      const end = endOfDay(endOfMonth(prev));
+      return { preset, label: "Προηγούμενος μήνας", start, end };
     }
     case "ytd": {
       const start = new Date(today.getFullYear(), 0, 1);

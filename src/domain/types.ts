@@ -11,10 +11,11 @@ export type TransmissionStatus = "Not Required" | "Pending" | "Accepted" | "Reje
 export type CollectionSignal = "Not Due" | "Due Soon" | "Overdue";
 
 export type PurchaseRequestStatus =
-  | "Open"
-  | "Needs Changes"
+  | "Draft"
+  | "Submitted"
   | "Rejected"
-  | "Approved / Committed";
+  | "Approved (Committed)"
+  | "Cancelled";
 
 export type SupplierBillStatus = "Open" | "Ready" | "Blocked" | "Scheduled" | "Paid" | "Overdue";
 
@@ -39,6 +40,7 @@ export type InvoiceDraft = {
   id: string;
   client: string;
   project?: string;
+  owner: string;
   updatedAt: string;
   currency: string;
   draftTotal: number;

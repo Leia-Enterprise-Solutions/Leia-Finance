@@ -1,6 +1,5 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Chip } from "../../../ui/Chip";
 
 export type ActionStripItem = {
   id: string;
@@ -14,23 +13,43 @@ export type ActionStripItem = {
 export function OverviewActionStrip({ items }: { items: ActionStripItem[] }) {
   const navigate = useNavigate();
 
+  function getItemPresentation(item: ActionStripItem) {
+    // Visual mapping for prototype demo only.
+    if (item.id === "ar")
+      return { title: "Απαιτήσεις", icon: "bi-exclamation-octagon", tone: "danger" as const };
+    if (item.id === "ap")
+      return { title: "Οφειλές", icon: "bi-bank", tone: "danger" as const };
+    if (item.id === "pq")
+      return { title: "Πληρωμές", icon: "bi-slash-circle", tone: "warning" as const };
+    if (item.id === "co")
+      return { title: "Δεσμεύσεις", icon: "bi-cash-stack", tone: "neutral" as const };
+    return { title: "Ενέργειες", icon: "bi-list-check", tone: "neutral" as const };
+  }
+
   return (
-    <div className="overview-action-strip" role="list">
+    <div className="overview-action-strip__list" role="list">
       {items.map((item) => (
         <div
           key={item.id}
           className="overview-action-strip__item"
-          role="button"
+          role="listitem"
           tabIndex={0}
           onClick={() => navigate(item.ctaTo)}
         >
-          <div className="overview-action-strip__main">
-            <span className="overview-action-strip__label">{item.label}</span>
-            {item.chip != null && item.chip !== "" && (
-              <span className="overview-action-strip__chip"><Chip tone="neutral">{item.chip}</Chip></span>
-            )}
-          </div>
-          <span className="overview-action-strip__arrow" aria-hidden="true">→</span>
+          {(() => {
+            const pres = getItemPresentation(item);
+            return (
+              <>
+                <div className={`overview-action-strip__icon overview-action-strip__icon--${pres.tone}`}>
+                  <i className={`bi ${pres.icon}`} aria-hidden />
+                </div>
+                <div className="overview-action-strip__text">
+                  <div className="overview-action-strip__title">{pres.title}</div>
+                  <div className="overview-action-strip__subtitle">{item.label}</div>
+                </div>
+              </>
+            );
+          })()}
         </div>
       ))}
     </div>

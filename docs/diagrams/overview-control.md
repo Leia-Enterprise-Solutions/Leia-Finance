@@ -1,0 +1,9 @@
+flowchart TD
+    O0[Άνοιγμα Finance Overview Dashboard]
+    O0 --> O1[Προβολή KPI, exposure, overdue, blocked items]
+    O1 --> O2{Τι απαιτεί προσοχή;}
+    O2 -->|Budget / Audit / Cost visibility| O3[Drilldown στο Control Layer]
+    O3 --> O4{Ποια control όψη χρειάζεται;}
+    O4 -->|Budget variance| O5[Άνοιγμα Budget Overview]
+    O4 -->|Traceability / investigation| O6[Άνοιγμα Audit Trail]
+    O4 -->|Employee cost visibility| O7[Άνοιγμα Employee Cost View]

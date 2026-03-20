@@ -88,7 +88,7 @@ export function RevenueHomePage() {
               Τιμολόγια
             </button>
             <button className="btn" onClick={() => navigate("/finance/revenue/collections")}>
-              Εισπράξεις
+              Οφειλές
             </button>
           </div>
         </Card>

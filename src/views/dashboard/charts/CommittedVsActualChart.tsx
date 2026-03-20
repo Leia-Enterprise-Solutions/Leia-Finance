@@ -21,6 +21,16 @@ export function CommittedVsActualChart() {
     <div style={{ width: "100%", height: 220, minWidth: 0, minHeight: 0 }}>
       <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
         <BarChart data={data} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
+          <defs>
+            <linearGradient id="grad-committed-v1" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="rgba(17, 24, 39, 0.95)" />
+              <stop offset="100%" stopColor="rgba(17, 24, 39, 0.22)" />
+            </linearGradient>
+            <linearGradient id="grad-actual-v1" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="rgba(217, 119, 6, 0.95)" />
+              <stop offset="100%" stopColor="rgba(217, 119, 6, 0.18)" />
+            </linearGradient>
+          </defs>
           <CartesianGrid vertical={false} stroke="rgba(226, 232, 240, 0.8)" />
           <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#64748b" }} axisLine={false} tickLine={false} />
           <YAxis
@@ -39,8 +49,8 @@ export function CommittedVsActualChart() {
             }}
             formatter={(value: unknown, name: unknown) => [formatCurrency(Number(value)), String(name)]}
           />
-          <Bar dataKey="committed" fill="rgba(17, 24, 39, 0.9)" radius={[10, 10, 10, 10]} />
-          <Bar dataKey="actual" fill="rgba(217, 119, 6, 0.85)" radius={[10, 10, 10, 10]} />
+          <Bar dataKey="committed" fill="url(#grad-committed-v1)" radius={[10, 10, 10, 10]} />
+          <Bar dataKey="actual" fill="url(#grad-actual-v1)" radius={[10, 10, 10, 10]} />
         </BarChart>
       </ResponsiveContainer>
     </div>

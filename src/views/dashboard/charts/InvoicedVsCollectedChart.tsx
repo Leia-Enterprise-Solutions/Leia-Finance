@@ -11,7 +11,7 @@ const data = [
 
 export function InvoicedVsCollectedChart() {
   return (
-    <div style={{ width: "100%", height: 220, minWidth: 0, minHeight: 0 }}>
+    <div style={{ width: "100%", height: "100%", minWidth: 0, minHeight: 0 }}>
       <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
         <LineChart data={data} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
           <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#64748b" }} axisLine={false} tickLine={false} />

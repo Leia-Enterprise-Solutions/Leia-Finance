@@ -13,8 +13,8 @@ function sum(nums: number[]) {
 export function SpendHomePage() {
   const navigate = useNavigate();
 
-  const openRequests = purchaseRequests.filter((r) => r.status === "Open").length;
-  const needsChangesRequests = purchaseRequests.filter((r) => r.status === "Needs Changes").length;
+  const openRequests = purchaseRequests.filter((r) => r.status === "Submitted").length;
+  const needsChangesRequests = purchaseRequests.filter((r) => r.status === "Submitted" && r.attachments === 0).length;
   const blockedBills = supplierBills.filter((b) => b.status === "Blocked").length;
   const overduePayables = supplierBills.filter((b) => b.status === "Overdue").length;
   const readyPayables = supplierBills.filter((b) => b.status === "Ready").length;

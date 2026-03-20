@@ -571,47 +571,100 @@
 /* Zone 3: Action strip */
 .overview-action-strip {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-lg);
+  background: var(--c-surface);
+  width: fit-content;
+  max-width: 520px;
+  align-self: flex-start;
+}
+
+.overview-needs-attention-card .card {
+  width: fit-content;
+  max-width: 520px;
+  display: inline-block;
+}
+
+.overview-action-strip__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.overview-action-strip__title {
+  font-size: var(--text-base);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--c-text);
+  margin-bottom: 0;
 }
 
 .overview-action-strip__item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  flex: 1;
-  min-width: 200px;
-  padding: var(--space-2) var(--space-3);
+  justify-content: flex-start;
+  gap: var(--space-3);
+  width: 100%;
+  flex: none;
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-md);
-  border: 1px solid var(--c-border);
-  background: linear-gradient(180deg, rgba(245, 158, 11, 0.06), rgba(255, 255, 255, 0.85));
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  background: linear-gradient(45deg, #f8f8f8, transparent);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 24%);
   cursor: pointer;
 }
 
-.overview-action-strip__main {
-  min-width: 0;
+.overview-action-strip__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  flex-wrap: wrap;
+  justify-content: center;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  flex: none;
 }
 
-.overview-action-strip__label {
-  font-size: var(--text-sm);
-  font-weight: 600;
+.overview-action-strip__icon i {
+  font-size: 18px;
+}
+
+.overview-action-strip__icon--danger {
+  background: rgba(220, 38, 38, 0.08);
+  color: #991b1b;
+}
+
+.overview-action-strip__icon--warning {
+  background: rgba(245, 158, 11, 0.10);
+  color: #92400e;
+}
+
+.overview-action-strip__icon--neutral {
+  background: rgba(148, 163, 184, 0.14);
+  color: #475569;
+}
+
+.overview-action-strip__text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.overview-action-strip__title {
+  font-weight: 650;
   color: var(--c-text);
 }
 
-.overview-action-strip__chip {
-  font-size: var(--text-xs);
-}
-
-.overview-action-strip__arrow {
+.overview-action-strip__subtitle {
   color: var(--c-muted);
-  font-size: 14px;
-  line-height: 1;
+  font-size: var(--text-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Zone 4: Domain panels */
@@ -761,7 +814,7 @@
   padding: 4px 8px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.58);
-  border: 1px solid rgba(15, 23, 42, 0.07);
+  border: none;
 }
 
 .kpi-icon {
@@ -787,25 +840,22 @@
   font-weight: 600;
   border-radius: 999px;
   padding: 2px 6px;
-  border: 1px solid transparent;
+  border: none;
 }
 
 .kpi-trend--positive {
   color: #166534;
   background: rgba(22, 163, 74, 0.12);
-  border-color: rgba(22, 163, 74, 0.22);
 }
 
 .kpi-trend--negative {
   color: #991b1b;
   background: rgba(220, 38, 38, 0.12);
-  border-color: rgba(220, 38, 38, 0.22);
 }
 
 .kpi-trend--neutral {
   color: var(--c-muted);
   background: rgba(148, 163, 184, 0.12);
-  border-color: rgba(148, 163, 184, 0.25);
 }
 
 .grid-2 {
@@ -818,6 +868,56 @@
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: var(--space-4);
+}
+
+/* 4-up grid utility (used on Overview to align 4 cards in one row) */
+.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+  align-items: stretch;
+}
+
+@media (max-width: 1100px) {
+  .grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .grid-4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.grid-4 > .card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.grid-4 > .card .card-b {
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+}
+
+.grid-4 .overview-action-strip__list {
+  flex: 1;
+}
+
+/* Pie chart only: cap chart wrapper height */
+.overview-piechart-cap .recharts-responsive-container {
+  max-height: 200px;
+}
+
+.overview-piechart-cap .recharts-wrapper {
+  max-height: 200px;
+}
+
+.overview-piechart-cap {
+  overflow: hidden;
+  max-height: 200px;
 }
 
 .row {

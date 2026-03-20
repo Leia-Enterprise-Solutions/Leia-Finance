@@ -7,9 +7,9 @@ import { purchaseRequests, supplierBills, auditEvents } from "../../mock/data";
 import { formatCurrency } from "../../domain/format";
 
 function toneForStatus(s: PurchaseRequestStatus) {
-  if (s === "Approved / Committed") return "success";
+  if (s === "Approved (Committed)") return "success";
   if (s === "Rejected") return "danger";
-  if (s === "Needs Changes") return "warning";
+  if (s === "Submitted") return "warning";
   return "neutral";
 }
 
@@ -23,7 +23,7 @@ export function PurchaseRequestDetailPage() {
         <div className="page-title">
           <h1>Request not found</h1>
           <p>
-            Go back to <Link to="/purchase-requests">Purchase Requests</Link>.
+            Go back to <Link to="/finance/spend/requests">Purchase Requests</Link>.
           </p>
         </div>
       </div>
@@ -41,11 +41,11 @@ export function PurchaseRequestDetailPage() {
           <p style={{ fontFamily: "var(--font-mono)" }}>{req.id}</p>
         </div>
         <div className="row">
-          <Link className="btn" to="/purchase-requests">
+          <Link className="btn" to="/finance/spend/requests">
             Back to list
           </Link>
           <button className="btn">Request changes</button>
-          <button className="btn primary" disabled={req.status === "Rejected"}>
+          <button className="btn primary" disabled={req.status === "Rejected" || req.status === "Cancelled"}>
             Approve
           </button>
         </div>

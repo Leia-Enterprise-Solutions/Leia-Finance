@@ -2,6 +2,8 @@ import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Card } from "../../ui/Card";
 import { Chip } from "../../ui/Chip";
+import { SidePanel } from "../../ui/SidePanel";
+import { ActionButton } from "../../ui/ActionButton";
 import type { AuditEvent } from "../../domain/types";
 import { auditEvents as allEvents } from "../../mock/data";
 import { getEnumParam, getStringParam } from "../../router/query";
@@ -25,6 +27,7 @@ export function AuditTrailPage() {
 
   const [sev, setSev] = React.useState<AuditEvent["severity"] | "All">(initialSev ?? "All");
   const [q, setQ] = React.useState(initialQ ?? "");
+  const [selectedEvent, setSelectedEvent] = React.useState<AuditEvent | null>(null);
 
   React.useEffect(() => {
     const url = new URL(window.location.href);
@@ -49,6 +52,29 @@ export function AuditTrailPage() {
       );
     })
     .sort((a, b) => (a.at < b.at ? 1 : -1));
+
+  function sourceModuleForTarget(target: string) {
+    if (target.startsWith("drf_")) return "Drafts";
+    if (target.startsWith("inv_")) return "Invoices / Receivables";
+    if (target.startsWith("pr_")) return "Purchase Requests";
+    if (target.startsWith("sb_")) return "Supplier Bills";
+    if (target.startsWith("pay_")) return "Payments Queue";
+    if (target.startsWith("bud_")) return "Budget";
+    if (target.startsWith("emp_")) return "Employee Costs";
+    return "—";
+  }
+
+  function navigateToTarget(event: AuditEvent) {
+    const t = event.target;
+    if (t.startsWith("inv_")) navigate(`/finance/revenue/invoices/${encodeURIComponent(t)}`);
+    else if (t.startsWith("pr_")) navigate(`/finance/spend/requests/${encodeURIComponent(t)}`);
+    else if (t.startsWith("sb_")) navigate(`/finance/spend/bills/${encodeURIComponent(t)}`);
+    else if (t.startsWith("pay_")) navigate(`/finance/spend/payments?q=${encodeURIComponent(t)}`);
+    else if (t.startsWith("drf_")) navigate(`/finance/revenue/drafts?q=${encodeURIComponent(t)}`);
+    else if (t.startsWith("bud_")) navigate(`/finance/control/budgets`);
+    else if (t.startsWith("emp_")) navigate(`/finance/control/employee-costs`);
+    else navigate(`/finance/control/audit`);
+  }
 
   return (
     <>
@@ -98,17 +124,23 @@ export function AuditTrailPage() {
                 <th>Actor</th>
                 <th>Action</th>
                 <th>Target</th>
+                <th>Source module</th>
                 <th>Summary</th>
                 <th>Severity</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((e) => (
-                <tr key={e.id}>
+                <tr
+                  key={e.id}
+                  onClick={() => setSelectedEvent(e)}
+                  style={{ cursor: "pointer" }}
+                >
                   <td className="muted">{new Date(e.at).toISOString().replace("T", " ").slice(0, 16)}</td>
                   <td>{e.actor}</td>
                   <td className="muted">{e.action}</td>
                   <td style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{e.target}</td>
+                  <td className="muted">{sourceModuleForTarget(e.target)}</td>
                   <td>{e.summary}</td>
                   <td>
                     <Chip tone={toneForSeverity(e.severity)}>{e.severity}</Chip>
@@ -117,7 +149,7 @@ export function AuditTrailPage() {
               ))}
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="muted" style={{ padding: 16 }}>
+                  <td colSpan={7} className="muted" style={{ padding: 16 }}>
                     No audit events found.
                   </td>
                 </tr>
@@ -126,6 +158,61 @@ export function AuditTrailPage() {
           </table>
         </div>
       </Card>
+
+      <SidePanel
+        open={!!selectedEvent}
+        title={selectedEvent ? `Audit event ${selectedEvent.id}` : "Audit event"}
+        onClose={() => setSelectedEvent(null)}
+      >
+        {selectedEvent ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <div className="row" style={{ justifyContent: "space-between" }}>
+              <Chip tone={toneForSeverity(selectedEvent.severity)}>{selectedEvent.severity}</Chip>
+              <Chip tone="neutral">{sourceModuleForTarget(selectedEvent.target)}</Chip>
+            </div>
+            <div className="divider" />
+            <div>
+              <div className="muted" style={{ fontSize: 12 }}>
+                Timestamp
+              </div>
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>
+                {new Date(selectedEvent.at).toISOString().replace("T", " ").slice(0, 16)}
+              </div>
+            </div>
+            <div>
+              <div className="muted" style={{ fontSize: 12 }}>
+                Actor / Action
+              </div>
+              <div>
+                {selectedEvent.actor} · {selectedEvent.action}
+              </div>
+            </div>
+            <div>
+              <div className="muted" style={{ fontSize: 12 }}>
+                Target record
+              </div>
+              <div style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{selectedEvent.target}</div>
+            </div>
+            <div className="card" style={{ padding: 12, background: "var(--c-surface-2)" }}>
+              <div className="muted" style={{ fontSize: 12 }}>
+                Summary
+              </div>
+              <div style={{ marginTop: 6 }}>{selectedEvent.summary}</div>
+            </div>
+            <div className="row">
+              <ActionButton onClick={() => navigateToTarget(selectedEvent)}>
+                Open target record
+              </ActionButton>
+              <ActionButton
+                disabled
+                disabledReason="Prototype: event diff/before-after is not available in mock data."
+              >
+                View before/after
+              </ActionButton>
+            </div>
+          </div>
+        ) : null}
+      </SidePanel>
     </>
   );
 }

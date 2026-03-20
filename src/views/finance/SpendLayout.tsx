@@ -11,7 +11,6 @@ export function SpendLayout() {
           <span className="finance-section-header__title">Δαπάνες</span>
           <FinanceSubnav
             items={[
-              { label: "Αρχική", to: "/finance/spend" },
               { label: "Αιτήματα", to: "/finance/spend/requests" },
               { label: "Λογαριασμοί", to: "/finance/spend/bills" },
               { label: "Ουρά πληρωμών", to: "/finance/spend/payments" }

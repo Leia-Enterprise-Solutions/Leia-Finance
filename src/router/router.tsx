@@ -17,8 +17,6 @@ import { AuditTrailPage } from "../views/audit/AuditTrailPage";
 import { AppProviders } from "../state/AppProviders";
 import { FinanceLauncherPage } from "../views/finance/FinanceLauncherPage";
 import { FinanceOverviewHomePage } from "../views/finance/FinanceOverviewHomePage";
-import { RevenueHomePage } from "../views/finance/RevenueHomePage";
-import { SpendHomePage } from "../views/finance/SpendHomePage";
 import { ControlHomePage } from "../views/finance/ControlHomePage";
 import { OverviewLayout } from "../views/finance/OverviewLayout";
 import { RevenueLayout } from "../views/finance/RevenueLayout";
@@ -69,7 +67,7 @@ export const router = createBrowserRouter([
             path: "revenue",
             element: <RevenueLayout />,
             children: [
-              { index: true, element: <RevenueHomePage /> },
+              { index: true, element: <Navigate to="/finance/revenue/drafts" replace /> },
               { path: "drafts", element: <DraftsPage /> },
               { path: "drafts/builder", element: <InvoiceDraftBuilderPage /> },
               { path: "drafts/:draftId/builder", element: <InvoiceDraftBuilderPage /> },
@@ -82,7 +80,7 @@ export const router = createBrowserRouter([
             path: "spend",
             element: <SpendLayout />,
             children: [
-              { index: true, element: <SpendHomePage /> },
+              { index: true, element: <Navigate to="/finance/spend/requests" replace /> },
               { path: "requests", element: <PurchaseRequestsPage /> },
               { path: "requests/:requestId", element: <PurchaseRequestDetailPage /> },
               { path: "bills", element: <SupplierBillsPage /> },

@@ -2,10 +2,12 @@ import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Card } from "../../ui/Card";
 import { KpiCard } from "../../ui/KpiCard";
+import { Chip } from "../../ui/Chip";
 import { formatCurrency, formatInt, formatCurrencyCompact } from "../../domain/format";
-import { invoices, paymentsQueue, receivables, supplierBills, budgetLines } from "../../mock/data";
+import { invoices, paymentsQueue, receivables, supplierBills, budgetLines, auditEvents } from "../../mock/data";
+import type { InvoiceStatus } from "../../domain/types";
 import { InvoicedVsCollectedChart } from "./charts/InvoicedVsCollectedChart";
-import { CommittedVsActualChart } from "./charts/CommittedVsActualChart";
+import { CashFlowChart } from "./charts/CashFlowChart";
 import { ExpensesBySupplierPieChart } from "./charts/ExpensesBySupplierPieChart";
 import { AgingSnapshot } from "./widgets/AgingSnapshot";
 import { OverviewActionStrip } from "./widgets/OverviewActionStrip";
@@ -113,9 +115,58 @@ export function DashboardPage() {
   ];
 
   // —— Zone 6: Mock counts for control preview (no backend)
-  const budgetWarningCount = 0;
-  const auditExceptionCount = 0;
-  const recentActivityCount = 8;
+
+  const recentAuditItems = React.useMemo(() => {
+    return auditEvents
+      .slice()
+      .sort((a, b) => (a.at < b.at ? 1 : -1))
+      .slice(0, 4);
+  }, []);
+
+  function severityTone(sev: "Info" | "Warning" | "Exception") {
+    if (sev === "Exception") return "danger";
+    if (sev === "Warning") return "warning";
+    return "neutral";
+  }
+
+  function sourceModuleForTarget(target: string) {
+    if (target.startsWith("drf_")) return "Drafts";
+    if (target.startsWith("inv_")) return "Invoices / Receivables";
+    if (target.startsWith("pr_")) return "Purchase Requests";
+    if (target.startsWith("sb_")) return "Supplier Bills";
+    if (target.startsWith("pay_")) return "Payments Queue";
+    if (target.startsWith("bud_")) return "Budget";
+    if (target.startsWith("emp_")) return "Employee Costs";
+    return "—";
+  }
+
+  function toneForInvoiceStatus(s: InvoiceStatus) {
+    if (s === "Paid") return "success";
+    if (s === "Overdue") return "danger";
+    if (s === "Partially Paid") return "warning";
+    return "neutral";
+  }
+
+  const previewInvoices = React.useMemo(() => {
+    const weight: Record<InvoiceStatus, number> = {
+      Draft: 5,
+      Issued: 2,
+      "Partially Paid": 1,
+      Paid: 3,
+      Overdue: 0,
+      Cancelled: 4
+    };
+    return invoices
+      .slice()
+      .sort((a, b) => weight[a.status] - weight[b.status] || a.dueDate.localeCompare(b.dueDate))
+      .slice(0, 4);
+  }, []);
+
+  const invoicesAttentionStatus: InvoiceStatus = React.useMemo(() => {
+    if (invoices.some((i) => i.status === "Overdue")) return "Overdue";
+    if (invoices.some((i) => i.status === "Partially Paid")) return "Partially Paid";
+    return "Issued";
+  }, []);
 
   return (
     <>
@@ -151,17 +202,17 @@ export function DashboardPage() {
             totalLabel="Σύνολο ανοικτών"
             totalValue={formatCurrency(outReceivables)}
             sublabel={recSublabel}
-            ctaLabel="Εισπράξεις"
+            ctaLabel="Οφειλές"
             ctaTo="/finance/revenue/collections"
           >
             <AgingSnapshot kind="receivables" compact />
           </OverviewDomainPanel>
           <OverviewDomainPanel
-            title="Υποχρεώσεις"
+            title="Οφειλές"
             totalLabel="Σύνολο ανοικτών"
             totalValue={formatCurrency(outPayables)}
             sublabel={paySublabel}
-            ctaLabel="Ουρά"
+            ctaLabel="Οφειλές"
             ctaTo="/finance/spend/payments"
           >
             <AgingSnapshot kind="payables" compact />
@@ -173,53 +224,130 @@ export function DashboardPage() {
         </div>
       </section>
 
-      {/* Zone 4 — Needs attention */}
-      <section className="overview-section overview-section--attention" aria-labelledby="overview-attention-heading">
-        <h2 id="overview-attention-heading" className="overview-section__title">
-          Χρειάζονται ενέργεια
-        </h2>
-        <OverviewActionStrip items={actionStripItems} />
-      </section>
+      {/* 4-up row: need action + trends + expenses */}
+      <div className="grid-4 overview-fourup overview-section">
+        <Card title="Χρειάζονται ενέργεια">
+          <OverviewActionStrip items={actionStripItems} />
+        </Card>
 
-      {/* Zone 5 — Trends (2 charts, quieter) */}
-      <section className="overview-section overview-section--trends" aria-labelledby="overview-trends-heading">
-        <h2 id="overview-trends-heading" className="overview-section__title">
-          Τάσεις
-        </h2>
-        <div className="grid-2">
-          <Card title="Εκδόσεις vs Εισπράξεις">
-            <InvoicedVsCollectedChart />
-          </Card>
-          <Card title="Δεσμευμένα vs Πληρωθέντα">
-            <CommittedVsActualChart />
-          </Card>
-        </div>
-      </section>
+        <Card title="Ταμειακή ροή">
+          <CashFlowChart />
+        </Card>
 
-      {/* Zone 5b — Secondary analytics */}
-      <section className="overview-section overview-section--secondary" aria-labelledby="overview-secondary-heading">
-        <h2 id="overview-secondary-heading" className="overview-section__title overview-section__title--muted">
-          Λοιπές αναλύσεις
-        </h2>
+        <Card title="Εκδόσεις vs Οφειλές">
+          <InvoicedVsCollectedChart />
+        </Card>
+
         <Card title="Έξοδα ανά προμηθευτή">
           <ExpensesBySupplierPieChart />
         </Card>
-      </section>
+      </div>
 
       {/* Zone 6 — Control / activity preview (compact) */}
-      <section className="overview-section overview-section--compact" aria-labelledby="overview-control-heading">
-        <div className="overview-control-preview">
-          <h2 id="overview-control-heading" className="overview-section__title overview-section__title--muted">
-            Έλεγχος & δραστηριότητα
-          </h2>
-          <div className="overview-control-preview__stats">
-            <span className="overview-control-preview__stat">Προειδοποιήσεις budget: {formatInt(budgetWarningCount)}</span>
-            <span className="overview-control-preview__stat">Εξαιρέσεις audit: {formatInt(auditExceptionCount)}</span>
-            <span className="overview-control-preview__stat">Πρόσφατη δραστηριότητα: {formatInt(recentActivityCount)}</span>
-          </div>
-          <Link to="/finance/overview?tab=activity" className="btn btn--sm ghost">
-            Προβολή όλων
-          </Link>
+      <section className=" overview-section overview-section--compact" aria-labelledby="overview-control-heading">
+ 
+        <div className="grid-2">
+          <Card
+            title="Audit Trail / Activity Log"
+            right={
+              <Link to="/finance/control/audit" className="btn btn--sm">
+                Προβολή όλων
+              </Link>
+            }
+          >
+            <div style={{ overflow: "auto" }}>
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>At</th>
+                    <th>Actor</th>
+                    <th>Action</th>
+                    <th>Source</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentAuditItems.map((e) => (
+                    <tr
+                      key={e.id}
+                      onClick={() => navigate(`/finance/control/audit?q=${encodeURIComponent(e.target)}`)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <td className="muted">{new Date(e.at).toISOString().replace("T", " ").slice(0, 16)}</td>
+                      <td>
+                        <div className="row" style={{ gap: 8 }}>
+                          <Chip tone={severityTone(e.severity)}>{e.severity}</Chip>
+                          <span>{e.actor}</span>
+                        </div>
+                      </td>
+                      <td className="muted">{e.action}</td>
+                      <td className="muted">{sourceModuleForTarget(e.target)}</td>
+                    </tr>
+                  ))}
+                  {recentAuditItems.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="muted" style={{ padding: 16 }}>
+                        No audit events in mock data.
+                      </td>
+                    </tr>
+                  ) : null}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+
+          <Card
+            title="Invoices (preview)"
+            right={
+              <Link
+                to={`/finance/revenue/invoices?status=${encodeURIComponent(invoicesAttentionStatus)}`}
+                className="btn btn--sm"
+              >
+                Προβολή όλων
+              </Link>
+            }
+          >
+            <div style={{ overflow: "auto" }}>
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Invoice</th>
+                    <th>Client</th>
+                    <th>Status</th>
+                    <th>Due</th>
+                    <th className="num">Outstanding</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {previewInvoices.map((inv) => {
+                    const outstanding = Math.max(0, inv.total - inv.paid);
+                    return (
+                      <tr
+                        key={inv.id}
+                        onClick={() => navigate(`/finance/revenue/invoices/${encodeURIComponent(inv.id)}`)}
+                        style={{
+                          cursor: "pointer",
+                          background:
+                            inv.status === "Overdue"
+                              ? "rgba(220, 38, 38, 0.05)"
+                              : inv.status === "Partially Paid"
+                                ? "rgba(245, 158, 11, 0.05)"
+                                : undefined
+                        }}
+                      >
+                        <td style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{inv.number}</td>
+                        <td>{inv.client}</td>
+                        <td>
+                          <Chip tone={toneForInvoiceStatus(inv.status)}>{inv.status}</Chip>
+                        </td>
+                        <td className="muted">{inv.dueDate}</td>
+                        <td className="num">{formatCurrency(outstanding, inv.currency)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </Card>
         </div>
       </section>
     </>

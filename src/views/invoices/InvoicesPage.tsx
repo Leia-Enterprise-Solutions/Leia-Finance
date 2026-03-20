@@ -3,9 +3,10 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Card } from "../../ui/Card";
 import { Chip } from "../../ui/Chip";
 import { SidePanel } from "../../ui/SidePanel";
+import { ActionButton } from "../../ui/ActionButton";
 import { FiltersBar } from "../../ui/FiltersBar";
 import type { Invoice, InvoiceStatus, TransmissionStatus } from "../../domain/types";
-import { invoices as allInvoices } from "../../mock/data";
+import { invoices as allInvoices, receivables } from "../../mock/data";
 import { formatCurrency, daysBetween } from "../../domain/format";
 import { getEnumParam, getStringParam } from "../../router/query";
 
@@ -62,8 +63,7 @@ export function InvoicesPage() {
           <p>Προβολή εκδοθέντων τιμολογίων με καθυστέρηση, διαβίβαση και λεπτομέρειες.</p>
         </div>
         <div className="row">
-          <button className="btn">Μαζικές ενέργειες</button>
-          <button className="btn primary" onClick={() => navigate("/drafts/builder")}>
+          <button className="btn primary" onClick={() => navigate("/finance/revenue/drafts/builder")}>
             Νέο πρόχειρο
           </button>
         </div>
@@ -148,6 +148,7 @@ export function InvoicesPage() {
                 <th>Έργο</th>
                 <th>Έκδοση</th>
                 <th>Λήξη</th>
+                <th className="num">Days overdue</th>
                 <th className="num">Total</th>
                 <th className="num">Paid</th>
                 <th className="num">Outstanding</th>
@@ -159,20 +160,17 @@ export function InvoicesPage() {
               {filtered.map((i) => {
                 const outstanding = Math.max(0, i.total - i.paid);
                 const daysOver = now > new Date(i.dueDate) ? daysBetween(now, new Date(i.dueDate)) : 0;
+                const overdueTint = i.status === "Overdue" ? "rgba(220, 38, 38, 0.08)" : undefined;
                 return (
-                  <tr key={i.id} onClick={() => setSelected(i)} style={{ cursor: "pointer" }}>
+                  <tr key={i.id} onClick={() => setSelected(i)} style={{ cursor: "pointer", background: overdueTint }}>
                     <td style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{i.number}</td>
                     <td>{i.client}</td>
                     <td className="muted">{i.project ?? "—"}</td>
                     <td className="muted">{i.issueDate}</td>
                     <td>
                       <span>{i.dueDate}</span>
-                      {i.status === "Overdue" ? (
-                        <span className="faint" style={{ marginLeft: 8 }}>
-                          ({daysOver}ημ καθυστέρηση)
-                        </span>
-                      ) : null}
                     </td>
+                    <td className="num">{i.status === "Overdue" ? `${daysOver}` : "—"}</td>
                     <td className="num">{formatCurrency(i.total, i.currency)}</td>
                     <td className="num">{formatCurrency(i.paid, i.currency)}</td>
                     <td className="num">{formatCurrency(outstanding, i.currency)}</td>
@@ -187,7 +185,7 @@ export function InvoicesPage() {
               })}
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="muted" style={{ padding: 16 }}>
+                  <td colSpan={11} className="muted" style={{ padding: 16 }}>
                     Δεν υπάρχουν τιμολόγια σε αυτή την προβολή. Δοκιμάστε να αλλάξετε φίλτρα ή εύρος ημερομηνιών.
                   </td>
                 </tr>
@@ -203,22 +201,31 @@ export function InvoicesPage() {
         onClose={() => setSelected(null)}
       >
         {selected ? (
+          (() => {
+            const receivable = receivables.find((r) => r.invoiceId === selected.id) ?? null;
+            return (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <div className="row" style={{ justifyContent: "space-between" }}>
               <Chip tone={toneForInvoiceStatus(selected.status)}>{selected.status}</Chip>
               <Chip tone={toneForTransmission(selected.transmission)}>{selected.transmission}</Chip>
             </div>
             <div className="divider" />
-            <div className="row" style={{ justifyContent: "space-between" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
               <div>
                 <div className="muted" style={{ fontSize: 12 }}>
-                  Σύνολο
+                  Total
                 </div>
                 <div style={{ fontWeight: 650 }}>{formatCurrency(selected.total, selected.currency)}</div>
               </div>
               <div>
                 <div className="muted" style={{ fontSize: 12 }}>
-                  Υπόλοιπο
+                  Paid
+                </div>
+                <div style={{ fontWeight: 650 }}>{formatCurrency(selected.paid, selected.currency)}</div>
+              </div>
+              <div>
+                <div className="muted" style={{ fontSize: 12 }}>
+                  Outstanding
                 </div>
                 <div style={{ fontWeight: 650 }}>
                   {formatCurrency(Math.max(0, selected.total - selected.paid), selected.currency)}
@@ -243,13 +250,22 @@ export function InvoicesPage() {
                 <div className="muted" style={{ fontSize: 12 }}>
                   Υπεύθυνος
                 </div>
-                <div>{selected.owner}</div>
+                <div>{receivable?.owner ?? selected.owner}</div>
               </div>
               <div>
                 <div className="muted" style={{ fontSize: 12 }}>
                   Έργο
                 </div>
                 <div>{selected.project ?? "—"}</div>
+              </div>
+            </div>
+            <div className="card" style={{ padding: 12, background: "var(--c-surface-2)" }}>
+              <div className="muted" style={{ fontSize: 12 }}>
+                Collections note / last follow-up
+              </div>
+              <div style={{ marginTop: 6 }}>{receivable?.nextAction ?? "—"}</div>
+              <div className="muted" style={{ marginTop: 8, fontSize: 12 }}>
+                Expected payment date: —
               </div>
             </div>
             {selected.transmission === "Rejected" ? (
@@ -261,12 +277,26 @@ export function InvoicesPage() {
               </div>
             ) : null}
             <div className="row">
-              <button className="btn" onClick={() => navigate(`/invoices/${selected.id}`)}>
+              <button className="btn" onClick={() => navigate(`/finance/revenue/invoices/${selected.id}`)}>
                 Πλήρεις λεπτομέρειες
               </button>
-              <button className="btn primary">Καταχώρηση είσπραξης</button>
+              <ActionButton
+                variant="primary"
+                disabled
+                disabledReason="Prototype: collection note editor is not implemented in v1."
+              >
+                Add collection note
+              </ActionButton>
+              <button
+                className="btn"
+                onClick={() => navigate(`/finance/revenue/collections?q=${encodeURIComponent(selected.number)}`)}
+              >
+                Go to Collections
+              </button>
             </div>
           </div>
+            );
+          })()
         ) : null}
       </SidePanel>
     </>

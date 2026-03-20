@@ -76,6 +76,7 @@ export const invoiceDrafts: InvoiceDraft[] = [
     id: "drf_2001",
     client: "Northwind Labs",
     project: "Retainer",
+    owner: "Alex",
     updatedAt: "2026-03-16T14:20:00Z",
     currency: "EUR",
     draftTotal: 11250,
@@ -86,6 +87,7 @@ export const invoiceDrafts: InvoiceDraft[] = [
     id: "drf_2002",
     client: "Globex",
     project: "Change request",
+    owner: "Iris",
     updatedAt: "2026-03-03T11:00:00Z",
     currency: "EUR",
     draftTotal: 3200,
@@ -96,6 +98,7 @@ export const invoiceDrafts: InvoiceDraft[] = [
     id: "drf_2003",
     client: "Acme Holding",
     project: "Implementation",
+    owner: "Mina",
     updatedAt: "2026-03-18T09:42:00Z",
     currency: "EUR",
     draftTotal: 8900,
@@ -150,7 +153,7 @@ export const purchaseRequests: PurchaseRequest[] = [
     amount: 4200,
     currency: "EUR",
     urgency: "Normal",
-    status: "Approved / Committed",
+    status: "Approved (Committed)",
     attachments: 2
   },
   {
@@ -162,7 +165,7 @@ export const purchaseRequests: PurchaseRequest[] = [
     amount: 2800,
     currency: "EUR",
     urgency: "Urgent",
-    status: "Open",
+    status: "Submitted",
     attachments: 1
   },
   {
@@ -175,7 +178,7 @@ export const purchaseRequests: PurchaseRequest[] = [
     amount: 1600,
     currency: "EUR",
     urgency: "Normal",
-    status: "Needs Changes",
+    status: "Submitted",
     attachments: 0
   }
 ];
@@ -305,6 +308,40 @@ export const billableWork: BillableWorkItem[] = [
     amount: 0,
     currency: "EUR",
     status: "Non-billable"
+  }
+  ,
+  {
+    id: "bw_9011",
+    client: "Northwind Labs",
+    project: "Retainer",
+    date: "2026-03-02",
+    description: "Monthly retainer line (March) – billable hours",
+    amount: 18250,
+    currency: "EUR",
+    status: "Invoiced",
+    invoicedByInvoiceId: "inv_1001"
+  },
+  {
+    id: "bw_9012",
+    client: "Acme Holding",
+    project: "Implementation",
+    date: "2026-03-05",
+    description: "Implementation milestones – billable hours",
+    amount: 24500,
+    currency: "EUR",
+    status: "Invoiced",
+    invoicedByInvoiceId: "inv_1002"
+  },
+  {
+    id: "bw_9013",
+    client: "Umbrella",
+    project: "Support",
+    date: "2026-03-09",
+    description: "Support services – billable hours",
+    amount: 7800,
+    currency: "EUR",
+    status: "Invoiced",
+    invoicedByInvoiceId: "inv_1004"
   }
 ];
 

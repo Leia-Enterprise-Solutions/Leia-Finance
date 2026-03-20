@@ -4,7 +4,7 @@ import type { DateRangePreset } from "../state/dateRangeTypes";
 
 const OPTIONS: { id: DateRangePreset; label: string }[] = [
   { id: "month", label: "Μήνας" },
-  { id: "quarter", label: "Τρίμηνο" },
+  { id: "last_month", label: "Τελευταίος μήνας" },
   { id: "ytd", label: "YTD" },
   { id: "lytd", label: "LYTD" }
 ];

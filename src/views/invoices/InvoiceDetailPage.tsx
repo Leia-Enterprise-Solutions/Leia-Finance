@@ -2,9 +2,11 @@ import React from "react";
 import { Link, useParams } from "react-router-dom";
 import { Card } from "../../ui/Card";
 import { Chip } from "../../ui/Chip";
+import { ActionButton } from "../../ui/ActionButton";
 import type { InvoiceStatus, TransmissionStatus } from "../../domain/types";
-import { invoices, receivables, auditEvents } from "../../mock/data";
+import { invoices, receivables, billableWork, auditEvents } from "../../mock/data";
 import { formatCurrency } from "../../domain/format";
+import { useFinancePrototypeState } from "../../state/FinancePrototypeState";
 
 function toneForInvoiceStatus(s: InvoiceStatus) {
   if (s === "Paid") return "success";
@@ -21,6 +23,7 @@ function toneForTransmission(s: TransmissionStatus) {
 
 export function InvoiceDetailPage() {
   const { invoiceId } = useParams();
+  const { getLastCollectionNote } = useFinancePrototypeState();
   const inv = invoices.find((i) => i.id === invoiceId) ?? null;
 
   if (!inv) {
@@ -29,7 +32,7 @@ export function InvoiceDetailPage() {
         <div className="page-title">
           <h1>Invoice not found</h1>
           <p>
-            Go back to <Link to="/invoices">Invoices</Link>.
+            Go back to <Link to="/finance/revenue/invoices">Invoices</Link>.
           </p>
         </div>
       </div>
@@ -39,6 +42,25 @@ export function InvoiceDetailPage() {
   const receivable = receivables.find((r) => r.invoiceId === inv.id) ?? null;
   const outstanding = Math.max(0, inv.total - inv.paid);
   const timeline = auditEvents.filter((e) => e.target === inv.id).slice(0, 8);
+
+  const linkedWork = billableWork.filter((w) => w.invoicedByInvoiceId === inv.id);
+  const lastCollectionNote = getLastCollectionNote(inv.id);
+  const lastSnippet = lastCollectionNote
+    ? lastCollectionNote.text.length > 80
+      ? `${lastCollectionNote.text.slice(0, 80)}…`
+      : lastCollectionNote.text
+    : null;
+
+  function sourceModuleForTarget(target: string) {
+    if (target.startsWith("drf_")) return "Drafts";
+    if (target.startsWith("inv_")) return "Invoices / Receivables";
+    if (target.startsWith("pr_")) return "Purchase Requests";
+    if (target.startsWith("sb_")) return "Supplier Bills";
+    if (target.startsWith("pay_")) return "Payments Queue";
+    if (target.startsWith("bud_")) return "Budget";
+    if (target.startsWith("emp_")) return "Employee Costs";
+    return "—";
+  }
 
   return (
     <>
@@ -51,17 +73,25 @@ export function InvoiceDetailPage() {
           </p>
         </div>
         <div className="row">
-          <Link className="btn" to="/invoices">
+          <Link className="btn" to="/finance/revenue/invoices">
             Back to list
           </Link>
-          <button className="btn">Open PDF</button>
-          <button className="btn primary">Register receipt</button>
+          <Link className="btn" to={`/finance/revenue/collections?q=${encodeURIComponent(inv.number)}`}>
+            Go to Collections
+          </Link>
+          <ActionButton
+            variant="primary"
+            disabled
+            disabledReason="Prototype: collection note editor is not implemented in v1."
+          >
+            Add collection note
+          </ActionButton>
         </div>
       </div>
 
       <div className="grid-2" style={{ marginBottom: 16 }}>
         <Card
-          title="Status"
+          title="Fiscal / external transmission"
           right={
             <div className="row">
               <Chip tone={toneForInvoiceStatus(inv.status)}>{inv.status}</Chip>
@@ -134,15 +164,87 @@ export function InvoiceDetailPage() {
               <div style={{ fontWeight: 650, fontSize: 16 }}>{formatCurrency(outstanding, inv.currency)}</div>
             </div>
           </div>
+        </Card>
+      </div>
 
-          {receivable ? (
-            <div className="card" style={{ padding: 12, background: "var(--c-surface-2)", marginTop: 12 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <Card title="Linked billable work (read-only)">
+          <div style={{ overflow: "auto" }}>
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Work item</th>
+                  <th>Date</th>
+                  <th>Description</th>
+                  <th>Client</th>
+                  <th>Project</th>
+                  <th className="num">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {linkedWork.length ? (
+                  linkedWork.map((w) => (
+                    <tr key={w.id}>
+                      <td style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{w.id}</td>
+                      <td className="muted">{w.date}</td>
+                      <td>{w.description}</td>
+                      <td>{w.client}</td>
+                      <td className="muted">{w.project ?? "—"}</td>
+                      <td className="num">{formatCurrency(w.amount, w.currency)}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="muted" style={{ padding: 16 }}>
+                      No linked billable work in mock data.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+
+        <Card title="Collections notes / history">
+          <div className="grid-2" style={{ marginBottom: 8 }}>
+            <div>
               <div className="muted" style={{ fontSize: 12 }}>
-                Collections note
+                Latest note snippet
               </div>
-              <div style={{ marginTop: 6 }}>{receivable.nextAction ?? "—"}</div>
+              <div style={{ marginTop: 6 }}>{lastSnippet ?? receivable?.nextAction ?? "—"}</div>
+              <div className="muted" style={{ marginTop: 8, fontSize: 12 }}>
+                Last note date:{" "}
+                {lastCollectionNote ? new Date(lastCollectionNote.at).toISOString().slice(0, 10) : "—"}
+              </div>
             </div>
-          ) : null}
+            <div>
+              <div className="muted" style={{ fontSize: 12 }}>
+                Follow-up owner
+              </div>
+              <div style={{ marginTop: 6 }}>{receivable?.owner ?? inv.owner}</div>
+              <div className="muted" style={{ marginTop: 8, fontSize: 12 }}>
+                Expected payment date: —
+              </div>
+            </div>
+          </div>
+          <div className="row" style={{ justifyContent: "space-between" }}>
+            <ActionButton
+              disabled
+              disabledReason="Prototype: collection note editor is not implemented in v1."
+              variant="primary"
+            >
+              Add collection note
+            </ActionButton>
+            <Link className="btn" to={`/finance/revenue/collections?q=${encodeURIComponent(inv.number)}`}>
+              Go to Collections
+            </Link>
+          </div>
+        </Card>
+
+        <Card title="Payments">
+          <div className="muted">
+            No payment registrations are present in mock data for this invoice (prototype placeholder).
+          </div>
         </Card>
       </div>
 
@@ -153,6 +255,7 @@ export function InvoiceDetailPage() {
               <th>At</th>
               <th>Actor</th>
               <th>Action</th>
+              <th>Source module</th>
               <th>Summary</th>
             </tr>
           </thead>
@@ -163,12 +266,13 @@ export function InvoiceDetailPage() {
                   <td className="muted">{new Date(e.at).toISOString().replace("T", " ").slice(0, 16)}</td>
                   <td>{e.actor}</td>
                   <td className="muted">{e.action}</td>
+                  <td className="muted">{sourceModuleForTarget(e.target)}</td>
                   <td>{e.summary}</td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={4} className="muted" style={{ padding: 16 }}>
+                <td colSpan={5} className="muted" style={{ padding: 16 }}>
                   No timeline events for this invoice in mock data.
                 </td>
               </tr>

@@ -6,10 +6,9 @@ import { SidePanel } from "../../ui/SidePanel";
 import { ActionButton } from "../../ui/ActionButton";
 import { FiltersBar } from "../../ui/FiltersBar";
 import type { SupplierBill, SupplierBillStatus } from "../../domain/types";
-import { supplierBills as allBills } from "../../mock/data";
 import { formatCurrency, daysBetween } from "../../domain/format";
 import { getEnumParam, getStringParam } from "../../router/query";
-import { usePermissions } from "../../state/permissions";
+import { useFinancePrototypeState } from "../../state/FinancePrototypeState";
 
 function toneForBillStatus(s: SupplierBillStatus) {
   if (s === "Paid") return "success";
@@ -25,7 +24,6 @@ function toneForMatch(m: SupplierBill["match"]) {
 }
 
 export function SupplierBillsPage() {
-  const perms = usePermissions();
   const navigate = useNavigate();
   const loc = useLocation();
   const params = React.useMemo(() => new URLSearchParams(loc.search), [loc.search]);
@@ -40,6 +38,8 @@ export function SupplierBillsPage() {
   const [q, setQ] = React.useState(initialQ ?? "");
   const [selected, setSelected] = React.useState<SupplierBill | null>(null);
 
+  const { supplierBills } = useFinancePrototypeState();
+
   React.useEffect(() => {
     const url = new URL(window.location.href);
     if (status === "All") url.searchParams.delete("status");
@@ -50,7 +50,7 @@ export function SupplierBillsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, q]);
 
-  const filtered = allBills.filter((b) => {
+  const filtered = supplierBills.filter((b) => {
     if (status !== "All" && b.status !== status) return false;
     if (!q.trim()) return true;
     const needle = q.toLowerCase();
@@ -70,12 +70,6 @@ export function SupplierBillsPage() {
           <p>Προβολή υποχρεώσεων: αντιστοίχιση vs αίτημα, ετοιμότητα, λήξεις και εξαιρέσεις.</p>
         </div>
         <div className="row">
-          <ActionButton
-            disabled={!perms.canRecordSupplierBill}
-            disabledReason={!perms.canRecordSupplierBill ? "You don't have permission to record supplier bills." : undefined}
-          >
-            Καταχώρηση τιμολογίου
-          </ActionButton>
           <ActionButton variant="primary" onClick={() => navigate("/finance/spend/payments")}>
             Άνοιγμα ουράς πληρωμών
           </ActionButton>
@@ -157,17 +151,27 @@ export function SupplierBillsPage() {
                 <th>Προμηθευτής</th>
                 <th>Παραλαβή</th>
                 <th>Λήξη</th>
+                <th className="num">Days overdue</th>
                 <th className="num">Amount</th>
                 <th>Αντιστοίχιση</th>
+                <th>Readiness</th>
                 <th>Συνδεδεμένο αίτημα</th>
-                <th>Κατάσταση</th>
+                <th>Blocked / mismatch reason</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((b) => {
                 const daysOver = now > new Date(b.dueDate) ? daysBetween(now, new Date(b.dueDate)) : 0;
+                const isOverdue = b.status === "Overdue";
                 return (
-                  <tr key={b.id} onClick={() => setSelected(b)} style={{ cursor: "pointer" }}>
+                  <tr
+                    key={b.id}
+                    onClick={() => setSelected(b)}
+                    style={{
+                      cursor: "pointer",
+                      background: isOverdue ? "rgba(220, 38, 38, 0.08)" : undefined
+                    }}
+                  >
                     <td style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{b.id}</td>
                     <td>{b.supplier}</td>
                     <td className="muted">{b.receivedAt}</td>
@@ -179,20 +183,27 @@ export function SupplierBillsPage() {
                         </span>
                       ) : null}
                     </td>
+                    <td className="num">{b.status === "Overdue" ? `${daysOver}` : "—"}</td>
                     <td className="num">{formatCurrency(b.amount, b.currency)}</td>
                     <td>
                       <Chip tone={toneForMatch(b.match)}>{b.match}</Chip>
                     </td>
-                    <td className="muted">{b.linkedRequestId ?? "—"}</td>
                     <td>
                       <Chip tone={toneForBillStatus(b.status)}>{b.status}</Chip>
+                    </td>
+                    <td className="muted">{b.linkedRequestId ?? "—"}</td>
+                    <td className="muted">
+                      {b.status === "Paid"
+                        ? "—"
+                        : b.blockedReason ??
+                          (b.match === "Mismatch" ? "Mismatch vs approved request" : "—")}
                     </td>
                   </tr>
                 );
               })}
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="muted" style={{ padding: 16 }}>
+                  <td colSpan={10} className="muted" style={{ padding: 16 }}>
                     Δεν βρέθηκαν τιμολόγια προμηθευτών.
                   </td>
                 </tr>
@@ -228,11 +239,11 @@ export function SupplierBillsPage() {
                 <div>{selected.dueDate}</div>
               </div>
             </div>
-            {selected.status === "Blocked" || selected.match !== "Matched" ? (
+            {selected.status !== "Paid" && (selected.status === "Blocked" || selected.match !== "Matched") ? (
               <div className="card" style={{ padding: 12, background: "var(--c-warning-50)" }}>
                 <div style={{ fontWeight: 650, color: "#92400e" }}>Μπλοκαρισμένο / απαιτεί επίλυση</div>
                 <div className="muted" style={{ marginTop: 4 }}>
-                  {selected.blockedReason ?? "Resolve mismatch or required controls before marking Ready."}
+                  {selected.blockedReason ?? "Resolve mismatch or required controls before moving this payable forward."}
                 </div>
               </div>
             ) : null}
@@ -240,9 +251,22 @@ export function SupplierBillsPage() {
               <button className="btn" onClick={() => navigate(`/finance/spend/bills/${selected.id}`)}>
                 Πλήρεις λεπτομέρειες
               </button>
-              <button className="btn">Προσθήκη συνημμένου</button>
-              <button className="btn primary" disabled={selected.status !== "Ready"}>
-                Προσθήκη στις πληρωμές
+              <button
+                className="btn"
+                disabled={selected.status === "Ready"}
+                onClick={() => navigate(`/finance/spend/bills/${selected.id}`)}
+              >
+                Resolve readiness/mismatch
+              </button>
+              <button
+                className="btn primary"
+                disabled={selected.status !== "Ready" || selected.match !== "Matched"}
+                onClick={() => {
+                  navigate(`/finance/spend/payments?q=${encodeURIComponent(selected.id)}`);
+                  setSelected(null);
+                }}
+              >
+                Send to payments queue
               </button>
             </div>
           </div>
