@@ -279,19 +279,23 @@ export function CollectionsPage() {
                 );
               })()}
             </div>
-            <div className="row">
+            <div className="row" style={{ justifyContent: "space-between" }}>
               <button
-                className="btn"
+                className="btn ghost btn--sm"
+                onClick={() => navigate(`/finance/revenue/invoices/${selected.invoiceId}`)}
+                title="Προβολή τιμολογίου"
+              >
+                Προβολή τιμολογίου
+              </button>
+              <ActionButton
+                variant="primary"
                 onClick={() => {
                   setNoteDraft("");
                   setNoteEditorOpen(true);
                 }}
               >
                 Καταχώρηση Σημείωσης
-              </button>
-              <button className="btn primary" onClick={() => navigate(`/finance/revenue/invoices/${selected.invoiceId}`)}>
-                Άνοιγμα λεπτομερειών τιμολογίου
-              </button>
+              </ActionButton>
             </div>
 
             {noteEditorOpen ? (

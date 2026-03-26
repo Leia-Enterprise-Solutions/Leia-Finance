@@ -328,9 +328,13 @@ export function InvoicesPage() {
                 </div>
               </div>
             ) : null}
-            <div className="row">
-              <button className="btn" onClick={() => navigate(`/finance/revenue/invoices/${selected.id}`)}>
-                Πλήρεις λεπτομέρειες
+            <div className="row" style={{ justifyContent: "space-between" }}>
+              <button
+                className="btn ghost btn--sm"
+                onClick={() => navigate(`/finance/revenue/invoices/${selected.id}`)}
+                title="Προβολή πλήρων λεπτομερειών"
+              >
+                Προβολή
               </button>
               <ActionButton
                 variant="primary"
@@ -342,10 +346,11 @@ export function InvoicesPage() {
                 Καταχώρηση Σημείωσης
               </ActionButton>
               <button
-                className="btn"
+                className="btn ghost btn--sm"
                 onClick={() => navigate(`/finance/revenue/collections?q=${encodeURIComponent(selected.number)}`)}
+                title="Μετάβαση στις Απαιτήσεις / Εισπράξεις"
               >
-                Μετάβαση στις Εισπράξεις
+                Εισπράξεις
               </button>
             </div>
 

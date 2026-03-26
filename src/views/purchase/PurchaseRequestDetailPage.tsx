@@ -43,8 +43,8 @@ export function PurchaseRequestDetailPage() {
           <p style={{ fontFamily: "var(--font-mono)" }}>{req.id}</p>
         </div>
         <div className="row">
-          <Link className="btn" to="/finance/spend/requests">
-            Back to list
+          <Link className="btn ghost btn--sm" to="/finance/spend/requests" title="Επιστροφή στη λίστα">
+            Πίσω
           </Link>
           <button
             className="btn"
@@ -61,7 +61,7 @@ export function PurchaseRequestDetailPage() {
             Έγκριση
           </button>
           <button
-            className="btn"
+            className="btn ghost"
             disabled={req.status === "Rejected" || req.status === "Cancelled"}
             onClick={() => updatePurchaseRequestStatus(req.id, "Rejected")}
           >

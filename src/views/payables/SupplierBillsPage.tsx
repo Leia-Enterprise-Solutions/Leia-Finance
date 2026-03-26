@@ -247,16 +247,17 @@ export function SupplierBillsPage() {
                 </div>
               </div>
             ) : null}
-            <div className="row">
-              <button className="btn" onClick={() => navigate(`/finance/spend/bills/${selected.id}`)}>
-                Πλήρεις λεπτομέρειες
+            <div className="row" style={{ justifyContent: "space-between" }}>
+              <button className="btn ghost btn--sm" onClick={() => navigate(`/finance/spend/bills/${selected.id}`)}>
+                Προβολή
               </button>
               <button
-                className="btn"
+                className="btn ghost btn--sm"
                 disabled={selected.status === "Ready"}
                 onClick={() => navigate(`/finance/spend/bills/${selected.id}`)}
+                title={selected.status === "Ready" ? "Ήδη έτοιμο για πληρωμή." : undefined}
               >
-                Resolve readiness/mismatch
+                Επίλυση
               </button>
               <button
                 className="btn primary"
@@ -267,7 +268,7 @@ export function SupplierBillsPage() {
                   setSelected(null);
                 }}
               >
-                Send to payments queue
+                Αποστολή στην ουρά
               </button>
             </div>
           </div>

@@ -52,8 +52,8 @@ export function SupplierBillDetailPage() {
           <p>{bill.supplier}</p>
         </div>
         <div className="row">
-          <Link className="btn" to="/finance/spend/bills">
-            Back to list
+          <Link className="btn ghost btn--sm" to="/finance/spend/bills" title="Επιστροφή στη λίστα">
+            Πίσω
           </Link>
           <button
             className="btn"
@@ -72,7 +72,7 @@ export function SupplierBillDetailPage() {
               navigate(`/finance/spend/payments?q=${encodeURIComponent(bill.id)}`);
             }}
           >
-            Send to payments queue
+            Αποστολή στην ουρά
           </button>
         </div>
       </div>

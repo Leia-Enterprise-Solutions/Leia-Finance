@@ -256,34 +256,36 @@ export function PurchaseRequestsPage() {
                 </div>
               </div>
             ) : null}
-            <div className="row">
-              <button className="btn" onClick={() => navigate(`/purchase-requests/${selected.id}`)}>
-                Open full detail
+            <div className="row" style={{ justifyContent: "space-between", flexWrap: "wrap" }}>
+              <button className="btn ghost btn--sm" onClick={() => navigate(`/purchase-requests/${selected.id}`)}>
+                Προβολή
               </button>
-              <button
-                className="btn"
-                disabled={!perms.canApproveRequest || selected.status === "Rejected" || selected.status === "Cancelled"}
-                onClick={() => updatePurchaseRequestStatus(selected.id, "Returned for Changes")}
-                title={!perms.canApproveRequest ? "You don't have permission to approve requests." : undefined}
-              >
-                Επιστροφή για Διορθώσεις
-              </button>
-              <button
-                className="btn primary"
-                disabled={!perms.canApproveRequest || selected.status === "Rejected" || selected.status === "Cancelled"}
-                title={!perms.canApproveRequest ? "You don't have permission to approve requests." : undefined}
-                onClick={() => updatePurchaseRequestStatus(selected.id, "Approved (Committed)")}
-              >
-                Έγκριση
-              </button>
-              <button
-                className="btn"
-                disabled={!perms.canApproveRequest || selected.status === "Rejected" || selected.status === "Cancelled"}
-                title={!perms.canApproveRequest ? "You don't have permission to approve requests." : undefined}
-                onClick={() => updatePurchaseRequestStatus(selected.id, "Rejected")}
-              >
-                Απόρριψη
-              </button>
+              <div className="row" style={{ flexWrap: "wrap" }}>
+                <button
+                  className="btn"
+                  disabled={!perms.canApproveRequest || selected.status === "Rejected" || selected.status === "Cancelled"}
+                  onClick={() => updatePurchaseRequestStatus(selected.id, "Returned for Changes")}
+                  title={!perms.canApproveRequest ? "You don't have permission to approve requests." : undefined}
+                >
+                  Επιστροφή
+                </button>
+                <button
+                  className="btn primary"
+                  disabled={!perms.canApproveRequest || selected.status === "Rejected" || selected.status === "Cancelled"}
+                  title={!perms.canApproveRequest ? "You don't have permission to approve requests." : undefined}
+                  onClick={() => updatePurchaseRequestStatus(selected.id, "Approved (Committed)")}
+                >
+                  Έγκριση
+                </button>
+                <button
+                  className="btn ghost"
+                  disabled={!perms.canApproveRequest || selected.status === "Rejected" || selected.status === "Cancelled"}
+                  title={!perms.canApproveRequest ? "You don't have permission to approve requests." : undefined}
+                  onClick={() => updatePurchaseRequestStatus(selected.id, "Rejected")}
+                >
+                  Απόρριψη
+                </button>
+              </div>
             </div>
           </div>
         ) : null}
