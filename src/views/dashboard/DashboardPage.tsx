@@ -10,9 +10,10 @@ import { InvoicedVsCollectedChart } from "./charts/InvoicedVsCollectedChart";
 import { CashFlowChart } from "./charts/CashFlowChart";
 import { ExpensesBySupplierPieChart } from "./charts/ExpensesBySupplierPieChart";
 import { AgingSnapshot } from "./widgets/AgingSnapshot";
-import { OverviewActionStrip } from "./widgets/OverviewActionStrip";
 import { OverviewDomainPanel } from "./widgets/OverviewDomainPanel";
 import { useFinancePrototypeState } from "../../state/FinancePrototypeState";
+import { CriticalPointsPanel } from "./widgets/CriticalPointsPanel";
+import { DocumentsPreview, type DocumentPreviewRow } from "./widgets/DocumentsPreview";
 
 function sum(nums: number[]) {
   return nums.reduce((a, b) => a + b, 0);
@@ -47,9 +48,9 @@ export function DashboardPage() {
   const topWidgets = [
     {
       key: "gross",
-      label: "Εκδοθέντα",
+      label: "Μικτές Εκδόσεις",
       value: formatCurrency(grossInvoiced),
-      sub: "vs προηγ. περίοδο",
+      sub: "σύνολο τιμολογίων (μικτό)",
       to: "/finance/revenue/invoices?status=Issued",
       iconClass: "bi-send",
       currentValue: grossInvoiced,
@@ -67,9 +68,9 @@ export function DashboardPage() {
     },
     {
       key: "expenses",
-      label: "Πληρωμένες δαπάνες",
+      label: "Πληρωμένες Δαπάνες (μικτές)",
       value: formatCurrency(expensesPaid),
-      sub: "vs προηγ. περίοδο",
+      sub: "εκτελεσμένες πληρωμές",
       to: "/finance/spend/payments?status=Executed",
       iconClass: "bi-bank",
       currentValue: expensesPaid,
@@ -79,7 +80,7 @@ export function DashboardPage() {
       key: "net",
       label: "Καθαρή μεταβολή ταμείου",
       value: formatCurrency(netCash),
-      sub: "cash in - cash out",
+      sub: "εισροές - εκροές (λειτουργικό)",
       iconClass: "bi-graph-up-arrow",
       currentValue: netCash,
       trendPreference: "higher" as const
@@ -90,48 +91,112 @@ export function DashboardPage() {
   const recSublabel = `${formatInt(receivables.length)} ανοικτές · Μη ληξιπρ. ${notDueRecCount} · Σύντομα ${dueSoonRecCount} · Ληξιπρ. ${overdueRecCount}`;
   const paySublabel = `Έτοιμες ${payReady} · Μπλοκ. ${payBlocked} · Ληξιπρ. ${overduePayCount}`;
 
-  // —— Zone 4: Needs attention strip
-  const actionStripItems = [
+  const criticalRisks = [
     {
-      id: "ar",
-      label: overdueRecCount === 0 ? "0 ληξιπρ." : `${formatInt(overdueRecCount)} ληξιπρ.`,
-      chip: "απαιτήσεις",
-      ctaTo: "/finance/revenue/collections?signal=Overdue"
+      id: "risk_ar_overdue",
+      title: "Ληξιπρόθεσμες Απαιτήσεις",
+      subtitle: "Κίνδυνος καθυστέρησης είσπραξης",
+      value: `${formatInt(overdueRecCount)}`,
+      tone: "danger" as const,
+      icon: "bi-exclamation-octagon",
+      to: "/finance/revenue/collections?signal=Overdue"
     },
     {
-      id: "ar_due",
-      label: dueSoonRecCount === 0 ? "0 λήγουν" : `${formatInt(dueSoonRecCount)} λήγουν`,
-      chip: "απαιτήσεις",
-      ctaTo: "/finance/revenue/collections?signal=Due%20Soon"
+      id: "risk_ap_overdue",
+      title: "Ληξιπρόθεσμες Υποχρεώσεις",
+      subtitle: "Κίνδυνος καθυστέρησης πληρωμής",
+      value: `${formatInt(overduePayCount)}`,
+      tone: "danger" as const,
+      icon: "bi-bank",
+      to: "/finance/spend/bills?status=Overdue"
     },
     {
-      id: "ap",
-      label: overduePayCount === 0 ? "0 ληξιπρ." : `${formatInt(overduePayCount)} ληξιπρ.`,
-      chip: "υποχρ.",
-      ctaTo: "/finance/spend/bills?status=Overdue"
-    },
-    {
-      id: "ap_blk",
-      label:
+      id: "risk_ap_blocked",
+      title: "Μπλοκαρισμένες Υποχρεώσεις",
+      subtitle: "Απαιτείται επίλυση πριν την πληρωμή",
+      value:
         blockedPayCount === 0
-          ? "0 μπλοκ."
-          : `${formatInt(blockedPayCount)} μπλοκ. · ${formatCurrencyCompact(blockedPayAmount)}`,
-      chip: "υποχρ.",
-      ctaTo: "/finance/spend/bills?status=Blocked"
-    },
-    {
-      id: "pq",
-      label: `${formatInt(paymentsQueue.length)} σε προετ.${blockedPayments > 0 ? ` · ${formatInt(blockedPayments)} μπλοκ.` : ""}`,
-      chip: "πληρωμές",
-      ctaTo: "/finance/spend/payments"
-    },
-    {
-      id: "co",
-      label: `${formatCurrencyCompact(committedSpend)} δεσμεύσεις`,
-      chip: "budget",
-      ctaTo: "/finance/control/budgets"
+          ? "0"
+          : `${formatInt(blockedPayCount)} · ${formatCurrencyCompact(blockedPayAmount)}`,
+      tone: "warning" as const,
+      icon: "bi-slash-circle",
+      to: "/finance/spend/bills?status=Blocked"
     }
-  ];
+  ].filter((x) => x.value !== "0");
+
+  const criticalNextSteps = [
+    {
+      id: "next_ar_due",
+      title: "Απαιτήσεις που λήγουν σύντομα",
+      subtitle: "Προτεραιότητα follow-up",
+      value: `${formatInt(dueSoonRecCount)}`,
+      tone: "warning" as const,
+      icon: "bi-clock-history",
+      to: "/finance/revenue/collections?signal=Due%20Soon"
+    },
+    {
+      id: "next_payments_prep",
+      title: "Πληρωμές σε προετοιμασία",
+      subtitle: blockedPayments > 0 ? `${formatInt(blockedPayments)} μπλοκαρισμένες` : undefined,
+      value: `${formatInt(paymentsQueue.length)}`,
+      tone: blockedPayments > 0 ? ("warning" as const) : ("neutral" as const),
+      icon: "bi-list-check",
+      to: "/finance/spend/payments"
+    }
+  ].filter((x) => x.value !== "0");
+
+  const [docsFilter, setDocsFilter] = React.useState<"All" | "OUT" | "IN">("All");
+
+  function toneForSupplierBillStatus(s: string) {
+    if (s === "Paid") return "success" as const;
+    if (s === "Overdue") return "danger" as const;
+    if (s === "Blocked") return "warning" as const;
+    return "neutral" as const;
+  }
+
+  const documentsPreviewRows: DocumentPreviewRow[] = React.useMemo(() => {
+    const rows: DocumentPreviewRow[] = [];
+
+    for (const inv of invoices) {
+      const outstanding = Math.max(0, inv.total - inv.paid);
+      rows.push({
+        id: inv.id,
+        ref: inv.number,
+        counterparty: inv.client,
+        direction: "OUT",
+        statusLabel: inv.status,
+        statusTone: toneForInvoiceStatus(inv.status),
+        dateLabel: inv.dueDate,
+        amountLabel: formatCurrency(outstanding, inv.currency),
+        to: `/finance/revenue/invoices/${encodeURIComponent(inv.id)}`
+      });
+    }
+
+    for (const b of supplierBills) {
+      rows.push({
+        id: b.id,
+        ref: b.id,
+        counterparty: b.supplier,
+        direction: "IN",
+        statusLabel: b.status,
+        statusTone: toneForSupplierBillStatus(b.status),
+        dateLabel: b.dueDate,
+        amountLabel: formatCurrency(b.amount, b.currency),
+        to: `/finance/spend/bills/${encodeURIComponent(b.id)}`
+      });
+    }
+
+    const score = (r: DocumentPreviewRow) => {
+      const statusWeight =
+        r.statusTone === "danger" ? 0 : r.statusTone === "warning" ? 1 : r.statusTone === "neutral" ? 2 : 3;
+      return `${statusWeight}_${r.dateLabel}`;
+    };
+
+    return rows
+      .slice()
+      .sort((a, b) => score(a).localeCompare(score(b)))
+      .slice(0, 10);
+  }, [invoices, supplierBills]);
 
   // —— Zone 6: Mock counts for control preview (no backend)
 
@@ -245,8 +310,8 @@ export function DashboardPage() {
 
       {/* 4-up row: need action + trends + expenses */}
       <div className="grid-4 overview-fourup overview-section">
-        <Card title="Χρειάζονται ενέργεια">
-          <OverviewActionStrip items={actionStripItems} />
+        <Card title="Κρίσιμα Σημεία & Επόμενα Βήματα">
+          <CriticalPointsPanel risks={criticalRisks} nextSteps={criticalNextSteps} />
         </Card>
 
         <Card title="Ταμειακή ροή">
@@ -274,7 +339,7 @@ export function DashboardPage() {
               </Link>
             }
           >
-            <div style={{ overflow: "auto" }}>
+            <div className="finance-table-wrap">
               <table className="table">
                 <thead>
                   <tr>
@@ -289,7 +354,7 @@ export function DashboardPage() {
                     <tr
                       key={e.id}
                       onClick={() => navigate(`/finance/control/audit?q=${encodeURIComponent(e.target)}`)}
-                      style={{ cursor: "pointer" }}
+                      className="finance-table-clickrow"
                     >
                       <td className="muted">{new Date(e.at).toISOString().replace("T", " ").slice(0, 16)}</td>
                       <td>
@@ -315,57 +380,9 @@ export function DashboardPage() {
           </Card>
 
           <Card
-            title="Invoices (preview)"
-            right={
-              <Link
-                to={`/finance/revenue/invoices?status=${encodeURIComponent(invoicesAttentionStatus)}`}
-                className="btn btn--sm"
-              >
-                Προβολή όλων
-              </Link>
-            }
+            title="Παραστατικά / Τιμολόγια"
           >
-            <div style={{ overflow: "auto" }}>
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Τιμολόγιο</th>
-                    <th>Πελάτης</th>
-                    <th>Κατάσταση</th>
-                    <th>Λήξη</th>
-                    <th className="num">Υπόλοιπο</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {previewInvoices.map((inv) => {
-                    const outstanding = Math.max(0, inv.total - inv.paid);
-                    return (
-                      <tr
-                        key={inv.id}
-                        onClick={() => navigate(`/finance/revenue/invoices/${encodeURIComponent(inv.id)}`)}
-                        style={{
-                          cursor: "pointer",
-                          background:
-                            inv.status === "Overdue"
-                              ? "rgba(220, 38, 38, 0.05)"
-                              : inv.status === "Partially Paid"
-                                ? "rgba(245, 158, 11, 0.05)"
-                                : undefined
-                        }}
-                      >
-                        <td style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{inv.number}</td>
-                        <td>{inv.client}</td>
-                        <td>
-                          <Chip tone={toneForInvoiceStatus(inv.status)}>{inv.status}</Chip>
-                        </td>
-                        <td className="muted">{inv.dueDate}</td>
-                        <td className="num">{formatCurrency(outstanding, inv.currency)}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <DocumentsPreview rows={documentsPreviewRows} filter={docsFilter} onFilterChange={setDocsFilter} />
           </Card>
         </div>
       </section>

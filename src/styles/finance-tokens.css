@@ -1,0 +1,33 @@
+:root {
+  /*
+   Finance semantic layer.
+   Keep tiny: alias to existing core tokens, allow overrides later.
+   */
+  --finance-bg: var(--c-bg);
+  --finance-surface: var(--c-surface);
+  --finance-surface-2: var(--c-surface-2);
+  --finance-border: var(--c-border);
+  --finance-text: var(--c-text);
+  --finance-muted: var(--c-muted);
+  --finance-faint: var(--c-faint);
+
+  --finance-radius-surface: var(--radius-lg);
+  --finance-radius-item: var(--radius-md);
+  --finance-radius-chip: 999px;
+
+  --finance-shadow-surface: var(--shadow-1);
+
+  --finance-space-1: var(--space-2); /* 8 */
+  --finance-space-2: var(--space-3); /* 12 */
+  --finance-space-3: var(--space-4); /* 16 */
+  --finance-space-4: var(--space-6); /* 24 */
+
+  --finance-success-bg: var(--c-success-50);
+  --finance-warning-bg: var(--c-warning-50);
+  --finance-danger-bg: var(--c-danger-50);
+
+  --finance-success: var(--c-success);
+  --finance-warning: var(--c-warning);
+  --finance-danger: var(--c-danger);
+}
+

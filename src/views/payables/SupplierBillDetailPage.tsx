@@ -88,9 +88,9 @@ export function SupplierBillDetailPage() {
           }
         >
           {bill.status !== "Paid" && (bill.status === "Blocked" || bill.match !== "Matched") ? (
-            <div className="card" style={{ padding: 12, background: "var(--c-warning-50)" }}>
-              <div style={{ fontWeight: 650, color: "#92400e" }}>Blocked for payment</div>
-              <div className="muted" style={{ marginTop: 4 }}>
+            <div className="finance-callout" data-tone="warning">
+              <div className="finance-callout__title">Blocked for payment</div>
+              <div className="finance-callout__body">
                 {bill.blockedReason ??
                   "Resolve mismatch and required controls before moving this payable to the payments queue."}
               </div>
@@ -121,15 +121,15 @@ export function SupplierBillDetailPage() {
             </div>
           ) : null}
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 12 }}>
+          <div className="finance-kv-grid" style={{ marginTop: 12 }}>
             <div>
-              <div className="muted" style={{ fontSize: 12 }}>
+              <div className="finance-kv__label">
                 Received
               </div>
               <div>{bill.receivedAt}</div>
             </div>
             <div>
-              <div className="muted" style={{ fontSize: 12 }}>
+              <div className="finance-kv__label">
                 Due
               </div>
               <div>{bill.dueDate}</div>
@@ -139,10 +139,12 @@ export function SupplierBillDetailPage() {
 
         <Card title="Amount / Linkage">
           <div>
-            <div className="muted" style={{ fontSize: 12 }}>
+            <div className="finance-kv__label">
               Amount
             </div>
-            <div style={{ fontWeight: 650, fontSize: 16 }}>{formatCurrency(bill.amount, bill.currency)}</div>
+            <div className="finance-kv__value finance-kv__value--strong" style={{ fontSize: 16 }}>
+              {formatCurrency(bill.amount, bill.currency)}
+            </div>
           </div>
 
           <div className="divider" style={{ margin: "12px 0" }} />

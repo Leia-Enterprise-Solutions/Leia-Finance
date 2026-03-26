@@ -25,9 +25,13 @@ export function AuditTrailPage() {
     ["Info", "Warning", "Exception"] as const
   );
   const initialQ = getStringParam(params, "q");
+  const initialFrom = getStringParam(params, "from");
+  const initialTo = getStringParam(params, "to");
 
   const [sev, setSev] = React.useState<AuditEvent["severity"] | "All">(initialSev ?? "All");
   const [q, setQ] = React.useState(initialQ ?? "");
+  const [from, setFrom] = React.useState(initialFrom ?? "");
+  const [to, setTo] = React.useState(initialTo ?? "");
   const [selectedEvent, setSelectedEvent] = React.useState<AuditEvent | null>(null);
 
   React.useEffect(() => {
@@ -36,12 +40,22 @@ export function AuditTrailPage() {
     else url.searchParams.set("severity", sev);
     if (!q.trim()) url.searchParams.delete("q");
     else url.searchParams.set("q", q.trim());
+    if (!from.trim()) url.searchParams.delete("from");
+    else url.searchParams.set("from", from.trim());
+    if (!to.trim()) url.searchParams.delete("to");
+    else url.searchParams.set("to", to.trim());
     navigate(`${loc.pathname}?${url.searchParams.toString()}`, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sev, q]);
+  }, [sev, q, from, to]);
 
   const filtered = allEvents
     .filter((e) => (sev === "All" ? true : e.severity === sev))
+    .filter((e) => {
+      const d = new Date(e.at).toISOString().slice(0, 10);
+      if (from.trim() && d < from.trim()) return false;
+      if (to.trim() && d > to.trim()) return false;
+      return true;
+    })
     .filter((e) => {
       if (!q.trim()) return true;
       const needle = q.toLowerCase();
@@ -82,42 +96,52 @@ export function AuditTrailPage() {
       <div className="page-head">
         <div className="page-title">
           <h1>Audit Trail</h1>
-          <p>Cross-module timeline: drafts, issues, receipts, approvals, blocked payables and exceptions.</p>
+          <p>Ιχνηλασιμότητα ενεργειών (drafts, έκδοση, approvals, blocked, exceptions) σε ενιαίο timeline.</p>
         </div>
         <div className="row">
-          <button className="btn">Export</button>
-          <button className="btn primary">Create note</button>
+          <button className="btn">Εξαγωγή</button>
+          <button className="btn primary" disabled title="v1: δεν υποστηρίζεται καταχώρηση σημείωσης στο audit.">
+            Σημείωση (v1: όχι διαθέσιμο)
+          </button>
         </div>
       </div>
 
-      <Card title="Filter">
+      <Card title="Φίλτρα">
         <div className="filters">
           <div className="field" style={{ minWidth: 240 }}>
-            <label>Search</label>
+            <label>Αναζήτηση</label>
             <input
               className="input"
-              placeholder="Actor, action, target…"
+              placeholder="Χρήστης, ενέργεια, στόχος…"
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
           </div>
           <div className="field" style={{ minWidth: 180 }}>
-            <label>Severity</label>
+            <label>Σοβαρότητα</label>
             <select className="select" value={sev} onChange={(e) => setSev(e.target.value as AuditEvent["severity"] | "All")}>
-              <option value="All">All</option>
+              <option value="All">Όλα</option>
               <option value="Info">Info</option>
               <option value="Warning">Warning</option>
               <option value="Exception">Exception</option>
             </select>
           </div>
-          <Chip tone="neutral">{filtered.length} events</Chip>
+          <div className="field" style={{ minWidth: 180 }}>
+            <label>Από</label>
+            <input className="input" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+          </div>
+          <div className="field" style={{ minWidth: 180 }}>
+            <label>Έως</label>
+            <input className="input" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+          </div>
+          <Chip tone="neutral">{filtered.length} συμβάντα</Chip>
         </div>
       </Card>
 
-      <div style={{ height: 14 }} />
+      <div className="finance-spacer" />
 
       <Card title="Activity">
-        <div style={{ overflow: "auto" }}>
+        <div className="finance-table-wrap">
           <table className="table">
             <thead>
               <tr>
@@ -135,7 +159,7 @@ export function AuditTrailPage() {
                 <tr
                   key={e.id}
                   onClick={() => setSelectedEvent(e)}
-                  style={{ cursor: "pointer" }}
+                  className="finance-table-clickrow"
                 >
                   <td className="muted">{new Date(e.at).toISOString().replace("T", " ").slice(0, 16)}</td>
                   <td>{e.actor}</td>
@@ -194,7 +218,7 @@ export function AuditTrailPage() {
               </div>
               <div style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{selectedEvent.target}</div>
             </div>
-            <div className="card" style={{ padding: 12, background: "var(--c-surface-2)" }}>
+            <div className="finance-warning-box" style={{ background: "var(--finance-surface-2)", borderColor: "rgba(15,23,42,0.10)" }}>
               <div className="muted" style={{ fontSize: 12 }}>
                 Summary
               </div>

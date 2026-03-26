@@ -29,6 +29,8 @@ export function CollectionsPage() {
 
   const [signal, setSignal] = React.useState<CollectionSignal | "All">(initialSignal ?? "All");
   const [q, setQ] = React.useState(initialQ ?? "");
+  const [fromDue, setFromDue] = React.useState(getStringParam(params, "fromDue") ?? "");
+  const [toDue, setToDue] = React.useState(getStringParam(params, "toDue") ?? "");
   const [selected, setSelected] = React.useState<ReceivableWorkItem | null>(null);
 
   const { getLastCollectionNote, addCollectionNote, receivables: allReceivables } = useFinancePrototypeState();
@@ -46,12 +48,18 @@ export function CollectionsPage() {
     else url.searchParams.set("signal", signal);
     if (!q.trim()) url.searchParams.delete("q");
     else url.searchParams.set("q", q.trim());
+    if (!fromDue.trim()) url.searchParams.delete("fromDue");
+    else url.searchParams.set("fromDue", fromDue.trim());
+    if (!toDue.trim()) url.searchParams.delete("toDue");
+    else url.searchParams.set("toDue", toDue.trim());
     navigate(`${loc.pathname}?${url.searchParams.toString()}`, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [signal, q]);
+  }, [signal, q, fromDue, toDue]);
 
   const filtered = allReceivables.filter((r) => {
     if (signal !== "All" && r.signal !== signal) return false;
+    if (fromDue.trim() && r.dueDate < fromDue.trim()) return false;
+    if (toDue.trim() && r.dueDate > toDue.trim()) return false;
     if (!q.trim()) return true;
     const needle = q.toLowerCase();
     return r.invoiceNumber.toLowerCase().includes(needle) || r.client.toLowerCase().includes(needle);
@@ -68,7 +76,7 @@ export function CollectionsPage() {
       <div className="page-head">
         <div className="page-title">
           <h1>Απαιτήσεις / Εισπράξεις</h1>
-          <p>Λίστα εργασιών για ανοικτές απαιτήσεις: λειτουργικά σήματα, follow-ups και καταχώρηση σημείωσης.</p>
+          <p>Λίστα εργασιών follow-up για ανοικτές απαιτήσεις: λειτουργικά σήματα, follow-ups και καταχώρηση σημείωσης.</p>
         </div>
         <div className="row">
           <ActionButton
@@ -140,13 +148,21 @@ export function CollectionsPage() {
               <option value="Overdue">Ληξιπρόθεσμο</option>
             </select>
           </div>
+          <div className="field" style={{ minWidth: 180 }}>
+            <label>Λήξη από</label>
+            <input className="input" type="date" value={fromDue} onChange={(e) => setFromDue(e.target.value)} />
+          </div>
+          <div className="field" style={{ minWidth: 180 }}>
+            <label>Λήξη έως</label>
+            <input className="input" type="date" value={toDue} onChange={(e) => setToDue(e.target.value)} />
+          </div>
         </FiltersBar>
       </Card>
 
-      <div style={{ height: 14 }} />
+      <div className="finance-spacer" />
 
       <Card title="Λίστα απαιτήσεων">
-        <div style={{ overflow: "auto" }}>
+        <div className="finance-table-wrap">
           <table className="table">
             <thead>
               <tr>
@@ -169,7 +185,7 @@ export function CollectionsPage() {
                 const lastDate = last ? new Date(last.at).toISOString().slice(0, 10) : "—";
                 const lastSnippet = last ? (last.text.length > 44 ? `${last.text.slice(0, 44)}…` : last.text) : "—";
                 return (
-                  <tr key={r.invoiceId} onClick={() => setSelected(r)} style={{ cursor: "pointer" }}>
+                  <tr key={r.invoiceId} onClick={() => setSelected(r)} className="finance-table-clickrow">
                     <td style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{r.invoiceNumber}</td>
                     <td>{r.client}</td>
                     <td className="muted">{r.owner}</td>
@@ -195,7 +211,7 @@ export function CollectionsPage() {
               {filtered.length === 0 ? (
                 <tr>
                   <td colSpan={10} className="muted" style={{ padding: 16 }}>
-                    Δεν υπάρχουν οφειλές σε αυτή την προβολή. Αλλάξτε φίλτρο σήματος ή εύρος ημερομηνιών.
+                    Δεν υπάρχουν απαιτήσεις σε αυτή την προβολή. Αλλάξτε φίλτρο σήματος ή εύρος ημερομηνιών λήξης.
                   </td>
                 </tr>
               ) : null}
@@ -217,35 +233,35 @@ export function CollectionsPage() {
             </div>
             <div className="divider" />
             {selected.signal === "Overdue" ? (
-              <div className="card" style={{ padding: 12, background: "var(--c-danger-50)" }}>
-                <div style={{ fontWeight: 650, color: "#991b1b" }}>Ληξιπρόθεσμη απαίτηση</div>
-                <div className="muted" style={{ marginTop: 4 }}>
+              <div className="finance-callout" data-tone="danger">
+                <div className="finance-callout__title">Ληξιπρόθεσμη απαίτηση</div>
+                <div className="finance-callout__body">
                   Αυτή η απαίτηση χρειάζεται follow-up. Υψηλή προτεραιότητα στις Απαιτήσεις.
                 </div>
               </div>
             ) : null}
             <div>
-              <div className="muted" style={{ fontSize: 12 }}>
+              <div className="finance-kv__label">
                 Υπόλοιπο
               </div>
-              <div style={{ fontWeight: 650, fontSize: 16 }}>
+              <div className="finance-kv__value finance-kv__value--strong" style={{ fontSize: 16 }}>
                 {formatCurrency(selected.outstanding, selected.currency)}
               </div>
             </div>
             <div>
-              <div className="muted" style={{ fontSize: 12 }}>
+              <div className="finance-kv__label">
                 Ημ/νία λήξης
               </div>
               <div>{selected.dueDate}</div>
             </div>
             <div>
-              <div className="muted" style={{ fontSize: 12 }}>
+              <div className="finance-kv__label">
                 Expected payment date
               </div>
               <div>—</div>
             </div>
-            <div className="card" style={{ padding: 12, background: "var(--c-surface-2)" }}>
-              <div className="muted" style={{ fontSize: 12 }}>
+            <div className="finance-box">
+              <div className="finance-kv__label">
                 Τελευταία σημείωση απαίτησης
               </div>
               {(() => {
@@ -256,7 +272,7 @@ export function CollectionsPage() {
                     <div style={{ marginTop: 6 }}>
                       {last?.text ? last.text : selected.nextAction ?? "Προσθήκη σημείωσης…"}
                     </div>
-                    <div className="muted" style={{ marginTop: 8, fontSize: 12 }}>
+                    <div className="finance-meta" style={{ marginTop: 8 }}>
                       Ημ/νία τελευταίας σημείωσης: {lastDate ?? "—"}
                     </div>
                   </>
@@ -279,8 +295,8 @@ export function CollectionsPage() {
             </div>
 
             {noteEditorOpen ? (
-              <div className="card" style={{ padding: 12, background: "var(--c-surface-2)" }}>
-                <div className="muted" style={{ fontSize: 12 }}>
+              <div className="finance-box">
+                <div className="finance-kv__label">
                   Σημείωση
                 </div>
                 <textarea

@@ -95,7 +95,7 @@ export function RevenueHomePage() {
         </Card>
 
         <Card title="Εξαιρέσεις">
-          <div className="row" style={{ justifyContent: "space-between" }}>
+          <div className="finance-row finance-row--between finance-row--wrap">
             <div className="muted">Οι ληξιπρόθεσμες απαιτήσεις χρειάζονται παρακολούθηση.</div>
             <button className="btn" onClick={() => navigate("/finance/revenue/collections?signal=Overdue")}>
               Λεπτομέρειες

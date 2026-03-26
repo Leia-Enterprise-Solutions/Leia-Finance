@@ -81,35 +81,35 @@ export function PurchaseRequestDetailPage() {
           }
         >
           {req.attachments === 0 ? (
-            <div className="card" style={{ padding: 12, background: "var(--c-warning-50)" }}>
-              <div style={{ fontWeight: 650, color: "#92400e" }}>Missing attachments</div>
-              <div className="muted" style={{ marginTop: 4 }}>
+            <div className="finance-callout" data-tone="warning">
+              <div className="finance-callout__title">Missing attachments</div>
+              <div className="finance-callout__body">
                 Request is likely blocked until supporting documents are added.
               </div>
             </div>
           ) : null}
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 12 }}>
+          <div className="finance-kv-grid" style={{ marginTop: 12 }}>
             <div>
-              <div className="muted" style={{ fontSize: 12 }}>
+              <div className="finance-kv__label">
                 Requester
               </div>
               <div>{req.requester}</div>
             </div>
             <div>
-              <div className="muted" style={{ fontSize: 12 }}>
+              <div className="finance-kv__label">
                 Department
               </div>
               <div>{req.department}</div>
             </div>
             <div>
-              <div className="muted" style={{ fontSize: 12 }}>
+              <div className="finance-kv__label">
                 Supplier
               </div>
               <div>{req.supplier ?? "—"}</div>
             </div>
             <div>
-              <div className="muted" style={{ fontSize: 12 }}>
+              <div className="finance-kv__label">
                 Created
               </div>
               <div>{req.createdAt}</div>

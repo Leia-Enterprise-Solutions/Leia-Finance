@@ -97,7 +97,7 @@ export function ControlHomePage() {
         </Card>
 
         <Card title="Εξαιρέσεις">
-          <div className="row" style={{ justifyContent: "space-between" }}>
+          <div className="finance-row finance-row--between finance-row--wrap">
             <div className="muted">{formatInt(exceptions)} συμβάντα audit (μη ενημερωτικά).</div>
             <button className="btn" onClick={() => navigate("/finance/control/audit")}>
               Λεπτομέρειες

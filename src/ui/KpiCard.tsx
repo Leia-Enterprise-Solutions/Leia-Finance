@@ -18,7 +18,8 @@ const PRESET_CHANGE: Record<ReturnType<typeof useDateRange>["range"]["preset"], 
   month: -0.06,
   last_month: -0.05,
   ytd: 0.02,
-  lytd: 0.04
+  lytd: 0.04,
+  custom: 0
 };
 
 function clamp(n: number, min: number, max: number) {

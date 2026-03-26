@@ -195,9 +195,9 @@ export function DraftsPage() {
               </div>
             </div>
             {selected.status === "Stale" ? (
-              <div className="card" style={{ padding: 12, background: "var(--c-warning-50)" }}>
-                <div style={{ fontWeight: 650, color: "#92400e" }}>Stale draft</div>
-                <div className="muted" style={{ marginTop: 4 }}>
+              <div className="finance-warning-box">
+                <div className="finance-warning-box__title">Stale draft</div>
+                <div className="finance-warning-box__body">
                   This draft is stale for {staleAgeDays(selected)} days. Review reserved lines and either resume in the
                   builder or discard to release them.
                 </div>
@@ -214,8 +214,8 @@ export function DraftsPage() {
                   Preview (top 10)
                 </span>
               </div>
-              <div style={{ overflow: "auto", marginTop: 8 }}>
-                <table className="table" style={{ marginBottom: 0 }}>
+              <div className="finance-table-wrap" style={{ marginTop: 8 }}>
+                <table className="table">
                   <thead>
                     <tr>
                         <th>Πηγή</th>

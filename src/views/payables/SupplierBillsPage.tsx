@@ -240,9 +240,9 @@ export function SupplierBillsPage() {
               </div>
             </div>
             {selected.status !== "Paid" && (selected.status === "Blocked" || selected.match !== "Matched") ? (
-              <div className="card" style={{ padding: 12, background: "var(--c-warning-50)" }}>
-                <div style={{ fontWeight: 650, color: "#92400e" }}>Μπλοκαρισμένο / απαιτεί επίλυση</div>
-                <div className="muted" style={{ marginTop: 4 }}>
+              <div className="finance-warning-box">
+                <div className="finance-warning-box__title">Μπλοκαρισμένο / απαιτεί επίλυση</div>
+                <div className="finance-warning-box__body">
                   {selected.blockedReason ?? "Resolve mismatch or required controls before moving this payable forward."}
                 </div>
               </div>

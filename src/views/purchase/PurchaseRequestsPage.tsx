@@ -30,9 +30,13 @@ export function PurchaseRequestsPage() {
     ["Draft", "Submitted", "Returned for Changes", "Approved (Committed)", "Rejected"] as const
   );
   const initialQ = getStringParam(params, "q");
+  const initialFrom = getStringParam(params, "from");
+  const initialTo = getStringParam(params, "to");
 
   const [status, setStatus] = React.useState<PurchaseRequestStatus | "All">(initialStatus ?? "All");
   const [q, setQ] = React.useState(initialQ ?? "");
+  const [from, setFrom] = React.useState(initialFrom ?? "");
+  const [to, setTo] = React.useState(initialTo ?? "");
   const [selected, setSelected] = React.useState<PurchaseRequest | null>(null);
   const [createOpen, setCreateOpen] = React.useState(false);
   const [draftForm, setDraftForm] = React.useState({
@@ -51,12 +55,18 @@ export function PurchaseRequestsPage() {
     else url.searchParams.set("status", status);
     if (!q.trim()) url.searchParams.delete("q");
     else url.searchParams.set("q", q.trim());
+    if (!from.trim()) url.searchParams.delete("from");
+    else url.searchParams.set("from", from.trim());
+    if (!to.trim()) url.searchParams.delete("to");
+    else url.searchParams.set("to", to.trim());
     navigate(`${loc.pathname}?${url.searchParams.toString()}`, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, q]);
+  }, [status, q, from, to]);
 
   const filtered = allRequests.filter((r) => {
     if (status !== "All" && r.status !== status) return false;
+    if (from.trim() && r.createdAt < from.trim()) return false;
+    if (to.trim() && r.createdAt > to.trim()) return false;
     if (!q.trim()) return true;
     const needle = q.toLowerCase();
     return (
@@ -105,22 +115,30 @@ export function PurchaseRequestsPage() {
               onChange={(e) => setStatus(e.target.value as PurchaseRequestStatus | "All")}
             >
               <option value="All">Όλα</option>
-              <option value="Draft">Draft</option>
-              <option value="Submitted">Submitted</option>
-              <option value="Returned for Changes">Returned for changes</option>
-              <option value="Approved (Committed)">Approved / committed</option>
-              <option value="Rejected">Rejected</option>
+              <option value="Draft">Πρόχειρο</option>
+              <option value="Submitted">Υποβλήθηκε</option>
+              <option value="Returned for Changes">Επιστροφή για διορθώσεις</option>
+              <option value="Approved (Committed)">Εγκεκριμένο (δέσμευση)</option>
+              <option value="Rejected">Απορρίφθηκε</option>
             </select>
+          </div>
+          <div className="field" style={{ minWidth: 180 }}>
+            <label>Υποβολή από</label>
+            <input className="input" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+          </div>
+          <div className="field" style={{ minWidth: 180 }}>
+            <label>Υποβολή έως</label>
+            <input className="input" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
           </div>
           <Chip tone="warning">{filtered.filter((r) => r.urgency === "Urgent").length} urgent</Chip>
           <Chip tone="neutral">{filtered.length} requests</Chip>
         </div>
       </Card>
 
-      <div style={{ height: 14 }} />
+      <div className="finance-spacer" />
 
       <Card title="Λίστα αιτημάτων">
-        <div style={{ overflow: "auto" }}>
+        <div className="finance-table-wrap">
           <table className="table">
             <thead>
               <tr>
@@ -139,7 +157,7 @@ export function PurchaseRequestsPage() {
             </thead>
             <tbody>
               {filtered.map((r) => (
-                <tr key={r.id} onClick={() => setSelected(r)} style={{ cursor: "pointer" }}>
+                <tr key={r.id} onClick={() => setSelected(r)} className="finance-table-clickrow">
                   <td>
                     <div style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{r.id}</div>
                     <div>{r.title}</div>
@@ -184,56 +202,56 @@ export function PurchaseRequestsPage() {
               <Chip tone={selected.urgency === "Urgent" ? "warning" : "neutral"}>{selected.urgency}</Chip>
             </div>
             <div className="divider" />
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div className="finance-kv-grid">
               <div>
-                <div className="muted" style={{ fontSize: 12 }}>
+                <div className="finance-kv__label">
                   Requester
                 </div>
                 <div>{selected.requester}</div>
               </div>
               <div>
-                <div className="muted" style={{ fontSize: 12 }}>
+                <div className="finance-kv__label">
                   Department
                 </div>
                 <div>{selected.department}</div>
               </div>
               <div>
-                <div className="muted" style={{ fontSize: 12 }}>
+                <div className="finance-kv__label">
                   Supplier
                 </div>
                 <div>{selected.supplier ?? "—"}</div>
               </div>
               <div>
-                <div className="muted" style={{ fontSize: 12 }}>
+                <div className="finance-kv__label">
                   Submitted
                 </div>
                 <div>{selected.createdAt}</div>
               </div>
               <div>
-                <div className="muted" style={{ fontSize: 12 }}>
+                <div className="finance-kv__label">
                   Attachments
                 </div>
                 <div>{selected.attachments}</div>
               </div>
               <div>
-                <div className="muted" style={{ fontSize: 12 }}>
+                <div className="finance-kv__label">
                   Approver
                 </div>
                 <div>—</div>
               </div>
             </div>
             <div>
-              <div className="muted" style={{ fontSize: 12 }}>
+              <div className="finance-kv__label">
                 Amount
               </div>
-              <div style={{ fontWeight: 650, fontSize: 16 }}>
+              <div className="finance-kv__value finance-kv__value--strong" style={{ fontSize: 16 }}>
                 {formatCurrency(selected.amount, selected.currency)}
               </div>
             </div>
             {selected.attachments === 0 ? (
-              <div className="card" style={{ padding: 12, background: "var(--c-warning-50)" }}>
-                <div style={{ fontWeight: 650, color: "#92400e" }}>Missing attachments</div>
-                <div className="muted" style={{ marginTop: 4 }}>
+              <div className="finance-callout" data-tone="warning">
+                <div className="finance-callout__title">Missing attachments</div>
+                <div className="finance-callout__body">
                   Request is likely blocked until supporting documents are added.
                 </div>
               </div>

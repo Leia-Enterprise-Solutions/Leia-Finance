@@ -35,15 +35,41 @@ export function InvoicesPage() {
     ["Draft", "Issued", "Partially Paid", "Paid", "Overdue", "Cancelled"] as const
   );
   const initialQ = getStringParam(params, "q");
+  const initialDateField = getEnumParam<"issue" | "due">(params, "dateField", ["issue", "due"] as const);
+  const initialFrom = getStringParam(params, "from");
+  const initialTo = getStringParam(params, "to");
 
   const [status, setStatus] = React.useState<InvoiceStatus | "All">(initialStatus ?? "All");
   const [q, setQ] = React.useState(initialQ ?? "");
+  const [dateField, setDateField] = React.useState<"issue" | "due">(initialDateField ?? "issue");
+  const [from, setFrom] = React.useState(initialFrom ?? "");
+  const [to, setTo] = React.useState(initialTo ?? "");
   const [selected, setSelected] = React.useState<Invoice | null>(null);
   const [noteEditorOpen, setNoteEditorOpen] = React.useState(false);
   const [noteDraft, setNoteDraft] = React.useState("");
 
+  React.useEffect(() => {
+    const url = new URL(window.location.href);
+    if (status === "All") url.searchParams.delete("status");
+    else url.searchParams.set("status", status);
+    if (!q.trim()) url.searchParams.delete("q");
+    else url.searchParams.set("q", q.trim());
+    url.searchParams.set("dateField", dateField);
+    if (!from.trim()) url.searchParams.delete("from");
+    else url.searchParams.set("from", from.trim());
+    if (!to.trim()) url.searchParams.delete("to");
+    else url.searchParams.set("to", to.trim());
+    navigate(`${loc.pathname}?${url.searchParams.toString()}`, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, q, dateField, from, to]);
+
+  const selectedDateForInvoice = (i: Invoice) => (dateField === "issue" ? i.issueDate : i.dueDate);
+
   const filtered = allInvoices.filter((i) => {
     if (status !== "All" && i.status !== status) return false;
+    const d = selectedDateForInvoice(i);
+    if (from.trim() && d < from.trim()) return false;
+    if (to.trim() && d > to.trim()) return false;
     if (!q.trim()) return true;
     const needle = q.toLowerCase();
     return (
@@ -63,7 +89,7 @@ export function InvoicesPage() {
       <div className="page-head">
         <div className="page-title">
           <h1>Τιμολόγια</h1>
-          <p>Προβολή εκδοθέντων τιμολογίων με καθυστέρηση, διαβίβαση και λεπτομέρειες.</p>
+          <p>Λίστα εκδοθέντων τιμολογίων: καθυστερήσεις, διαβίβαση μέσω παρόχου και πρόσβαση σε λεπτομέρειες.</p>
         </div>
         <div className="row">
           <button className="btn primary" onClick={() => navigate("/finance/revenue/drafts/builder")}>
@@ -106,6 +132,9 @@ export function InvoicesPage() {
             onClick={() => {
               setStatus("All");
               setQ("");
+              setDateField("issue");
+              setFrom("");
+              setTo("");
             }}
           >
             Εκκαθάριση
@@ -136,13 +165,28 @@ export function InvoicesPage() {
               <option value="Cancelled">Ακυρώθηκε</option>
             </select>
           </div>
+          <div className="field" style={{ minWidth: 180 }}>
+            <label>Ημερομηνία</label>
+            <select className="select" value={dateField} onChange={(e) => setDateField(e.target.value as "issue" | "due")}>
+              <option value="issue">Ημ/νία έκδοσης</option>
+              <option value="due">Ημ/νία λήξης</option>
+            </select>
+          </div>
+          <div className="field" style={{ minWidth: 180 }}>
+            <label>Από</label>
+            <input className="input" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+          </div>
+          <div className="field" style={{ minWidth: 180 }}>
+            <label>Έως</label>
+            <input className="input" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+          </div>
         </FiltersBar>
       </Card>
 
-      <div style={{ height: 14 }} />
+      <div className="finance-spacer" />
 
       <Card title="Λίστα τιμολογίων">
-        <div style={{ overflow: "auto" }}>
+        <div className="finance-table-wrap">
           <table className="table">
             <thead>
               <tr>
@@ -151,10 +195,10 @@ export function InvoicesPage() {
                 <th>Έργο</th>
                 <th>Έκδοση</th>
                 <th>Λήξη</th>
-                <th className="num">Days overdue</th>
-                <th className="num">Total</th>
-                <th className="num">Paid</th>
-                <th className="num">Outstanding</th>
+                <th className="num">Ημέρες καθυστέρησης</th>
+                <th className="num">Σύνολο</th>
+                <th className="num">Εξοφληθέν</th>
+                <th className="num">Υπόλοιπο</th>
                 <th>Κατάσταση</th>
                 <th>Διαβίβαση</th>
               </tr>
@@ -165,7 +209,12 @@ export function InvoicesPage() {
                 const daysOver = now > new Date(i.dueDate) ? daysBetween(now, new Date(i.dueDate)) : 0;
                 const overdueTint = i.status === "Overdue" ? "rgba(220, 38, 38, 0.08)" : undefined;
                 return (
-                  <tr key={i.id} onClick={() => setSelected(i)} style={{ cursor: "pointer", background: overdueTint }}>
+                  <tr
+                    key={i.id}
+                    onClick={() => setSelected(i)}
+                    className="finance-table-clickrow"
+                    style={{ background: overdueTint }}
+                  >
                     <td style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{i.number}</td>
                     <td>{i.client}</td>
                     <td className="muted">{i.project ?? "—"}</td>
@@ -236,45 +285,45 @@ export function InvoicesPage() {
               </div>
             </div>
             <div className="divider" />
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            <div className="finance-kv-grid">
               <div>
-                <div className="muted" style={{ fontSize: 12 }}>
+                <div className="finance-kv__label">
                   Ημ/νία έκδοσης
                 </div>
                 <div>{selected.issueDate}</div>
               </div>
               <div>
-                <div className="muted" style={{ fontSize: 12 }}>
+                <div className="finance-kv__label">
                   Ημ/νία λήξης
                 </div>
                 <div>{selected.dueDate}</div>
               </div>
               <div>
-                <div className="muted" style={{ fontSize: 12 }}>
+                <div className="finance-kv__label">
                   Υπεύθυνος
                 </div>
                 <div>{receivable?.owner ?? selected.owner}</div>
               </div>
               <div>
-                <div className="muted" style={{ fontSize: 12 }}>
+                <div className="finance-kv__label">
                   Έργο
                 </div>
                 <div>{selected.project ?? "—"}</div>
               </div>
             </div>
-            <div className="card" style={{ padding: 12, background: "var(--c-surface-2)" }}>
-              <div className="muted" style={{ fontSize: 12 }}>
+            <div className="finance-box">
+              <div className="finance-kv__label">
                 Collections note / last follow-up
               </div>
               <div style={{ marginTop: 6 }}>{receivable?.nextAction ?? "—"}</div>
-              <div className="muted" style={{ marginTop: 8, fontSize: 12 }}>
-                Expected payment date: —
+              <div className="finance-meta" style={{ marginTop: 8 }}>
+                Αναμενόμενη ημ/νία πληρωμής: — (v1: δεν μοντελοποιείται πλήρως)
               </div>
             </div>
             {selected.transmission === "Rejected" ? (
-              <div className="card" style={{ padding: 12, background: "var(--c-danger-50)" }}>
-                <div style={{ fontWeight: 650, color: "#991b1b" }}>Απόρριψη διαβίβασης</div>
-                <div className="muted" style={{ marginTop: 4 }}>
+              <div className="finance-callout" data-tone="danger">
+                <div className="finance-callout__title">Απόρριψη διαβίβασης</div>
+                <div className="finance-callout__body">
                   Διορθώστε τα στοιχεία και επανεκδώστε / επαναστείλετε σύμφωνα με την πολιτική.
                 </div>
               </div>
@@ -296,13 +345,13 @@ export function InvoicesPage() {
                 className="btn"
                 onClick={() => navigate(`/finance/revenue/collections?q=${encodeURIComponent(selected.number)}`)}
               >
-                Go to Collections
+                Μετάβαση στις Εισπράξεις
               </button>
             </div>
 
             {noteEditorOpen ? (
-              <div className="card" style={{ padding: 12, background: "var(--c-surface-2)" }}>
-                <div className="muted" style={{ fontSize: 12 }}>
+              <div className="finance-box">
+                <div className="finance-kv__label">
                   Σημείωση είσπραξης
                 </div>
                 <textarea

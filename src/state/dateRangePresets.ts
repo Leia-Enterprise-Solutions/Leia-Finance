@@ -41,6 +41,13 @@ export function computePreset(preset: DateRangePreset, now = new Date()): DateRa
       const end = endOfDay(new Date(today.getFullYear() - 1, today.getMonth(), today.getDate()));
       return { preset, label: "Πέρσι έως σήμερα", start, end };
     }
+    case "custom": {
+      // The concrete dates come from DateRangeProvider.
+      // Fallback keeps range valid even before user applies.
+      const start = startOfMonth(today);
+      const end = endOfDay(endOfMonth(today));
+      return { preset, label: "Προσαρμοσμένο", start, end };
+    }
   }
 }
 

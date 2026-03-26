@@ -23,6 +23,17 @@ function toneForStatus(s: PaymentQueueItem["status"]) {
   return "neutral";
 }
 
+function labelForReadiness(r: PaymentQueueItem["readiness"]) {
+  return r === "Ready" ? "Έτοιμο" : "Μπλοκαρισμένο";
+}
+
+function labelForQueueStatus(s: PaymentQueueItem["status"]) {
+  // Queue lifecycle (not a business document status).
+  if (s === "Prepared") return "Προετοιμασία";
+  if (s === "Scheduled") return "Προγραμματισμένο";
+  return "Εκτελεσμένο";
+}
+
 export function PaymentsQueuePage() {
   const perms = usePermissions();
   const navigate = useNavigate();
@@ -52,7 +63,7 @@ export function PaymentsQueuePage() {
 
   type Segment =
     | "Έτοιμες για πληρωμή"
-    | "Blocked / ασυμφωνία"
+    | "Μπλοκαρισμένες / ασυμφωνία"
     | "Λήγουν σύντομα"
     | "Ληξιπρόθεσμες υποχρεώσεις"
     | "Εκτελεσμένες (Paid)";
@@ -60,7 +71,7 @@ export function PaymentsQueuePage() {
   const [segment, setSegment] = React.useState<Segment>(() => {
     const now = new Date();
     const overdueExists = paymentsQueue.some((p) => new Date(p.dueDate) < now && p.status !== "Executed");
-    if (readiness === "Blocked") return "Blocked / ασυμφωνία";
+    if (readiness === "Blocked") return "Μπλοκαρισμένες / ασυμφωνία";
     if (readiness === "Ready") return "Έτοιμες για πληρωμή";
     if (overdueExists) return "Ληξιπρόθεσμες υποχρεώσεις";
     return "Λήγουν σύντομα";
@@ -107,7 +118,7 @@ export function PaymentsQueuePage() {
     const isOverdue = due < now && daysBetween(now, due) > 0;
 
     if (segment === "Έτοιμες για πληρωμή") return p.readiness === "Ready" && p.status === "Prepared";
-    if (segment === "Blocked / ασυμφωνία") return p.readiness === "Blocked";
+    if (segment === "Μπλοκαρισμένες / ασυμφωνία") return p.readiness === "Blocked";
     if (segment === "Λήγουν σύντομα") return daysUntilDue >= 0 && daysUntilDue <= DUE_SOON_WINDOW_DAYS && !isOverdue && p.status !== "Executed";
     if (segment === "Εκτελεσμένες (Paid)") return p.status === "Executed";
     // Ληξιπρόθεσμες υποχρεώσεις
@@ -178,12 +189,10 @@ export function PaymentsQueuePage() {
       <div className="page-head">
         <div className="page-title">
           <h1>Ουρά πληρωμών</h1>
-          <p>Ready vs blocked, due soon/overdue payables, and batch execution handoff.</p>
+          <p>Workbench εκτέλεσης πληρωμών v1: προετοιμασία → προγραμματισμός → εκτέλεση. Τα φίλτρα λήξης είναι τοπικά.</p>
         </div>
         <div className="row">
-          <span className="muted" style={{ fontSize: 12 }}>
-            Select eligible ready items below, then execute from the sticky batch bar.
-          </span>
+          <span className="finance-meta">Επιλέξτε Ready items (Prepared/Scheduled). Η επιλογή δεν σημαίνει «εκτελέστηκε».</span>
         </div>
       </div>
 
@@ -247,16 +256,16 @@ export function PaymentsQueuePage() {
           Έτοιμες για πληρωμή ({readySegmentCount})
         </button>
         <button
-          className={segment === "Blocked / ασυμφωνία" ? "btn primary" : "btn"}
+          className={segment === "Μπλοκαρισμένες / ασυμφωνία" ? "btn primary" : "btn"}
           onClick={() => {
-            setSegment("Blocked / ασυμφωνία");
+            setSegment("Μπλοκαρισμένες / ασυμφωνία");
             setReadiness("Blocked");
             setStatus("Prepared");
             setSelectedIds([]);
             setSelected(null);
           }}
         >
-          Blocked / ασυμφωνία ({blockedSegmentCount})
+          Μπλοκαρισμένες / ασυμφωνία ({blockedSegmentCount})
         </button>
         <button
           className={segment === "Λήγουν σύντομα" ? "btn primary" : "btn"}
@@ -323,7 +332,7 @@ export function PaymentsQueuePage() {
       <div style={{ height: 14 }} />
 
       <Card title="Ουρά">
-        <div style={{ overflow: "auto" }}>
+        <div className="finance-table-wrap">
           <table className="table">
             <thead>
               <tr>
@@ -363,7 +372,8 @@ export function PaymentsQueuePage() {
                   <tr
                     key={p.id}
                     onClick={() => setSelected(p)}
-                    style={{ cursor: "pointer", background: isOverdue ? "rgba(220, 38, 38, 0.08)" : undefined }}
+                    className="finance-table-clickrow"
+                    style={{ background: isOverdue ? "rgba(220, 38, 38, 0.08)" : undefined }}
                   >
                     <td onClick={(e) => e.stopPropagation()}>
                       <input
@@ -420,21 +430,9 @@ export function PaymentsQueuePage() {
         </div>
       </Card>
 
-      <div
-        style={{
-          position: "sticky",
-          bottom: 0,
-          zIndex: 6,
-          background: "rgba(255, 255, 255, 0.72)",
-          backdropFilter: "blur(10px)",
-          borderTop: "1px solid var(--c-border)",
-          paddingTop: 12,
-          paddingBottom: 12,
-          marginTop: 16
-        }}
-      >
-        <div className="row" style={{ justifyContent: "space-between", padding: "0 4px" }}>
-          <div className="muted" style={{ fontSize: 12 }}>
+      <div className="finance-sticky-batchbar">
+        <div className="finance-sticky-batchbar__inner">
+          <div className="finance-meta">
             Επιλεγμένα: {selectedIds.length} (Prepared: {selectedPrepared}, Scheduled: {selectedScheduled}) · Σύνολο:{" "}
             {formatCurrency(selectedTotal, selectedCurrency)}
           </div>
@@ -478,23 +476,19 @@ export function PaymentsQueuePage() {
         {selected ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <div className="row" style={{ justifyContent: "space-between" }}>
-              <Chip tone={toneForReadiness(selected.readiness)}>{selected.readiness}</Chip>
-              <Chip tone={toneForStatus(selected.status)}>{selected.status}</Chip>
+              <Chip tone={toneForReadiness(selected.readiness)}>{labelForReadiness(selected.readiness)}</Chip>
+              <Chip tone={toneForStatus(selected.status)}>{labelForQueueStatus(selected.status)}</Chip>
             </div>
             <div className="divider" />
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               <div>
-                <div className="muted" style={{ fontSize: 12 }}>
-                  Linked request
-                </div>
+                <div className="muted" style={{ fontSize: 12 }}>Συνδεδεμένο αίτημα</div>
                 <div style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>
                   {selectedLinkedRequestId ?? "—"}
                 </div>
               </div>
               <div>
-                <div className="muted" style={{ fontSize: 12 }}>
-                  Department
-                </div>
+                <div className="muted" style={{ fontSize: 12 }}>Τμήμα</div>
                 <div>{selectedLinkedRequest?.department ?? "—"}</div>
               </div>
             </div>
@@ -513,21 +507,23 @@ export function PaymentsQueuePage() {
               </div>
             </div>
             {selected.readiness === "Blocked" ? (
-              <div className="card" style={{ padding: 12, background: "var(--c-warning-50)" }}>
-                <div style={{ fontWeight: 650, color: "#92400e" }}>Μπλοκαρισμένο</div>
-                <div className="muted" style={{ marginTop: 4 }}>
+              <div className="finance-warning-box">
+                <div className="finance-warning-box__title">Μπλοκαρισμένο</div>
+                <div className="finance-warning-box__body">
                   {selected.blockedReason ?? "Resolve blocking issue before adding to batch."}
                 </div>
               </div>
             ) : null}
-            <div className="row">
+            <div className="row" style={{ justifyContent: "space-between" }}>
               <button
-                className="btn"
+                className="btn ghost btn--sm"
                 onClick={() => navigate(`/finance/spend/bills/${selected.supplierBillId}`)}
+                title="Προβολή τιμολογίου προμηθευτή"
               >
-                Open bill detail
+                Προβολή
               </button>
               <ActionButton
+                variant="primary"
                 disabled={!isSelectable(selected)}
                 disabledReason={
                   selected.readiness !== "Ready"
@@ -538,7 +534,7 @@ export function PaymentsQueuePage() {
                 }
                 onClick={() => toggleSelected(selected)}
               >
-                {selectedIds.includes(selected.id) ? "Remove from batch" : "Add to batch selection"}
+                {selectedIds.includes(selected.id) ? "Αφαίρεση από επιλογή" : "Προσθήκη στην επιλογή"}
               </ActionButton>
             </div>
           </div>

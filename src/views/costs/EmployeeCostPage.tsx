@@ -97,7 +97,7 @@ export function EmployeeCostPage() {
         </div>
       </Card>
 
-      <div style={{ height: 14 }} />
+      <div className="finance-spacer" />
 
       <div className="kpi-grid" style={{ marginBottom: 16 }}>
         <div className="kpi">
@@ -110,7 +110,7 @@ export function EmployeeCostPage() {
       </div>
 
       <Card title="Cost rows">
-        <div style={{ overflow: "auto" }}>
+        <div className="finance-table-wrap">
           <table className="table">
             <thead>
               <tr>

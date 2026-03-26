@@ -99,7 +99,7 @@ export function SpendHomePage() {
         </Card>
 
         <Card title="Εξαιρέσεις">
-          <div className="row" style={{ justifyContent: "space-between" }}>
+          <div className="finance-row finance-row--between finance-row--wrap">
             <div className="muted">Τα ληξιπρόθεσμα και τα μπλοκαρισμένα τιμολόγια είναι ρίσκο εκτέλεσης.</div>
             <button className="btn" onClick={() => navigate("/finance/spend/bills?status=Overdue")}>
               Λεπτομέρειες

@@ -1,4 +1,4 @@
-export type DateRangePreset = "month" | "last_month" | "ytd" | "lytd";
+export type DateRangePreset = "month" | "last_month" | "ytd" | "lytd" | "custom";
 
 export type DateRangeState = {
   preset: DateRangePreset;

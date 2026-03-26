@@ -167,10 +167,10 @@ export function BudgetOverviewPage() {
         </div>
       </Card>
 
-      <div style={{ height: 14 }} />
+      <div className="finance-spacer" />
 
       <Card title="Γραμμές προϋπολογισμού">
-        <div style={{ overflow: "auto" }}>
+        <div className="finance-table-wrap">
           <table className="table">
             <thead>
               <tr>

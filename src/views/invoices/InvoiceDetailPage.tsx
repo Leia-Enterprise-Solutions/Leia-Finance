@@ -80,7 +80,7 @@ export function InvoiceDetailPage() {
             Back to list
           </Link>
           <Link className="btn" to={`/finance/revenue/collections?q=${encodeURIComponent(inv.number)}`}>
-            Go to Collections
+            Μετάβαση στις Εισπράξεις
           </Link>
           <ActionButton
             variant="primary"
@@ -105,42 +105,42 @@ export function InvoiceDetailPage() {
           }
         >
           {inv.transmission === "Rejected" ? (
-            <div className="card" style={{ padding: 12, background: "var(--c-danger-50)" }}>
-              <div style={{ fontWeight: 650, color: "#991b1b" }}>Transmission rejected</div>
-              <div className="muted" style={{ marginTop: 4 }}>
+            <div className="finance-callout" data-tone="danger">
+              <div className="finance-callout__title">Transmission rejected</div>
+              <div className="finance-callout__body">
                 Correction required before resending to external fiscal channel.
               </div>
             </div>
           ) : inv.transmission === "Pending" ? (
-            <div className="card" style={{ padding: 12, background: "var(--c-warning-50)" }}>
-              <div style={{ fontWeight: 650, color: "#92400e" }}>Transmission pending</div>
-              <div className="muted" style={{ marginTop: 4 }}>
+            <div className="finance-callout" data-tone="warning">
+              <div className="finance-callout__title">Transmission pending</div>
+              <div className="finance-callout__body">
                 Monitor external acceptance; keep visibility in list filters.
               </div>
             </div>
           ) : null}
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 12 }}>
+          <div className="finance-kv-grid" style={{ marginTop: 12 }}>
             <div>
-              <div className="muted" style={{ fontSize: 12 }}>
+              <div className="finance-kv__label">
                 Issue date
               </div>
               <div>{inv.issueDate}</div>
             </div>
             <div>
-              <div className="muted" style={{ fontSize: 12 }}>
+              <div className="finance-kv__label">
                 Due date
               </div>
               <div>{inv.dueDate}</div>
             </div>
             <div>
-              <div className="muted" style={{ fontSize: 12 }}>
+              <div className="finance-kv__label">
                 Owner
               </div>
               <div>{inv.owner}</div>
             </div>
             <div>
-              <div className="muted" style={{ fontSize: 12 }}>
+              <div className="finance-kv__label">
                 Currency
               </div>
               <div>{inv.currency}</div>
@@ -151,22 +151,28 @@ export function InvoiceDetailPage() {
         <Card title="Amounts">
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
             <div>
-              <div className="muted" style={{ fontSize: 12 }}>
+              <div className="finance-kv__label">
                 Total
               </div>
-              <div style={{ fontWeight: 650, fontSize: 16 }}>{formatCurrency(inv.total, inv.currency)}</div>
+              <div className="finance-kv__value finance-kv__value--strong" style={{ fontSize: 16 }}>
+                {formatCurrency(inv.total, inv.currency)}
+              </div>
             </div>
             <div>
-              <div className="muted" style={{ fontSize: 12 }}>
+              <div className="finance-kv__label">
                 Paid
               </div>
-              <div style={{ fontWeight: 650, fontSize: 16 }}>{formatCurrency(inv.paid, inv.currency)}</div>
+              <div className="finance-kv__value finance-kv__value--strong" style={{ fontSize: 16 }}>
+                {formatCurrency(inv.paid, inv.currency)}
+              </div>
             </div>
             <div>
-              <div className="muted" style={{ fontSize: 12 }}>
+              <div className="finance-kv__label">
                 Outstanding
               </div>
-              <div style={{ fontWeight: 650, fontSize: 16 }}>{formatCurrency(outstanding, inv.currency)}</div>
+              <div className="finance-kv__value finance-kv__value--strong" style={{ fontSize: 16 }}>
+                {formatCurrency(outstanding, inv.currency)}
+              </div>
             </div>
           </div>
         </Card>
@@ -174,7 +180,7 @@ export function InvoiceDetailPage() {
 
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <Card title="Συνδεδεμένη χρεώσιμη εργασία (μόνο ανάγνωση)">
-          <div style={{ overflow: "auto" }}>
+          <div className="finance-table-wrap">
             <table className="table">
               <thead>
                 <tr>
@@ -211,24 +217,24 @@ export function InvoiceDetailPage() {
         </Card>
 
         <Card title="Collections notes / history">
-          <div className="grid-2" style={{ marginBottom: 8 }}>
+          <div className="finance-kv-grid" style={{ marginBottom: 8 }}>
             <div>
-              <div className="muted" style={{ fontSize: 12 }}>
-                Latest note snippet
+              <div className="finance-kv__label">
+                Τελευταία σημείωση
               </div>
               <div style={{ marginTop: 6 }}>{lastSnippet ?? receivable?.nextAction ?? "—"}</div>
-              <div className="muted" style={{ marginTop: 8, fontSize: 12 }}>
-                Last note date:{" "}
+              <div className="finance-meta" style={{ marginTop: 8 }}>
+                Ημ/νία τελευταίας σημείωσης:{" "}
                 {lastCollectionNote ? new Date(lastCollectionNote.at).toISOString().slice(0, 10) : "—"}
               </div>
             </div>
             <div>
-              <div className="muted" style={{ fontSize: 12 }}>
-                Follow-up owner
+              <div className="finance-kv__label">
+                Υπεύθυνος follow-up
               </div>
               <div style={{ marginTop: 6 }}>{receivable?.owner ?? inv.owner}</div>
-              <div className="muted" style={{ marginTop: 8, fontSize: 12 }}>
-                Expected payment date: —
+              <div className="finance-meta" style={{ marginTop: 8 }}>
+                Αναμενόμενη ημ/νία πληρωμής: — (v1: ενδεικτικό/placeholder)
               </div>
             </div>
           </div>
@@ -243,13 +249,13 @@ export function InvoiceDetailPage() {
               Καταχώρηση Σημείωσης
             </ActionButton>
             <Link className="btn" to={`/finance/revenue/collections?q=${encodeURIComponent(inv.number)}`}>
-              Go to Collections
+              Μετάβαση στις Εισπράξεις
             </Link>
           </div>
 
           {noteEditorOpen ? (
-            <div className="card" style={{ padding: 12, marginTop: 12, background: "var(--c-surface-2)" }}>
-              <div className="muted" style={{ fontSize: 12 }}>
+            <div className="finance-box" style={{ marginTop: 12 }}>
+              <div className="finance-kv__label">
                 Σημείωση είσπραξης
               </div>
               <textarea
