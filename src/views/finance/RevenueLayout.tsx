@@ -8,12 +8,12 @@ export function RevenueLayout() {
     <div>
       <header className="finance-section-header">
         <div className="finance-section-header__left">
-          <span className="finance-section-header__title">Έσοδα</span>
+          <span className="finance-section-header__title">Κύκλος Εσόδων / Απαιτήσεων</span>
           <FinanceSubnav
             items={[
-              { label: "Πρόχειρα", to: "/finance/revenue/drafts" },
+              { label: "Πρόχειρα Τιμολογίου", to: "/finance/revenue/drafts" },
               { label: "Τιμολόγια", to: "/finance/revenue/invoices" },
-              { label: "Οφειλές", to: "/finance/revenue/collections" }
+              { label: "Απαιτήσεις (Εισπράξεις)", to: "/finance/revenue/collections" }
             ]}
           />
         </div>

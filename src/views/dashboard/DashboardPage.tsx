@@ -4,7 +4,7 @@ import { Card } from "../../ui/Card";
 import { KpiCard } from "../../ui/KpiCard";
 import { Chip } from "../../ui/Chip";
 import { formatCurrency, formatInt, formatCurrencyCompact } from "../../domain/format";
-import { invoices, paymentsQueue, receivables, supplierBills, budgetLines, auditEvents } from "../../mock/data";
+import { budgetLines } from "../../mock/data";
 import type { InvoiceStatus } from "../../domain/types";
 import { InvoicedVsCollectedChart } from "./charts/InvoicedVsCollectedChart";
 import { CashFlowChart } from "./charts/CashFlowChart";
@@ -12,6 +12,7 @@ import { ExpensesBySupplierPieChart } from "./charts/ExpensesBySupplierPieChart"
 import { AgingSnapshot } from "./widgets/AgingSnapshot";
 import { OverviewActionStrip } from "./widgets/OverviewActionStrip";
 import { OverviewDomainPanel } from "./widgets/OverviewDomainPanel";
+import { useFinancePrototypeState } from "../../state/FinancePrototypeState";
 
 function sum(nums: number[]) {
   return nums.reduce((a, b) => a + b, 0);
@@ -19,6 +20,7 @@ function sum(nums: number[]) {
 
 export function DashboardPage() {
   const navigate = useNavigate();
+  const { invoices, paymentsQueue, receivables, supplierBills, auditEvents } = useFinancePrototypeState();
 
   const grossInvoiced = sum(invoices.map((i) => i.total));
   const collected = sum(invoices.map((i) => i.paid));
@@ -35,6 +37,8 @@ export function DashboardPage() {
   const dueSoonRecCount = receivables.filter((r) => r.signal === "Due Soon").length;
   const notDueRecCount = receivables.filter((r) => r.signal === "Not Due").length;
   const overduePayCount = supplierBills.filter((b) => b.status === "Overdue").length;
+  const blockedPayCount = supplierBills.filter((b) => b.status === "Blocked").length;
+  const blockedPayAmount = sum(supplierBills.filter((b) => b.status === "Blocked").map((b) => b.amount));
   const blockedPayments = paymentsQueue.filter((p) => p.readiness === "Blocked").length;
   const payReady = supplierBills.filter((b) => b.status === "Ready").length;
   const payBlocked = supplierBills.filter((b) => b.status === "Blocked").length;
@@ -95,10 +99,25 @@ export function DashboardPage() {
       ctaTo: "/finance/revenue/collections?signal=Overdue"
     },
     {
+      id: "ar_due",
+      label: dueSoonRecCount === 0 ? "0 λήγουν" : `${formatInt(dueSoonRecCount)} λήγουν`,
+      chip: "απαιτήσεις",
+      ctaTo: "/finance/revenue/collections?signal=Due%20Soon"
+    },
+    {
       id: "ap",
       label: overduePayCount === 0 ? "0 ληξιπρ." : `${formatInt(overduePayCount)} ληξιπρ.`,
       chip: "υποχρ.",
       ctaTo: "/finance/spend/bills?status=Overdue"
+    },
+    {
+      id: "ap_blk",
+      label:
+        blockedPayCount === 0
+          ? "0 μπλοκ."
+          : `${formatInt(blockedPayCount)} μπλοκ. · ${formatCurrencyCompact(blockedPayAmount)}`,
+      chip: "υποχρ.",
+      ctaTo: "/finance/spend/bills?status=Blocked"
     },
     {
       id: "pq",
@@ -202,17 +221,17 @@ export function DashboardPage() {
             totalLabel="Σύνολο ανοικτών"
             totalValue={formatCurrency(outReceivables)}
             sublabel={recSublabel}
-            ctaLabel="Οφειλές"
+            ctaLabel="Προβολή απαιτήσεων"
             ctaTo="/finance/revenue/collections"
           >
             <AgingSnapshot kind="receivables" compact />
           </OverviewDomainPanel>
           <OverviewDomainPanel
-            title="Οφειλές"
+            title="Υποχρεώσεις"
             totalLabel="Σύνολο ανοικτών"
             totalValue={formatCurrency(outPayables)}
             sublabel={paySublabel}
-            ctaLabel="Οφειλές"
+            ctaLabel="Προβολή υποχρεώσεων"
             ctaTo="/finance/spend/payments"
           >
             <AgingSnapshot kind="payables" compact />
@@ -234,7 +253,7 @@ export function DashboardPage() {
           <CashFlowChart />
         </Card>
 
-        <Card title="Εκδόσεις vs Οφειλές">
+        <Card title="Εκδόσεις vs Εισπράξεις">
           <InvoicedVsCollectedChart />
         </Card>
 
@@ -259,10 +278,10 @@ export function DashboardPage() {
               <table className="table">
                 <thead>
                   <tr>
-                    <th>At</th>
-                    <th>Actor</th>
-                    <th>Action</th>
-                    <th>Source</th>
+                    <th>Χρόνος</th>
+                    <th>Χρήστης</th>
+                    <th>Ενέργεια</th>
+                    <th>Ενότητα</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -310,11 +329,11 @@ export function DashboardPage() {
               <table className="table">
                 <thead>
                   <tr>
-                    <th>Invoice</th>
-                    <th>Client</th>
-                    <th>Status</th>
-                    <th>Due</th>
-                    <th className="num">Outstanding</th>
+                    <th>Τιμολόγιο</th>
+                    <th>Πελάτης</th>
+                    <th>Κατάσταση</th>
+                    <th>Λήξη</th>
+                    <th className="num">Υπόλοιπο</th>
                   </tr>
                 </thead>
                 <tbody>

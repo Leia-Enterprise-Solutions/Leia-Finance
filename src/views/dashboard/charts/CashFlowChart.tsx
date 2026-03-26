@@ -12,7 +12,7 @@ import {
   YAxis
 } from "recharts";
 import { formatCurrency } from "../../../domain/format";
-import { invoices, supplierBills } from "../../../mock/data";
+import { useFinancePrototypeState } from "../../../state/FinancePrototypeState";
 
 type WeekBucket = {
   start: Date;
@@ -42,7 +42,7 @@ function formatGreekShort(d: Date) {
   return d.toLocaleDateString("el-GR", { day: "2-digit", month: "short" });
 }
 
-function buildCashFlowBuckets(weeks: number): WeekBucket[] {
+function buildCashFlowBuckets(weeks: number, invoices: { dueDate: string; paid?: number }[], supplierBills: { dueDate: string; amount: number }[]): WeekBucket[] {
   const invoiceDates = invoices.map((i) => new Date(i.dueDate));
   const billDates = supplierBills.map((b) => new Date(b.dueDate));
   const allDates = [...invoiceDates, ...billDates].filter((d) => !Number.isNaN(d.getTime()));
@@ -92,7 +92,8 @@ function buildCashFlowBuckets(weeks: number): WeekBucket[] {
 }
 
 export function CashFlowChart({ weeks = 4 }: { weeks?: number }) {
-  const buckets = React.useMemo(() => buildCashFlowBuckets(weeks), [weeks]);
+  const { invoices, supplierBills } = useFinancePrototypeState();
+  const buckets = React.useMemo(() => buildCashFlowBuckets(weeks, invoices, supplierBills), [weeks, invoices, supplierBills]);
 
   const data = buckets.map((b, idx) => ({
     name: `W${idx + 1}`,

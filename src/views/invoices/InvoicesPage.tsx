@@ -6,9 +6,9 @@ import { SidePanel } from "../../ui/SidePanel";
 import { ActionButton } from "../../ui/ActionButton";
 import { FiltersBar } from "../../ui/FiltersBar";
 import type { Invoice, InvoiceStatus, TransmissionStatus } from "../../domain/types";
-import { invoices as allInvoices, receivables } from "../../mock/data";
 import { formatCurrency, daysBetween } from "../../domain/format";
 import { getEnumParam, getStringParam } from "../../router/query";
+import { useFinancePrototypeState } from "../../state/FinancePrototypeState";
 
 function toneForInvoiceStatus(s: InvoiceStatus) {
   if (s === "Paid") return "success";
@@ -26,6 +26,7 @@ function toneForTransmission(s: TransmissionStatus) {
 export function InvoicesPage() {
   const navigate = useNavigate();
   const loc = useLocation();
+  const { invoices: allInvoices, receivables, addCollectionNote } = useFinancePrototypeState();
   const params = React.useMemo(() => new URLSearchParams(loc.search), [loc.search]);
 
   const initialStatus = getEnumParam<InvoiceStatus>(
@@ -38,6 +39,8 @@ export function InvoicesPage() {
   const [status, setStatus] = React.useState<InvoiceStatus | "All">(initialStatus ?? "All");
   const [q, setQ] = React.useState(initialQ ?? "");
   const [selected, setSelected] = React.useState<Invoice | null>(null);
+  const [noteEditorOpen, setNoteEditorOpen] = React.useState(false);
+  const [noteDraft, setNoteDraft] = React.useState("");
 
   const filtered = allInvoices.filter((i) => {
     if (status !== "All" && i.status !== status) return false;
@@ -282,10 +285,12 @@ export function InvoicesPage() {
               </button>
               <ActionButton
                 variant="primary"
-                disabled
-                disabledReason="Prototype: collection note editor is not implemented in v1."
+                onClick={() => {
+                  setNoteDraft("");
+                  setNoteEditorOpen(true);
+                }}
               >
-                Add collection note
+                Καταχώρηση Σημείωσης
               </ActionButton>
               <button
                 className="btn"
@@ -294,6 +299,43 @@ export function InvoicesPage() {
                 Go to Collections
               </button>
             </div>
+
+            {noteEditorOpen ? (
+              <div className="card" style={{ padding: 12, background: "var(--c-surface-2)" }}>
+                <div className="muted" style={{ fontSize: 12 }}>
+                  Σημείωση είσπραξης
+                </div>
+                <textarea
+                  className="input"
+                  style={{ height: 90, paddingTop: 8, marginTop: 8 }}
+                  value={noteDraft}
+                  onChange={(e) => setNoteDraft(e.target.value)}
+                  placeholder="π.χ. follow-up, επιβεβαίωση πληρωμής, αναμενόμενη ημερομηνία…"
+                />
+                <div className="row" style={{ justifyContent: "space-between", marginTop: 10 }}>
+                  <button
+                    className="btn"
+                    onClick={() => {
+                      setNoteEditorOpen(false);
+                      setNoteDraft("");
+                    }}
+                  >
+                    Ακύρωση
+                  </button>
+                  <button
+                    className="btn primary"
+                    disabled={!noteDraft.trim()}
+                    onClick={() => {
+                      addCollectionNote(selected.id, noteDraft, receivable?.owner ?? selected.owner);
+                      setNoteEditorOpen(false);
+                      setNoteDraft("");
+                    }}
+                  >
+                    Αποθήκευση σημείωσης
+                  </button>
+                </div>
+              </div>
+            ) : null}
           </div>
             );
           })()

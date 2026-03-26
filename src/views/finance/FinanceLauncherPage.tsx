@@ -10,22 +10,22 @@ type LauncherApp = {
 const APPS: LauncherApp[] = [
   {
     key: "overview",
-    title: "Επισκόπηση",
+    title: "Πίνακας Επισκόπησης",
     to: "/finance/overview"
   },
   {
     key: "revenue",
-    title: "Έσοδα",
+    title: "Κύκλος Εσόδων / Απαιτήσεων",
     to: "/finance/revenue"
   },
   {
     key: "spend",
-    title: "Δαπάνες",
+    title: "Κύκλος Δαπανών / Υποχρεώσεων",
     to: "/finance/spend"
   },
   {
     key: "control",
-    title: "Έλεγχος",
+    title: "Υποστηρικτικό επίπεδο ελέγχου",
     to: "/finance/control"
   }
 ];

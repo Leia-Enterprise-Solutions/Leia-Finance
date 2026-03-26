@@ -6,7 +6,6 @@ import { SidePanel } from "../../ui/SidePanel";
 import { ActionButton } from "../../ui/ActionButton";
 import { FiltersBar } from "../../ui/FiltersBar";
 import type { CollectionSignal, ReceivableWorkItem } from "../../domain/types";
-import { receivables as allReceivables } from "../../mock/data";
 import { formatCurrency, daysBetween } from "../../domain/format";
 import { getEnumParam, getStringParam } from "../../router/query";
 import { useFinancePrototypeState } from "../../state/FinancePrototypeState";
@@ -32,7 +31,7 @@ export function CollectionsPage() {
   const [q, setQ] = React.useState(initialQ ?? "");
   const [selected, setSelected] = React.useState<ReceivableWorkItem | null>(null);
 
-  const { getLastCollectionNote, addCollectionNote } = useFinancePrototypeState();
+  const { getLastCollectionNote, addCollectionNote, receivables: allReceivables } = useFinancePrototypeState();
   const [noteDraft, setNoteDraft] = React.useState("");
   const [noteEditorOpen, setNoteEditorOpen] = React.useState(false);
 
@@ -68,16 +67,21 @@ export function CollectionsPage() {
     <>
       <div className="page-head">
         <div className="page-title">
-          <h1>Οφειλές / Απαιτήσεις</h1>
-          <p>Λίστα εργασιών για ανοικτές απαιτήσεις: σήματα, follow-ups και καταχώρηση αποπληρωμής.</p>
+          <h1>Απαιτήσεις / Εισπράξεις</h1>
+          <p>Λίστα εργασιών για ανοικτές απαιτήσεις: λειτουργικά σήματα, follow-ups και καταχώρηση σημείωσης.</p>
         </div>
         <div className="row">
           <ActionButton
             variant="primary"
-            disabled
-            disabledReason="Prototype: η εισαγωγή σημείωσης οφειλής δεν είναι διαθέσιμη στο v1."
+            disabled={!selected}
+            disabledReason={!selected ? "Επιλέξτε μια απαίτηση από τη λίστα για καταχώρηση σημείωσης." : undefined}
+            onClick={() => {
+              if (!selected) return;
+              setNoteDraft("");
+              setNoteEditorOpen(true);
+            }}
           >
-            Προσθήκη σημείωσης
+            Καταχώρηση Σημείωσης
           </ActionButton>
         </div>
       </div>
@@ -141,7 +145,7 @@ export function CollectionsPage() {
 
       <div style={{ height: 14 }} />
 
-      <Card title="Λίστα οφειλών">
+      <Card title="Λίστα απαιτήσεων">
         <div style={{ overflow: "auto" }}>
           <table className="table">
             <thead>
@@ -150,11 +154,11 @@ export function CollectionsPage() {
                 <th>Πελάτης</th>
                 <th>Υπεύθυνος</th>
                 <th>Λήξη</th>
-                <th className="num">Days overdue</th>
+                <th className="num">Ημέρες καθυστέρησης</th>
                 <th className="num">Υπόλοιπο</th>
                 <th>Σήμα</th>
-                <th>Expected payment date</th>
-                <th>Last note</th>
+                <th>Αναμενόμενη ημ/νία</th>
+                <th>Τελευταία σημείωση</th>
                 <th>Επόμενη ενέργεια</th>
               </tr>
             </thead>
@@ -202,7 +206,7 @@ export function CollectionsPage() {
 
       <SidePanel
         open={!!selected}
-        title={selected ? `${selected.invoiceNumber} • ${selected.client}` : "Οφειλή"}
+        title={selected ? `${selected.invoiceNumber} • ${selected.client}` : "Απαίτηση"}
         onClose={() => setSelected(null)}
       >
         {selected ? (
@@ -214,9 +218,9 @@ export function CollectionsPage() {
             <div className="divider" />
             {selected.signal === "Overdue" ? (
               <div className="card" style={{ padding: 12, background: "var(--c-danger-50)" }}>
-                <div style={{ fontWeight: 650, color: "#991b1b" }}>Ληξιπρόθεσμη οφειλή</div>
+                <div style={{ fontWeight: 650, color: "#991b1b" }}>Ληξιπρόθεσμη απαίτηση</div>
                 <div className="muted" style={{ marginTop: 4 }}>
-                  Αυτή η οφειλή χρειάζεται follow-up. Υψηλή προτεραιότητα στο Οφειλές.
+                  Αυτή η απαίτηση χρειάζεται follow-up. Υψηλή προτεραιότητα στις Απαιτήσεις.
                 </div>
               </div>
             ) : null}
@@ -242,7 +246,7 @@ export function CollectionsPage() {
             </div>
             <div className="card" style={{ padding: 12, background: "var(--c-surface-2)" }}>
               <div className="muted" style={{ fontSize: 12 }}>
-                Τελευταία σημείωση οφειλής
+                Τελευταία σημείωση απαίτησης
               </div>
               {(() => {
                 const last = getLastCollectionNote(selected.invoiceId);
@@ -267,10 +271,10 @@ export function CollectionsPage() {
                   setNoteEditorOpen(true);
                 }}
               >
-                Προσθήκη σημείωσης
+                Καταχώρηση Σημείωσης
               </button>
               <button className="btn primary" onClick={() => navigate(`/finance/revenue/invoices/${selected.invoiceId}`)}>
-                Open full invoice detail
+                Άνοιγμα λεπτομερειών τιμολογίου
               </button>
             </div>
 

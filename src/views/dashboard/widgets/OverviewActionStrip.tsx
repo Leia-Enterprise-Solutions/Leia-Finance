@@ -17,8 +17,12 @@ export function OverviewActionStrip({ items }: { items: ActionStripItem[] }) {
     // Visual mapping for prototype demo only.
     if (item.id === "ar")
       return { title: "Απαιτήσεις", icon: "bi-exclamation-octagon", tone: "danger" as const };
+    if (item.id === "ar_due")
+      return { title: "Απαιτήσεις (λήγουν)", icon: "bi-clock-history", tone: "warning" as const };
     if (item.id === "ap")
-      return { title: "Οφειλές", icon: "bi-bank", tone: "danger" as const };
+      return { title: "Υποχρεώσεις", icon: "bi-bank", tone: "danger" as const };
+    if (item.id === "ap_blk")
+      return { title: "Υποχρεώσεις (blocked)", icon: "bi-slash-circle", tone: "warning" as const };
     if (item.id === "pq")
       return { title: "Πληρωμές", icon: "bi-slash-circle", tone: "warning" as const };
     if (item.id === "co")

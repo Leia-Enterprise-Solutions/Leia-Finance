@@ -27,13 +27,25 @@ export function BudgetOverviewPage() {
   const loc = useLocation();
   const params = React.useMemo(() => new URLSearchParams(loc.search), [loc.search]);
   const initialDept = getStringParam(params, "dept");
+  const initialProject = getStringParam(params, "project");
+  const initialTask = getStringParam(params, "task");
   const initialSignal = getEnumParam<BudgetSignal>(params, "signal", ["Healthy", "Warning", "Breach"] as const);
 
   const [dept, setDept] = React.useState<string | "All">(initialDept ?? "All");
+  const [project, setProject] = React.useState<string | "All">(initialProject ?? "All");
+  const [task, setTask] = React.useState<string | "All">(initialTask ?? "All");
   const [signal, setSignal] = React.useState<BudgetSignal | "All">(initialSignal ?? "All");
 
   const departments = React.useMemo(
     () => ["All", ...Array.from(new Set(allLines.map((l) => l.department)))],
+    []
+  );
+  const projects = React.useMemo(
+    () => ["All", ...Array.from(new Set(allLines.map((l) => l.project ?? "—")))],
+    []
+  );
+  const tasks = React.useMemo(
+    () => ["All", ...Array.from(new Set(allLines.map((l) => l.task ?? "—")))],
     []
   );
 
@@ -41,22 +53,35 @@ export function BudgetOverviewPage() {
     const url = new URL(window.location.href);
     if (dept === "All") url.searchParams.delete("dept");
     else url.searchParams.set("dept", dept);
+    if (project === "All") url.searchParams.delete("project");
+    else url.searchParams.set("project", project);
+    if (task === "All") url.searchParams.delete("task");
+    else url.searchParams.set("task", task);
     if (signal === "All") url.searchParams.delete("signal");
     else url.searchParams.set("signal", signal);
     navigate(`${loc.pathname}?${url.searchParams.toString()}`, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dept, signal]);
+  }, [dept, project, task, signal]);
 
   const filtered = allLines
     .filter((l) => (dept === "All" ? true : l.department === dept))
+    .filter((l) => (project === "All" ? true : (l.project ?? "—") === project))
+    .filter((l) => (task === "All" ? true : (l.task ?? "—") === task))
     .filter((l) => (signal === "All" ? true : l.signal === signal));
+
+  const totals = React.useMemo(() => {
+    const budgeted = filtered.reduce((a, l) => a + l.budgeted, 0);
+    const committed = filtered.reduce((a, l) => a + l.committed, 0);
+    const actualPaid = filtered.reduce((a, l) => a + l.actualPaid, 0);
+    return { budgeted, committed, actualPaid };
+  }, [filtered]);
 
   return (
     <>
       <div className="page-head">
         <div className="page-title">
-          <h1>Budget Overview</h1>
-          <p>Budgeted vs committed vs actual paid with clear signal (healthy / warning / breach).</p>
+          <h1>Επισκόπηση Προϋπολογισμού</h1>
+          <p>Προϋπολογισμένα vs δεσμεύσεις vs πληρωθέντα με καθαρό σήμα (healthy / warning / breach).</p>
         </div>
         <div className="row">
           <button className="btn" disabled>
@@ -68,10 +93,34 @@ export function BudgetOverviewPage() {
         </div>
       </div>
 
-      <Card title="Filter">
+      <div className="kpi-grid" style={{ marginBottom: 16 }}>
+        <div className="kpi">
+          <div className="label">
+            <span>Προϋπολογισμένα</span>
+          </div>
+          <div className="value">{formatCurrency(totals.budgeted)}</div>
+          <div className="sub">στην τρέχουσα προβολή</div>
+        </div>
+        <div className="kpi">
+          <div className="label">
+            <span>Δεσμεύσεις</span>
+          </div>
+          <div className="value">{formatCurrency(totals.committed)}</div>
+          <div className="sub">δεσμεύσεις</div>
+        </div>
+        <div className="kpi">
+          <div className="label">
+            <span>Πληρωθέντα</span>
+          </div>
+          <div className="value">{formatCurrency(totals.actualPaid)}</div>
+          <div className="sub">πληρωθέντα</div>
+        </div>
+      </div>
+
+      <Card title="Φίλτρα">
         <div className="filters">
           <div className="field" style={{ minWidth: 220 }}>
-            <label>Department</label>
+            <label>Τμήμα</label>
             <select className="select" value={dept} onChange={(e) => setDept(e.target.value)}>
               {departments.map((d) => (
                 <option key={d} value={d}>
@@ -80,40 +129,62 @@ export function BudgetOverviewPage() {
               ))}
             </select>
           </div>
+          <div className="field" style={{ minWidth: 220 }}>
+            <label>Έργο</label>
+            <select className="select" value={project} onChange={(e) => setProject(e.target.value)}>
+              {projects.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field" style={{ minWidth: 220 }}>
+            <label>Εργασία</label>
+            <select className="select" value={task} onChange={(e) => setTask(e.target.value)}>
+              {tasks.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </div>
           <div className="field" style={{ minWidth: 180 }}>
-            <label>Signal</label>
+            <label>Σήμα</label>
             <select
               className="select"
               value={signal}
               onChange={(e) => setSignal(e.target.value as BudgetSignal | "All")}
             >
-              <option value="All">All</option>
+              <option value="All">Όλα</option>
               <option value="Healthy">Healthy</option>
               <option value="Warning">Warning</option>
               <option value="Breach">Breach</option>
             </select>
           </div>
-          <Chip tone="neutral">{filtered.length} lines</Chip>
+          <Chip tone="neutral">{filtered.length} γραμμές</Chip>
           <Chip tone="danger">{filtered.filter((l) => l.signal === "Breach").length} breach</Chip>
         </div>
       </Card>
 
       <div style={{ height: 14 }} />
 
-      <Card title="Budget lines">
+      <Card title="Γραμμές προϋπολογισμού">
         <div style={{ overflow: "auto" }}>
           <table className="table">
             <thead>
               <tr>
-                <th>Department</th>
-                <th>Category</th>
-                <th>Period</th>
-                <th className="num">Budgeted</th>
-                <th className="num">Committed</th>
-                <th className="num">Actual paid</th>
-                <th className="num">Remaining</th>
-                <th className="num">Variance</th>
-                <th>Signal</th>
+                <th>Τμήμα</th>
+                <th>Κατηγορία</th>
+                <th>Έργο</th>
+                <th>Εργασία</th>
+                <th>Περίοδος</th>
+                <th className="num">Προϋπολογισμένα</th>
+                <th className="num">Δεσμεύσεις</th>
+                <th className="num">Πληρωθέντα</th>
+                <th className="num">Υπόλοιπο</th>
+                <th className="num">Απόκλιση</th>
+                <th>Σήμα</th>
               </tr>
             </thead>
             <tbody>
@@ -121,6 +192,8 @@ export function BudgetOverviewPage() {
                 <tr key={l.id}>
                   <td>{l.department}</td>
                   <td className="muted">{l.category}</td>
+                  <td className="muted">{l.project ?? "—"}</td>
+                  <td className="muted">{l.task ?? "—"}</td>
                   <td className="muted">{l.period}</td>
                   <td className="num">{formatCurrency(l.budgeted, l.currency)}</td>
                   <td className="num">{formatCurrency(l.committed, l.currency)}</td>
@@ -140,7 +213,7 @@ export function BudgetOverviewPage() {
               ))}
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="muted" style={{ padding: 16 }}>
+                  <td colSpan={11} className="muted" style={{ padding: 16 }}>
                     No budget lines found for this selection.
                   </td>
                 </tr>

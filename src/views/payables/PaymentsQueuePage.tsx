@@ -26,7 +26,7 @@ function toneForStatus(s: PaymentQueueItem["status"]) {
 export function PaymentsQueuePage() {
   const perms = usePermissions();
   const navigate = useNavigate();
-  const { paymentsQueue, supplierBills, executePaymentsBatch } = useFinancePrototypeState();
+  const { paymentsQueue, supplierBills, schedulePaymentsBatch, executePaymentsBatch } = useFinancePrototypeState();
   const loc = useLocation();
   const params = React.useMemo(() => new URLSearchParams(loc.search), [loc.search]);
   const initialReadiness = getEnumParam<PaymentQueueItem["readiness"]>(
@@ -48,26 +48,32 @@ export function PaymentsQueuePage() {
   const [q, setQ] = React.useState(initialQ ?? "");
   const [selected, setSelected] = React.useState<PaymentQueueItem | null>(null);
   const [confirmSchedule, setConfirmSchedule] = React.useState(false);
+  const [confirmExecute, setConfirmExecute] = React.useState(false);
 
-  type Segment = "Ready for payment" | "Blocked / mismatch" | "Due soon" | "Overdue payables" | "Executed (Paid)";
+  type Segment =
+    | "Έτοιμες για πληρωμή"
+    | "Blocked / ασυμφωνία"
+    | "Λήγουν σύντομα"
+    | "Ληξιπρόθεσμες υποχρεώσεις"
+    | "Εκτελεσμένες (Paid)";
   const DUE_SOON_WINDOW_DAYS = 7;
   const [segment, setSegment] = React.useState<Segment>(() => {
     const now = new Date();
     const overdueExists = paymentsQueue.some((p) => new Date(p.dueDate) < now && p.status !== "Executed");
-    if (readiness === "Blocked") return "Blocked / mismatch";
-    if (readiness === "Ready") return "Ready for payment";
-    if (overdueExists) return "Overdue payables";
-    return "Due soon";
+    if (readiness === "Blocked") return "Blocked / ασυμφωνία";
+    if (readiness === "Ready") return "Έτοιμες για πληρωμή";
+    if (overdueExists) return "Ληξιπρόθεσμες υποχρεώσεις";
+    return "Λήγουν σύντομα";
   });
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
 
-  function isEligibleForBatch(p: PaymentQueueItem) {
-    // v1: only Prepared items that are Ready for payment are selectable.
-    return p.readiness === "Ready" && p.status === "Prepared";
+  function isSelectable(p: PaymentQueueItem) {
+    // v1: selection means "candidate for scheduling/execution", not executed.
+    return p.readiness === "Ready" && p.status !== "Executed";
   }
 
   function toggleSelected(p: PaymentQueueItem) {
-    if (!isEligibleForBatch(p)) return;
+    if (!isSelectable(p)) return;
     setSelectedIds((prev) => (prev.includes(p.id) ? prev.filter((id) => id !== p.id) : [...prev, p.id]));
   }
 
@@ -100,11 +106,11 @@ export function PaymentsQueuePage() {
     const daysUntilDue = daysBetween(due, now); // positive when due in the future
     const isOverdue = due < now && daysBetween(now, due) > 0;
 
-    if (segment === "Ready for payment") return p.readiness === "Ready" && p.status === "Prepared";
-    if (segment === "Blocked / mismatch") return p.readiness === "Blocked";
-    if (segment === "Due soon") return daysUntilDue >= 0 && daysUntilDue <= DUE_SOON_WINDOW_DAYS && !isOverdue && p.status !== "Executed";
-    if (segment === "Executed (Paid)") return p.status === "Executed";
-    // Overdue payables
+    if (segment === "Έτοιμες για πληρωμή") return p.readiness === "Ready" && p.status === "Prepared";
+    if (segment === "Blocked / ασυμφωνία") return p.readiness === "Blocked";
+    if (segment === "Λήγουν σύντομα") return daysUntilDue >= 0 && daysUntilDue <= DUE_SOON_WINDOW_DAYS && !isOverdue && p.status !== "Executed";
+    if (segment === "Εκτελεσμένες (Paid)") return p.status === "Executed";
+    // Ληξιπρόθεσμες υποχρεώσεις
     return isOverdue && p.status !== "Executed";
   });
 
@@ -158,6 +164,8 @@ export function PaymentsQueuePage() {
     .filter((p): p is PaymentQueueItem => p != null);
   const selectedTotal = selectedItems.reduce((a, p) => a + p.amount, 0);
   const selectedCurrency = selectedItems[0]?.currency ?? "EUR";
+  const selectedPrepared = selectedItems.filter((p) => p.status === "Prepared").length;
+  const selectedScheduled = selectedItems.filter((p) => p.status === "Scheduled").length;
 
   const selectedBill = selected ? supplierBills.find((b) => b.id === selected.supplierBillId) ?? null : null;
   const selectedLinkedRequestId = selectedBill?.linkedRequestId ?? null;
@@ -192,14 +200,14 @@ export function PaymentsQueuePage() {
           role="button"
           tabIndex={0}
           onClick={() => {
-            setSegment("Due soon");
+            setSegment("Λήγουν σύντομα");
             setReadiness("All");
             setStatus("Prepared");
             setSelectedIds([]);
           }}
         >
           <div className="label">
-            <span>Due soon</span>
+            <span>Λήγουν σύντομα</span>
             <span className="faint">↗</span>
           </div>
           <div className="value">{dueSoonCount}</div>
@@ -210,14 +218,14 @@ export function PaymentsQueuePage() {
           role="button"
           tabIndex={0}
           onClick={() => {
-            setSegment("Overdue payables");
+            setSegment("Ληξιπρόθεσμες υποχρεώσεις");
             setReadiness("All");
             setStatus("Prepared");
             setSelectedIds([]);
           }}
         >
           <div className="label">
-            <span>Overdue</span>
+            <span>Ληξιπρόθεσμα</span>
             <span className="faint">↗</span>
           </div>
           <div className="value">{overdueCount}</div>
@@ -227,64 +235,64 @@ export function PaymentsQueuePage() {
 
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
         <button
-          className={segment === "Ready for payment" ? "btn primary" : "btn"}
+          className={segment === "Έτοιμες για πληρωμή" ? "btn primary" : "btn"}
           onClick={() => {
-            setSegment("Ready for payment");
+            setSegment("Έτοιμες για πληρωμή");
             setReadiness("Ready");
             setStatus("Prepared");
             setSelectedIds([]);
             setSelected(null);
           }}
         >
-          Ready for payment ({readySegmentCount})
+          Έτοιμες για πληρωμή ({readySegmentCount})
         </button>
         <button
-          className={segment === "Blocked / mismatch" ? "btn primary" : "btn"}
+          className={segment === "Blocked / ασυμφωνία" ? "btn primary" : "btn"}
           onClick={() => {
-            setSegment("Blocked / mismatch");
+            setSegment("Blocked / ασυμφωνία");
             setReadiness("Blocked");
             setStatus("Prepared");
             setSelectedIds([]);
             setSelected(null);
           }}
         >
-          Blocked / mismatch ({blockedSegmentCount})
+          Blocked / ασυμφωνία ({blockedSegmentCount})
         </button>
         <button
-          className={segment === "Due soon" ? "btn primary" : "btn"}
+          className={segment === "Λήγουν σύντομα" ? "btn primary" : "btn"}
           onClick={() => {
-            setSegment("Due soon");
+            setSegment("Λήγουν σύντομα");
             setReadiness("All");
             setStatus("Prepared");
             setSelectedIds([]);
             setSelected(null);
           }}
         >
-          Due soon
+          Λήγουν σύντομα
         </button>
         <button
-          className={segment === "Overdue payables" ? "btn primary" : "btn"}
+          className={segment === "Ληξιπρόθεσμες υποχρεώσεις" ? "btn primary" : "btn"}
           onClick={() => {
-            setSegment("Overdue payables");
+            setSegment("Ληξιπρόθεσμες υποχρεώσεις");
             setReadiness("All");
             setStatus("Prepared");
             setSelectedIds([]);
             setSelected(null);
           }}
         >
-          Overdue payables ({overdueCount})
+          Ληξιπρόθεσμες υποχρεώσεις ({overdueCount})
         </button>
         <button
-          className={segment === "Executed (Paid)" ? "btn primary" : "btn"}
+          className={segment === "Εκτελεσμένες (Paid)" ? "btn primary" : "btn"}
           onClick={() => {
-            setSegment("Executed (Paid)");
+            setSegment("Εκτελεσμένες (Paid)");
             setReadiness("All");
             setStatus("Executed");
             setSelectedIds([]);
             setSelected(null);
           }}
         >
-          Executed (Paid) ({executedCount})
+          Εκτελεσμένες (Paid) ({executedCount})
         </button>
       </div>
 
@@ -319,16 +327,16 @@ export function PaymentsQueuePage() {
           <table className="table">
             <thead>
               <tr>
-                <th>Select</th>
+                <th>Επιλογή</th>
                 <th>Προμηθευτής</th>
-                <th>Bill reference</th>
-                <th>Due date</th>
-                <th className="num">Amount</th>
-                <th>Readiness</th>
-                <th>Linked request</th>
-                <th>Department</th>
-                <th>Payment status</th>
-                <th>Next step</th>
+                <th>Αναφορά τιμολογίου</th>
+                <th>Ημ/νία λήξης</th>
+                <th className="num">Ποσό</th>
+                <th>Ετοιμότητα</th>
+                <th>Συνδεδεμένο αίτημα</th>
+                <th>Τμήμα</th>
+                <th>Κατάσταση πληρωμής</th>
+                <th>Επόμενο βήμα</th>
               </tr>
             </thead>
             <tbody>
@@ -336,16 +344,21 @@ export function PaymentsQueuePage() {
                 const due = new Date(p.dueDate);
                 const daysOver = due < now ? daysBetween(now, due) : 0;
                 const isOverdue = daysOver > 0 && p.status !== "Executed";
-                const eligible = isEligibleForBatch(p);
+                const eligible = isSelectable(p);
                 const checked = selectedIds.includes(p.id);
                 const bill = supplierBills.find((b) => b.id === p.supplierBillId) ?? null;
                 const linkedRequestId = bill?.linkedRequestId ?? null;
                 const linkedRequest = linkedRequestId ? purchaseRequests.find((r) => r.id === linkedRequestId) ?? null : null;
-                const nextStep = p.readiness === "Blocked"
-                  ? "Resolve blocking issue"
-                  : eligible
-                    ? "Add to batch selection"
-                    : "Not selectable";
+                const nextStep =
+                  p.readiness === "Blocked"
+                    ? "Προβολή αιτίας block"
+                    : eligible
+                      ? p.status === "Prepared"
+                        ? "Προγραμματισμός"
+                        : p.status === "Scheduled"
+                          ? "Εκτέλεση"
+                          : "—"
+                      : "Μη επιλέξιμο";
                 return (
                   <tr
                     key={p.id}
@@ -369,7 +382,7 @@ export function PaymentsQueuePage() {
                       <span>{p.dueDate}</span>
                       {isOverdue ? (
                         <span className="faint" style={{ marginLeft: 8 }}>
-                          ({daysOver} days)
+                          ({daysOver} ημ.)
                         </span>
                       ) : null}
                     </td>
@@ -422,22 +435,38 @@ export function PaymentsQueuePage() {
       >
         <div className="row" style={{ justifyContent: "space-between", padding: "0 4px" }}>
           <div className="muted" style={{ fontSize: 12 }}>
-            Selected: {selectedIds.length} · Sum: {formatCurrency(selectedTotal, selectedCurrency)}
+            Επιλεγμένα: {selectedIds.length} (Prepared: {selectedPrepared}, Scheduled: {selectedScheduled}) · Σύνολο:{" "}
+            {formatCurrency(selectedTotal, selectedCurrency)}
           </div>
-          <ActionButton
-            variant="primary"
-            disabled={selectedIds.length === 0 || !perms.canSchedulePayment}
-            disabledReason={
-              selectedIds.length === 0
-                ? "Select eligible ready items first."
-                : !perms.canSchedulePayment
-                  ? "You don't have permission to execute payments."
-                  : undefined
-            }
-            onClick={() => setConfirmSchedule(true)}
-          >
-            Execute batch
-          </ActionButton>
+          <div className="row">
+            <ActionButton
+              disabled={selectedPrepared === 0 || !perms.canSchedulePayment}
+              disabledReason={
+                selectedPrepared === 0
+                  ? "Επιλέξτε Prepared items (Ready) για προγραμματισμό."
+                  : !perms.canSchedulePayment
+                    ? "Δεν έχετε δικαίωμα προγραμματισμού/εκτέλεσης."
+                    : undefined
+              }
+              onClick={() => setConfirmSchedule(true)}
+            >
+              Προγραμματισμός Επιλεγμένων
+            </ActionButton>
+            <ActionButton
+              variant="primary"
+              disabled={selectedScheduled === 0 || !perms.canSchedulePayment}
+              disabledReason={
+                selectedScheduled === 0
+                  ? "Επιλέξτε Scheduled items για εκτέλεση."
+                  : !perms.canSchedulePayment
+                    ? "Δεν έχετε δικαίωμα προγραμματισμού/εκτέλεσης."
+                    : undefined
+              }
+              onClick={() => setConfirmExecute(true)}
+            >
+              Εκτέλεση Επιλεγμένων
+            </ActionButton>
+          </div>
         </div>
       </div>
 
@@ -499,12 +528,12 @@ export function PaymentsQueuePage() {
                 Open bill detail
               </button>
               <ActionButton
-                disabled={!isEligibleForBatch(selected)}
+                disabled={!isSelectable(selected)}
                 disabledReason={
                   selected.readiness !== "Ready"
                     ? "Item is blocked."
-                    : selected.status !== "Prepared"
-                      ? "Only Prepared items can be selected."
+                    : selected.status === "Executed"
+                      ? "Item is already executed."
                       : undefined
                 }
                 onClick={() => toggleSelected(selected)}
@@ -518,16 +547,30 @@ export function PaymentsQueuePage() {
 
       <ConfirmDialog
         open={confirmSchedule}
-        title="Execute payment batch"
-        description={`Prototype confirmation. In v1 this will hand off selected ${selectedIds.length} items (sum ${formatCurrency(
+        title="Προγραμματισμός επιλεγμένων πληρωμών"
+        description={`Prototype confirmation. This will schedule ${selectedPrepared} Prepared item(s) (sum ${formatCurrency(
           selectedTotal,
           selectedCurrency
         )}).`}
-        confirmLabel="Execute"
+        confirmLabel="Προγραμματισμός"
         onCancel={() => setConfirmSchedule(false)}
         onConfirm={() => {
           setConfirmSchedule(false);
-          executePaymentsBatch(selectedIds);
+          const ids = selectedItems.filter((p) => p.status === "Prepared").map((p) => p.id);
+          schedulePaymentsBatch(ids);
+        }}
+      />
+
+      <ConfirmDialog
+        open={confirmExecute}
+        title="Εκτέλεση προγραμματισμένων πληρωμών"
+        description={`Prototype confirmation. This will execute ${selectedScheduled} Scheduled item(s).`}
+        confirmLabel="Εκτέλεση"
+        onCancel={() => setConfirmExecute(false)}
+        onConfirm={() => {
+          setConfirmExecute(false);
+          const ids = selectedItems.filter((p) => p.status === "Scheduled").map((p) => p.id);
+          executePaymentsBatch(ids);
           setSelectedIds([]);
           setSelected(null);
         }}

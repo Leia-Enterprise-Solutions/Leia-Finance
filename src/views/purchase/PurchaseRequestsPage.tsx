@@ -5,15 +5,16 @@ import { Chip } from "../../ui/Chip";
 import { SidePanel } from "../../ui/SidePanel";
 import { ActionButton } from "../../ui/ActionButton";
 import type { PurchaseRequest, PurchaseRequestStatus } from "../../domain/types";
-import { purchaseRequests as allRequests } from "../../mock/data";
 import { formatCurrency } from "../../domain/format";
 import { getEnumParam, getStringParam } from "../../router/query";
 import { usePermissions } from "../../state/permissions";
+import { useFinancePrototypeState } from "../../state/FinancePrototypeState";
 
 function toneForStatus(s: PurchaseRequestStatus) {
   if (s === "Approved (Committed)") return "success";
   if (s === "Rejected") return "danger";
   if (s === "Submitted") return "warning";
+  if (s === "Returned for Changes") return "warning";
   return "neutral";
 }
 
@@ -21,11 +22,12 @@ export function PurchaseRequestsPage() {
   const perms = usePermissions();
   const navigate = useNavigate();
   const loc = useLocation();
+  const { purchaseRequests: allRequests, createPurchaseRequest, updatePurchaseRequestStatus } = useFinancePrototypeState();
   const params = React.useMemo(() => new URLSearchParams(loc.search), [loc.search]);
   const initialStatus = getEnumParam<PurchaseRequestStatus>(
     params,
     "status",
-    ["Draft", "Submitted", "Approved (Committed)", "Rejected"] as const
+    ["Draft", "Submitted", "Returned for Changes", "Approved (Committed)", "Rejected"] as const
   );
   const initialQ = getStringParam(params, "q");
 
@@ -42,7 +44,6 @@ export function PurchaseRequestsPage() {
     urgency: "Normal" as PurchaseRequest["urgency"],
     attachments: "1"
   });
-  const [createdRequests, setCreatedRequests] = React.useState<PurchaseRequest[]>([]);
 
   React.useEffect(() => {
     const url = new URL(window.location.href);
@@ -54,9 +55,7 @@ export function PurchaseRequestsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, q]);
 
-  const requestsForUI = React.useMemo(() => [...createdRequests, ...allRequests], [createdRequests]);
-
-  const filtered = requestsForUI.filter((r) => {
+  const filtered = allRequests.filter((r) => {
     if (status !== "All" && r.status !== status) return false;
     if (!q.trim()) return true;
     const needle = q.toLowerCase();
@@ -72,42 +71,43 @@ export function PurchaseRequestsPage() {
     <>
       <div className="page-head">
         <div className="page-title">
-          <h1>Purchase Requests</h1>
-          <p>Request → approval → committed spend. Readiness signals via attachments & urgency.</p>
+          <h1>Αιτήματα Αγοράς</h1>
+          <p>Αίτημα → έγκριση → δεσμευμένη δαπάνη. Λειτουργικά σήματα ετοιμότητας μέσω επισυνάψεων & προτεραιότητας.</p>
         </div>
         <div className="row">
-          <ActionButton onClick={() => setCreateOpen(true)}>Create request</ActionButton>
+          <ActionButton onClick={() => setCreateOpen(true)}>Δημιουργία αιτήματος</ActionButton>
           <ActionButton
             variant="primary"
             disabled={!perms.canApproveRequest}
             disabledReason={!perms.canApproveRequest ? "You don't have permission to approve requests." : undefined}
           >
-            Approve queue
+            Ουρά έγκρισης
           </ActionButton>
         </div>
       </div>
 
-      <Card title="Filter">
+      <Card title="Φίλτρα">
         <div className="filters">
           <div className="field" style={{ minWidth: 240 }}>
-            <label>Search</label>
+            <label>Αναζήτηση</label>
             <input
               className="input"
-              placeholder="Title, requester, supplier…"
+              placeholder="Τίτλος, αιτών, προμηθευτής…"
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
           </div>
           <div className="field" style={{ minWidth: 200 }}>
-            <label>Status</label>
+            <label>Κατάσταση</label>
             <select
               className="select"
               value={status}
               onChange={(e) => setStatus(e.target.value as PurchaseRequestStatus | "All")}
             >
-              <option value="All">All</option>
+              <option value="All">Όλα</option>
               <option value="Draft">Draft</option>
               <option value="Submitted">Submitted</option>
+              <option value="Returned for Changes">Returned for changes</option>
               <option value="Approved (Committed)">Approved / committed</option>
               <option value="Rejected">Rejected</option>
             </select>
@@ -119,22 +119,22 @@ export function PurchaseRequestsPage() {
 
       <div style={{ height: 14 }} />
 
-      <Card title="Requests list">
+      <Card title="Λίστα αιτημάτων">
         <div style={{ overflow: "auto" }}>
           <table className="table">
             <thead>
               <tr>
-                <th>Request</th>
-                <th>Requester</th>
-                <th>Department</th>
-                <th>Supplier</th>
-                <th>Category</th>
-                <th className="num">Amount</th>
-                <th>Submitted</th>
-                <th>Approver</th>
-                <th>Urgency</th>
-                <th>Attachment</th>
-                <th>Status</th>
+                <th>Αίτημα</th>
+                <th>Αιτών</th>
+                <th>Τμήμα</th>
+                <th>Προμηθευτής</th>
+                <th>Κατηγορία</th>
+                <th className="num">Ποσό</th>
+                <th>Υποβλήθηκε</th>
+                <th>Εγκρίνων</th>
+                <th>Προτεραιότητα</th>
+                <th>Επισυνάψεις</th>
+                <th>Κατάσταση</th>
               </tr>
             </thead>
             <tbody>
@@ -242,20 +242,29 @@ export function PurchaseRequestsPage() {
               <button className="btn" onClick={() => navigate(`/purchase-requests/${selected.id}`)}>
                 Open full detail
               </button>
-              <button className="btn">Request changes</button>
+              <button
+                className="btn"
+                disabled={!perms.canApproveRequest || selected.status === "Rejected" || selected.status === "Cancelled"}
+                onClick={() => updatePurchaseRequestStatus(selected.id, "Returned for Changes")}
+                title={!perms.canApproveRequest ? "You don't have permission to approve requests." : undefined}
+              >
+                Επιστροφή για Διορθώσεις
+              </button>
               <button
                 className="btn primary"
                 disabled={!perms.canApproveRequest || selected.status === "Rejected" || selected.status === "Cancelled"}
                 title={!perms.canApproveRequest ? "You don't have permission to approve requests." : undefined}
+                onClick={() => updatePurchaseRequestStatus(selected.id, "Approved (Committed)")}
               >
-                Approve
+                Έγκριση
               </button>
               <button
                 className="btn"
                 disabled={!perms.canApproveRequest || selected.status === "Rejected" || selected.status === "Cancelled"}
                 title={!perms.canApproveRequest ? "You don't have permission to approve requests." : undefined}
+                onClick={() => updatePurchaseRequestStatus(selected.id, "Rejected")}
               >
-                Reject
+                Απόρριψη
               </button>
             </div>
           </div>
@@ -354,26 +363,31 @@ export function PurchaseRequestsPage() {
               className="btn primary"
               disabled={!draftForm.title.trim() || !draftForm.amount.trim()}
               onClick={() => {
-                const id = `pr_${Date.now()}`;
-                const createdAt = new Date().toISOString().slice(0, 10);
                 const amount = Number(draftForm.amount);
                 const attachments = Number(draftForm.attachments);
-                const req: PurchaseRequest = {
+                const id = createPurchaseRequest({
+                  title: draftForm.title.trim(),
+                  requester: draftForm.requester.trim() || "—",
+                  department: draftForm.department.trim() || "—",
+                  supplier: draftForm.supplier.trim() ? draftForm.supplier.trim() : undefined,
+                  amount: Number.isFinite(amount) ? amount : 0,
+                  urgency: draftForm.urgency,
+                  attachments: Number.isFinite(attachments) ? attachments : 0,
+                  currency: "EUR"
+                });
+                setSelected({
                   id,
                   title: draftForm.title.trim(),
                   requester: draftForm.requester.trim() || "—",
                   department: draftForm.department.trim() || "—",
                   supplier: draftForm.supplier.trim() ? draftForm.supplier.trim() : undefined,
-                  createdAt,
+                  createdAt: new Date().toISOString().slice(0, 10),
                   amount: Number.isFinite(amount) ? amount : 0,
                   currency: "EUR",
                   urgency: draftForm.urgency,
                   status: "Draft",
                   attachments: Number.isFinite(attachments) ? attachments : 0
-                };
-
-                setCreatedRequests((prev) => [req, ...prev]);
-                setSelected(req);
+                });
                 setCreateOpen(false);
               }}
             >

@@ -5,19 +5,29 @@ import { Chip } from "../../ui/Chip";
 import { ConfirmDialog } from "../../ui/ConfirmDialog";
 import { SidePanel } from "../../ui/SidePanel";
 import type { InvoiceDraft } from "../../domain/types";
-import { draftLinesByDraftId, invoiceDrafts as allDrafts } from "../../mock/data";
 import { formatCurrency } from "../../domain/format";
 import { getEnumParam, getStringParam } from "../../router/query";
+import { useFinancePrototypeState } from "../../state/FinancePrototypeState";
 
 function toneForDraftStatus(s: InvoiceDraft["status"]) {
   if (s === "Ready to Issue") return "success";
   if (s === "Stale") return "warning";
+  if (s === "Issued") return "neutral";
   return "neutral";
+}
+
+function labelForDraftStatus(s: InvoiceDraft["status"]) {
+  if (s === "In Progress") return "Σε εξέλιξη";
+  if (s === "Stale") return "Παρωχημένο";
+  if (s === "Ready to Issue") return "Έτοιμο για έκδοση";
+  if (s === "Issued") return "Εκδόθηκε";
+  return s;
 }
 
 export function DraftsPage() {
   const navigate = useNavigate();
   const loc = useLocation();
+  const { invoiceDrafts: allDrafts, draftLinesByDraftId, discardDraft } = useFinancePrototypeState();
   const params = React.useMemo(() => new URLSearchParams(loc.search), [loc.search]);
   const initialQ = getStringParam(params, "q");
   const initialStatus = getEnumParam<InvoiceDraft["status"]>(
@@ -62,69 +72,69 @@ export function DraftsPage() {
     <>
       <div className="page-head">
         <div className="page-title">
-          <h1>Invoice Drafts</h1>
-          <p>Draft triage: in-progress, stale, ready-to-issue, and reserved line visibility.</p>
+          <h1>Πρόχειρα Τιμολογίου</h1>
+          <p>Διαχείριση προσχεδίων: σε εξέλιξη, παρωχημένα, έτοιμα για έκδοση και ορατότητα δεσμευμένων γραμμών.</p>
         </div>
         <div className="row">
           <button className="btn" onClick={() => navigate("/finance/revenue/drafts/builder")}>
-            Open builder
+            Συνέχεια Προσχεδίου
           </button>
           <button className="btn primary" onClick={() => navigate("/finance/revenue/drafts/builder")}>
-            Create draft
+            Νέο Πρόχειρο Τιμολογίου
           </button>
         </div>
       </div>
 
-      <Card title="Filter">
+      <Card title="Φίλτρα">
         <div className="filters">
           <div className="field" style={{ minWidth: 240 }}>
-            <label>Search</label>
+            <label>Αναζήτηση</label>
             <input
               className="input"
-              placeholder="Client, project, draft id…"
+              placeholder="Πελάτης, έργο, id προσχεδίου…"
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
           </div>
           <div className="field" style={{ minWidth: 200 }}>
-            <label>Status</label>
+            <label>Κατάσταση</label>
             <select
               className="select"
               value={status}
               onChange={(e) => setStatus(e.target.value as InvoiceDraft["status"] | "All")}
             >
-              <option value="All">All</option>
-              <option value="In Progress">In progress</option>
-              <option value="Stale">Stale</option>
-              <option value="Ready to Issue">Ready to issue</option>
+              <option value="All">Όλα</option>
+              <option value="In Progress">Σε εξέλιξη</option>
+              <option value="Stale">Παρωχημένο</option>
+              <option value="Ready to Issue">Έτοιμο για έκδοση</option>
             </select>
           </div>
-          <Chip tone="neutral">{filtered.length} drafts</Chip>
-          <Chip tone="warning">{filtered.filter((d) => d.status === "Stale").length} stale</Chip>
+          <Chip tone="neutral">{filtered.length} προσχέδια</Chip>
+          <Chip tone="warning">{filtered.filter((d) => d.status === "Stale").length} παρωχημένα</Chip>
           <Chip tone="success">
-            {filtered.filter((d) => d.status === "Ready to Issue").length} ready
+            {filtered.filter((d) => d.status === "Ready to Issue").length} έτοιμα
           </Chip>
         </div>
       </Card>
 
       <div style={{ height: 14 }} />
 
-      <Card title="Drafts list">
+      <Card title="Λίστα προσχεδίων">
         <div style={{ overflow: "auto" }}>
           <table className="table">
             <thead>
               <tr>
-                <th>Draft</th>
-                <th>Client</th>
-                <th>Project</th>
-                <th>Owner</th>
-                <th>Updated</th>
-                <th className="num">Stale age</th>
-                <th className="num">Selected lines</th>
-                <th className="num">Draft total</th>
-                <th>Review needed</th>
-                <th className="num">Reserving</th>
-                <th>Status</th>
+                <th>Πρόχειρο</th>
+                <th>Πελάτης</th>
+                <th>Έργο</th>
+                <th>Υπεύθυνος</th>
+                <th>Ενημέρωση</th>
+                <th className="num">Ηλικία</th>
+                <th className="num">Γραμμές</th>
+                <th className="num">Σύνολο</th>
+                <th>Έλεγχος</th>
+                <th className="num">Δεσμεύσεις</th>
+                <th>Κατάσταση</th>
               </tr>
             </thead>
             <tbody>
@@ -140,19 +150,19 @@ export function DraftsPage() {
                   <td className="num">{formatCurrency(d.draftTotal, d.currency)}</td>
                   <td>
                     <Chip tone={d.status === "Stale" ? "warning" : "neutral"}>
-                      {d.status === "Stale" ? "Needs review" : "—"}
+                      {d.status === "Stale" ? "Χρειάζεται έλεγχο" : "—"}
                     </Chip>
                   </td>
                   <td className="num">{d.reservedLines}</td>
                   <td>
-                    <Chip tone={toneForDraftStatus(d.status)}>{d.status}</Chip>
+                    <Chip tone={toneForDraftStatus(d.status)}>{labelForDraftStatus(d.status)}</Chip>
                   </td>
                 </tr>
               ))}
               {filtered.length === 0 ? (
                 <tr>
                   <td colSpan={11} className="muted" style={{ padding: 16 }}>
-                    No drafts found in this view. Try clearing filters or create a new draft.
+                    Δεν βρέθηκαν πρόχειρα. Δοκιμάστε να καθαρίσετε φίλτρα ή δημιουργήστε νέο πρόχειρο.
                   </td>
                 </tr>
               ) : null}
@@ -163,13 +173,13 @@ export function DraftsPage() {
 
       <SidePanel
         open={!!selected}
-        title={selected ? `Draft ${selected.id}` : "Draft"}
+        title={selected ? `Πρόχειρο ${selected.id}` : "Πρόχειρο"}
         onClose={() => setSelected(null)}
       >
         {selected ? (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <div className="row" style={{ justifyContent: "space-between" }}>
-              <Chip tone={toneForDraftStatus(selected.status)}>{selected.status}</Chip>
+              <Chip tone={toneForDraftStatus(selected.status)}>{labelForDraftStatus(selected.status)}</Chip>
               <Chip tone="neutral">{`Reserving ${selected.reservedLines} lines`}</Chip>
             </div>
             <div className="muted" style={{ fontSize: 12 }}>
@@ -208,9 +218,9 @@ export function DraftsPage() {
                 <table className="table" style={{ marginBottom: 0 }}>
                   <thead>
                     <tr>
-                      <th>Source</th>
-                      <th>Description</th>
-                      <th className="num">Amount</th>
+                        <th>Πηγή</th>
+                        <th>Περιγραφή</th>
+                        <th className="num">Ποσό</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -234,10 +244,10 @@ export function DraftsPage() {
             </div>
             <div className="row">
               <button className="btn" onClick={() => navigate(`/finance/revenue/drafts/${selected.id}/builder`)}>
-                Open in Draft Builder
+                Άνοιγμα για Έκδοση
               </button>
               <button className="btn" onClick={() => setConfirmDiscard(true)}>
-                Discard draft
+                Απόρριψη και Αποδέσμευση
               </button>
             </div>
           </div>
@@ -246,17 +256,18 @@ export function DraftsPage() {
 
       <ConfirmDialog
         open={confirmDiscard}
-        title="Discard draft"
+        title="Απόρριψη προσχεδίου"
         description={
           selected
             ? `Prototype confirmation: discarding draft ${selected.id} will release reserved lines (${selected.reservedLines}).`
             : undefined
         }
-        confirmLabel="Discard"
+        confirmLabel="Απόρριψη"
         tone="danger"
         onCancel={() => setConfirmDiscard(false)}
         onConfirm={() => {
           setConfirmDiscard(false);
+          if (selected) discardDraft(selected.id);
           setSelected(null);
         }}
       />

@@ -2,8 +2,8 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Chip } from "../../../ui/Chip";
 import { formatCurrency } from "../../../domain/format";
-import { receivables, supplierBills } from "../../../mock/data";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { useFinancePrototypeState } from "../../../state/FinancePrototypeState";
 
 type Bucket = {
   key: "notDue" | "dueSoon" | "overdue" | "ready" | "blocked";
@@ -13,7 +13,7 @@ type Bucket = {
   queryValue: string;
 };
 
-function bucketizeReceivables(): Bucket[] {
+function bucketizeReceivables(receivables: { signal: string; outstanding: number }[]): Bucket[] {
   const notDue = receivables.filter((r) => r.signal === "Not Due").reduce((a, r) => a + r.outstanding, 0);
   const dueSoon = receivables.filter((r) => r.signal === "Due Soon").reduce((a, r) => a + r.outstanding, 0);
   const overdue = receivables.filter((r) => r.signal === "Overdue").reduce((a, r) => a + r.outstanding, 0);
@@ -24,7 +24,7 @@ function bucketizeReceivables(): Bucket[] {
   ];
 }
 
-function bucketizePayables(): Bucket[] {
+function bucketizePayables(supplierBills: { status: string; amount: number }[]): Bucket[] {
   const ready = supplierBills.filter((b) => b.status === "Ready").reduce((a, b) => a + b.amount, 0);
   const blocked = supplierBills.filter((b) => b.status === "Blocked").reduce((a, b) => a + b.amount, 0);
   const overdue = supplierBills.filter((b) => b.status === "Overdue").reduce((a, b) => a + b.amount, 0);
@@ -44,7 +44,8 @@ export function AgingSnapshot({
   compact?: boolean;
 }) {
   const navigate = useNavigate();
-  const buckets = kind === "receivables" ? bucketizeReceivables() : bucketizePayables();
+  const { receivables, supplierBills } = useFinancePrototypeState();
+  const buckets = kind === "receivables" ? bucketizeReceivables(receivables) : bucketizePayables(supplierBills);
   const total = buckets.reduce((a, b) => a + b.amount, 0);
 
   const colorForTone = (tone: Bucket["tone"]) => {

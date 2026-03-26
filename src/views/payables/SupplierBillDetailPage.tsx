@@ -22,7 +22,7 @@ function toneForMatch(m: SupplierBill["match"]) {
 
 export function SupplierBillDetailPage() {
   const { billId } = useParams();
-  const { supplierBills } = useFinancePrototypeState();
+  const { supplierBills, updateSupplierBill, sendBillToPaymentsQueue } = useFinancePrototypeState();
   const navigate = useNavigate();
   const bill = supplierBills.find((b) => b.id === billId) ?? null;
 
@@ -55,13 +55,22 @@ export function SupplierBillDetailPage() {
           <Link className="btn" to="/finance/spend/bills">
             Back to list
           </Link>
-          <button className="btn" disabled>
-            Add attachment (prototype)
+          <button
+            className="btn"
+            onClick={() => {
+              // Prototype: attachment handling is simplified into clearing the most common block.
+              updateSupplierBill(bill.id, { blockedReason: undefined });
+            }}
+          >
+            Προσθήκη Επισύναψης
           </button>
           <button
             className="btn primary"
             disabled={bill.status !== "Ready" || bill.match !== "Matched"}
-            onClick={() => navigate(`/finance/spend/payments?q=${encodeURIComponent(bill.id)}`)}
+            onClick={() => {
+              sendBillToPaymentsQueue(bill.id);
+              navigate(`/finance/spend/payments?q=${encodeURIComponent(bill.id)}`);
+            }}
           >
             Send to payments queue
           </button>
@@ -84,6 +93,30 @@ export function SupplierBillDetailPage() {
               <div className="muted" style={{ marginTop: 4 }}>
                 {bill.blockedReason ??
                   "Resolve mismatch and required controls before moving this payable to the payments queue."}
+              </div>
+              <div className="row" style={{ marginTop: 10 }}>
+                {bill.match !== "Matched" ? (
+                  <button
+                    className="btn"
+                    onClick={() => {
+                      updateSupplierBill(bill.id, { match: "Matched", blockedReason: undefined });
+                    }}
+                  >
+                    Επίλυση Ασυμφωνίας
+                  </button>
+                ) : null}
+                {bill.status !== "Ready" ? (
+                  <button
+                    className="btn primary"
+                    disabled={bill.match !== "Matched"}
+                    title={bill.match !== "Matched" ? "Πρώτα επιλύστε την ασυμφωνία." : undefined}
+                    onClick={() => {
+                      updateSupplierBill(bill.id, { status: "Ready", blockedReason: undefined });
+                    }}
+                  >
+                    Σήμανση ως Έτοιμο για Πληρωμή
+                  </button>
+                ) : null}
               </div>
             </div>
           ) : null}
@@ -164,10 +197,10 @@ export function SupplierBillDetailPage() {
         <table className="table">
           <thead>
             <tr>
-              <th>At</th>
-              <th>Actor</th>
-              <th>Action</th>
-              <th>Summary</th>
+              <th>Χρόνος</th>
+              <th>Χρήστης</th>
+              <th>Ενέργεια</th>
+              <th>Σύνοψη</th>
             </tr>
           </thead>
           <tbody>

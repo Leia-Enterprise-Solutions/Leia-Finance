@@ -4,7 +4,6 @@ import { Card } from "../../ui/Card";
 import { Chip } from "../../ui/Chip";
 import { ActionButton } from "../../ui/ActionButton";
 import type { InvoiceStatus, TransmissionStatus } from "../../domain/types";
-import { invoices, receivables, billableWork, auditEvents } from "../../mock/data";
 import { formatCurrency } from "../../domain/format";
 import { useFinancePrototypeState } from "../../state/FinancePrototypeState";
 
@@ -23,7 +22,8 @@ function toneForTransmission(s: TransmissionStatus) {
 
 export function InvoiceDetailPage() {
   const { invoiceId } = useParams();
-  const { getLastCollectionNote } = useFinancePrototypeState();
+  const { getLastCollectionNote, addCollectionNote, invoices, receivables, billableWork, auditEvents } =
+    useFinancePrototypeState();
   const inv = invoices.find((i) => i.id === invoiceId) ?? null;
 
   if (!inv) {
@@ -50,6 +50,9 @@ export function InvoiceDetailPage() {
       ? `${lastCollectionNote.text.slice(0, 80)}…`
       : lastCollectionNote.text
     : null;
+
+  const [noteEditorOpen, setNoteEditorOpen] = React.useState(false);
+  const [noteDraft, setNoteDraft] = React.useState("");
 
   function sourceModuleForTarget(target: string) {
     if (target.startsWith("drf_")) return "Drafts";
@@ -81,17 +84,19 @@ export function InvoiceDetailPage() {
           </Link>
           <ActionButton
             variant="primary"
-            disabled
-            disabledReason="Prototype: collection note editor is not implemented in v1."
+            onClick={() => {
+              setNoteDraft("");
+              setNoteEditorOpen(true);
+            }}
           >
-            Add collection note
+            Καταχώρηση Σημείωσης
           </ActionButton>
         </div>
       </div>
 
       <div className="grid-2" style={{ marginBottom: 16 }}>
         <Card
-          title="Fiscal / external transmission"
+          title="Διαβίβαση μέσω Παρόχου"
           right={
             <div className="row">
               <Chip tone={toneForInvoiceStatus(inv.status)}>{inv.status}</Chip>
@@ -168,17 +173,17 @@ export function InvoiceDetailPage() {
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        <Card title="Linked billable work (read-only)">
+        <Card title="Συνδεδεμένη χρεώσιμη εργασία (μόνο ανάγνωση)">
           <div style={{ overflow: "auto" }}>
             <table className="table">
               <thead>
                 <tr>
-                  <th>Work item</th>
-                  <th>Date</th>
-                  <th>Description</th>
-                  <th>Client</th>
-                  <th>Project</th>
-                  <th className="num">Amount</th>
+                  <th>Στοιχείο</th>
+                  <th>Ημ/νία</th>
+                  <th>Περιγραφή</th>
+                  <th>Πελάτης</th>
+                  <th>Έργο</th>
+                  <th className="num">Ποσό</th>
                 </tr>
               </thead>
               <tbody>
@@ -229,16 +234,55 @@ export function InvoiceDetailPage() {
           </div>
           <div className="row" style={{ justifyContent: "space-between" }}>
             <ActionButton
-              disabled
-              disabledReason="Prototype: collection note editor is not implemented in v1."
               variant="primary"
+              onClick={() => {
+                setNoteDraft("");
+                setNoteEditorOpen(true);
+              }}
             >
-              Add collection note
+              Καταχώρηση Σημείωσης
             </ActionButton>
             <Link className="btn" to={`/finance/revenue/collections?q=${encodeURIComponent(inv.number)}`}>
               Go to Collections
             </Link>
           </div>
+
+          {noteEditorOpen ? (
+            <div className="card" style={{ padding: 12, marginTop: 12, background: "var(--c-surface-2)" }}>
+              <div className="muted" style={{ fontSize: 12 }}>
+                Σημείωση είσπραξης
+              </div>
+              <textarea
+                className="input"
+                style={{ height: 90, paddingTop: 8, marginTop: 8 }}
+                value={noteDraft}
+                onChange={(e) => setNoteDraft(e.target.value)}
+                placeholder="π.χ. κλήση προγραμματισμένη, επιβεβαίωση πληρωμής, αναμενόμενη ημερομηνία…"
+              />
+              <div className="row" style={{ justifyContent: "space-between", marginTop: 10 }}>
+                <button
+                  className="btn"
+                  onClick={() => {
+                    setNoteEditorOpen(false);
+                    setNoteDraft("");
+                  }}
+                >
+                  Ακύρωση
+                </button>
+                <button
+                  className="btn primary"
+                  disabled={!noteDraft.trim()}
+                  onClick={() => {
+                    addCollectionNote(inv.id, noteDraft, receivable?.owner ?? inv.owner);
+                    setNoteEditorOpen(false);
+                    setNoteDraft("");
+                  }}
+                >
+                  Αποθήκευση σημείωσης
+                </button>
+              </div>
+            </div>
+          ) : null}
         </Card>
 
         <Card title="Payments">
@@ -252,11 +296,11 @@ export function InvoiceDetailPage() {
         <table className="table">
           <thead>
             <tr>
-              <th>At</th>
-              <th>Actor</th>
-              <th>Action</th>
-              <th>Source module</th>
-              <th>Summary</th>
+              <th>Χρόνος</th>
+              <th>Χρήστης</th>
+              <th>Ενέργεια</th>
+              <th>Ενότητα</th>
+              <th>Σύνοψη</th>
             </tr>
           </thead>
           <tbody>

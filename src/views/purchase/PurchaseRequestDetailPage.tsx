@@ -3,18 +3,20 @@ import { Link, useParams } from "react-router-dom";
 import { Card } from "../../ui/Card";
 import { Chip } from "../../ui/Chip";
 import type { PurchaseRequestStatus } from "../../domain/types";
-import { purchaseRequests, supplierBills, auditEvents } from "../../mock/data";
 import { formatCurrency } from "../../domain/format";
+import { useFinancePrototypeState } from "../../state/FinancePrototypeState";
 
 function toneForStatus(s: PurchaseRequestStatus) {
   if (s === "Approved (Committed)") return "success";
   if (s === "Rejected") return "danger";
   if (s === "Submitted") return "warning";
+  if (s === "Returned for Changes") return "warning";
   return "neutral";
 }
 
 export function PurchaseRequestDetailPage() {
   const { requestId } = useParams();
+  const { purchaseRequests, supplierBills, auditEvents, updatePurchaseRequestStatus } = useFinancePrototypeState();
   const req = purchaseRequests.find((r) => r.id === requestId) ?? null;
 
   if (!req) {
@@ -44,9 +46,26 @@ export function PurchaseRequestDetailPage() {
           <Link className="btn" to="/finance/spend/requests">
             Back to list
           </Link>
-          <button className="btn">Request changes</button>
-          <button className="btn primary" disabled={req.status === "Rejected" || req.status === "Cancelled"}>
-            Approve
+          <button
+            className="btn"
+            disabled={req.status === "Rejected" || req.status === "Cancelled"}
+            onClick={() => updatePurchaseRequestStatus(req.id, "Returned for Changes")}
+          >
+            Επιστροφή για Διορθώσεις
+          </button>
+          <button
+            className="btn primary"
+            disabled={req.status === "Rejected" || req.status === "Cancelled"}
+            onClick={() => updatePurchaseRequestStatus(req.id, "Approved (Committed)")}
+          >
+            Έγκριση
+          </button>
+          <button
+            className="btn"
+            disabled={req.status === "Rejected" || req.status === "Cancelled"}
+            onClick={() => updatePurchaseRequestStatus(req.id, "Rejected")}
+          >
+            Απόρριψη
           </button>
         </div>
       </div>
@@ -136,10 +155,10 @@ export function PurchaseRequestDetailPage() {
         <table className="table">
           <thead>
             <tr>
-              <th>At</th>
-              <th>Actor</th>
-              <th>Action</th>
-              <th>Summary</th>
+              <th>Χρόνος</th>
+              <th>Χρήστης</th>
+              <th>Ενέργεια</th>
+              <th>Σύνοψη</th>
             </tr>
           </thead>
           <tbody>

@@ -5,8 +5,8 @@ import { Chip } from "../../ui/Chip";
 import { SidePanel } from "../../ui/SidePanel";
 import { ActionButton } from "../../ui/ActionButton";
 import type { AuditEvent } from "../../domain/types";
-import { auditEvents as allEvents } from "../../mock/data";
 import { getEnumParam, getStringParam } from "../../router/query";
+import { useFinancePrototypeState } from "../../state/FinancePrototypeState";
 
 function toneForSeverity(s: AuditEvent["severity"]) {
   if (s === "Exception") return "danger";
@@ -17,6 +17,7 @@ function toneForSeverity(s: AuditEvent["severity"]) {
 export function AuditTrailPage() {
   const navigate = useNavigate();
   const loc = useLocation();
+  const { auditEvents: allEvents } = useFinancePrototypeState();
   const params = React.useMemo(() => new URLSearchParams(loc.search), [loc.search]);
   const initialSev = getEnumParam<AuditEvent["severity"]>(
     params,
@@ -120,13 +121,13 @@ export function AuditTrailPage() {
           <table className="table">
             <thead>
               <tr>
-                <th>At</th>
-                <th>Actor</th>
-                <th>Action</th>
-                <th>Target</th>
-                <th>Source module</th>
-                <th>Summary</th>
-                <th>Severity</th>
+                <th>Χρόνος</th>
+                <th>Χρήστης</th>
+                <th>Ενέργεια</th>
+                <th>Στόχος</th>
+                <th>Ενότητα</th>
+                <th>Σύνοψη</th>
+                <th>Σοβαρότητα</th>
               </tr>
             </thead>
             <tbody>

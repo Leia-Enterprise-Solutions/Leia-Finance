@@ -38,7 +38,7 @@ export function SupplierBillsPage() {
   const [q, setQ] = React.useState(initialQ ?? "");
   const [selected, setSelected] = React.useState<SupplierBill | null>(null);
 
-  const { supplierBills } = useFinancePrototypeState();
+  const { supplierBills, sendBillToPaymentsQueue } = useFinancePrototypeState();
 
   React.useEffect(() => {
     const url = new URL(window.location.href);
@@ -66,8 +66,8 @@ export function SupplierBillsPage() {
     <>
       <div className="page-head">
         <div className="page-title">
-          <h1>Τιμολόγια προμηθευτών</h1>
-          <p>Προβολή υποχρεώσεων: αντιστοίχιση vs αίτημα, ετοιμότητα, λήξεις και εξαιρέσεις.</p>
+          <h1>Τιμολόγια Προμηθευτών</h1>
+          <p>Προβολή υποχρεώσεων: αντιστοίχιση με αίτημα, ετοιμότητα πληρωμής, λήξεις και εξαιρέσεις.</p>
         </div>
         <div className="row">
           <ActionButton variant="primary" onClick={() => navigate("/finance/spend/payments")}>
@@ -151,12 +151,12 @@ export function SupplierBillsPage() {
                 <th>Προμηθευτής</th>
                 <th>Παραλαβή</th>
                 <th>Λήξη</th>
-                <th className="num">Days overdue</th>
-                <th className="num">Amount</th>
+                <th className="num">Ημέρες καθυστέρησης</th>
+                <th className="num">Ποσό</th>
                 <th>Αντιστοίχιση</th>
-                <th>Readiness</th>
+                <th>Ετοιμότητα</th>
                 <th>Συνδεδεμένο αίτημα</th>
-                <th>Blocked / mismatch reason</th>
+                <th>Αιτία block / ασυμφωνίας</th>
               </tr>
             </thead>
             <tbody>
@@ -262,6 +262,7 @@ export function SupplierBillsPage() {
                 className="btn primary"
                 disabled={selected.status !== "Ready" || selected.match !== "Matched"}
                 onClick={() => {
+                  sendBillToPaymentsQueue(selected.id);
                   navigate(`/finance/spend/payments?q=${encodeURIComponent(selected.id)}`);
                   setSelected(null);
                 }}

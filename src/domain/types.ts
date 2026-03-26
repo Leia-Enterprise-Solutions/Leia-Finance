@@ -13,6 +13,7 @@ export type CollectionSignal = "Not Due" | "Due Soon" | "Overdue";
 export type PurchaseRequestStatus =
   | "Draft"
   | "Submitted"
+  | "Returned for Changes"
   | "Rejected"
   | "Approved (Committed)"
   | "Cancelled";
@@ -45,7 +46,7 @@ export type InvoiceDraft = {
   currency: string;
   draftTotal: number;
   reservedLines: number;
-  status: "In Progress" | "Stale" | "Ready to Issue";
+  status: "In Progress" | "Stale" | "Ready to Issue" | "Issued";
 };
 
 export type ReceivableWorkItem = {
@@ -101,12 +102,19 @@ export type PaymentQueueItem = {
 
 export type BillableWorkStatus = "Available" | "Reserved" | "Invoiced" | "Non-billable";
 
+export type BillingType = "Hourly" | "Fixed";
+
 export type BillableWorkItem = {
   id: string;
   client: string;
   project?: string;
   date: string;
   description: string;
+  billingType: BillingType;
+  /** For Hourly */
+  hours?: number;
+  rate?: number;
+  /** Amount is the operational billing amount used in drafts/invoices. */
   amount: number;
   currency: string;
   status: BillableWorkStatus;
@@ -126,6 +134,8 @@ export type BudgetLine = {
   id: string;
   department: string;
   category: string;
+  project?: string;
+  task?: string;
   period: string;
   currency: string;
   budgeted: number;
@@ -138,6 +148,7 @@ export type EmployeeCostRow = {
   id: string;
   employee: string;
   team: string;
+  project?: string;
   period: string;
   currency: string;
   totalCost: number;

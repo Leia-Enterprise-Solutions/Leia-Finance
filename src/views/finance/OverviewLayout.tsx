@@ -16,11 +16,11 @@ export function OverviewLayout() {
     <div>
       <header className="finance-section-header">
         <div className="finance-section-header__left">
-          <span className="finance-section-header__title">Επισκόπηση</span>
+          <span className="finance-section-header__title">Πίνακας Επισκόπησης</span>
           <FinanceSubnav
             getActive={getActive}
             items={[
-              { label: "Αρχική", to: "/finance/overview" },
+              { label: "Πίνακας", to: "/finance/overview" },
               { label: "Ειδοποιήσεις / Εξαιρέσεις", to: "/finance/overview?tab=alerts" },
               { label: "Πρόσφατη δραστηριότητα", to: "/finance/overview?tab=activity" }
             ]}
@@ -30,10 +30,10 @@ export function OverviewLayout() {
           <DateRangeSwitcher />
           <div className="finance-overview-actions">
             <Link to="/finance/revenue/invoices" className="btn overview-action overview-action--secondary">
-              Τιμολόγια
+              Προβολή Τιμολογίων
             </Link>
             <Link to="/finance/spend/payments" className="btn primary overview-action overview-action--primary">
-              Ουρά πληρωμών
+              Προβολή Εκκρεμών Πληρωμών
             </Link>
           </div>
         </div>

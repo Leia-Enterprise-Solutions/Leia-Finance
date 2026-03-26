@@ -8,12 +8,12 @@ export function SpendLayout() {
     <div>
       <header className="finance-section-header">
         <div className="finance-section-header__left">
-          <span className="finance-section-header__title">Δαπάνες</span>
+          <span className="finance-section-header__title">Κύκλος Δαπανών / Υποχρεώσεων</span>
           <FinanceSubnav
             items={[
-              { label: "Αιτήματα", to: "/finance/spend/requests" },
-              { label: "Λογαριασμοί", to: "/finance/spend/bills" },
-              { label: "Ουρά πληρωμών", to: "/finance/spend/payments" }
+              { label: "Αιτήματα Αγοράς", to: "/finance/spend/requests" },
+              { label: "Τιμολόγια Προμηθευτών", to: "/finance/spend/bills" },
+              { label: "Ουρά Πληρωμών", to: "/finance/spend/payments" }
             ]}
           />
         </div>

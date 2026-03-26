@@ -4,7 +4,7 @@ import { Card } from "../../ui/Card";
 import { Chip } from "../../ui/Chip";
 import { KpiCard } from "../../ui/KpiCard";
 import { formatCurrency, formatInt } from "../../domain/format";
-import { invoiceDrafts, invoices, receivables } from "../../mock/data";
+import { useFinancePrototypeState } from "../../state/FinancePrototypeState";
 
 function sum(nums: number[]) {
   return nums.reduce((a, b) => a + b, 0);
@@ -12,6 +12,7 @@ function sum(nums: number[]) {
 
 export function RevenueHomePage() {
   const navigate = useNavigate();
+  const { invoiceDrafts, invoices, receivables } = useFinancePrototypeState();
 
   const staleDrafts = invoiceDrafts.filter((d) => d.status === "Stale").length;
   const readyDrafts = invoiceDrafts.filter((d) => d.status === "Ready to Issue").length;
@@ -88,7 +89,7 @@ export function RevenueHomePage() {
               Τιμολόγια
             </button>
             <button className="btn" onClick={() => navigate("/finance/revenue/collections")}>
-              Οφειλές
+              Απαιτήσεις
             </button>
           </div>
         </Card>

@@ -4,7 +4,7 @@ import { Card } from "../../ui/Card";
 import { Chip } from "../../ui/Chip";
 import { KpiCard } from "../../ui/KpiCard";
 import { formatCurrency, formatInt } from "../../domain/format";
-import { purchaseRequests, supplierBills, paymentsQueue } from "../../mock/data";
+import { useFinancePrototypeState } from "../../state/FinancePrototypeState";
 
 function sum(nums: number[]) {
   return nums.reduce((a, b) => a + b, 0);
@@ -12,6 +12,7 @@ function sum(nums: number[]) {
 
 export function SpendHomePage() {
   const navigate = useNavigate();
+  const { purchaseRequests, supplierBills, paymentsQueue } = useFinancePrototypeState();
 
   const openRequests = purchaseRequests.filter((r) => r.status === "Submitted").length;
   const needsChangesRequests = purchaseRequests.filter((r) => r.status === "Submitted" && r.attachments === 0).length;

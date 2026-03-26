@@ -4,7 +4,8 @@ import { Card } from "../../ui/Card";
 import { Chip } from "../../ui/Chip";
 import { KpiCard } from "../../ui/KpiCard";
 import { formatCurrency, formatInt } from "../../domain/format";
-import { budgetLines, employeeCosts, auditEvents } from "../../mock/data";
+import { budgetLines, employeeCosts } from "../../mock/data";
+import { useFinancePrototypeState } from "../../state/FinancePrototypeState";
 
 function sum(nums: number[]) {
   return nums.reduce((a, b) => a + b, 0);
@@ -12,6 +13,7 @@ function sum(nums: number[]) {
 
 export function ControlHomePage() {
   const navigate = useNavigate();
+  const { auditEvents } = useFinancePrototypeState();
 
   const totalCommitted = sum(budgetLines.map((b) => b.committed));
   const totalActualPaid = sum(budgetLines.map((b) => b.actualPaid));

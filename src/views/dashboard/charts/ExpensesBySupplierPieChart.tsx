@@ -1,7 +1,7 @@
 import React from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { formatCurrency } from "../../../domain/format";
-import { supplierBills } from "../../../mock/data";
+import { useFinancePrototypeState } from "../../../state/FinancePrototypeState";
 
 type Slice = {
   supplier: string;
@@ -18,9 +18,9 @@ const COLORS = [
   "rgba(59, 130, 246, 0.90)"
 ];
 
-function buildSlices(): { total: number; slices: Slice[] } {
+function buildSlicesFromBills(bills: { supplier: string; amount: number }[]): { total: number; slices: Slice[] } {
   const totals = new Map<string, number>();
-  for (const b of supplierBills) {
+  for (const b of bills) {
     totals.set(b.supplier, (totals.get(b.supplier) ?? 0) + b.amount);
   }
 
@@ -38,7 +38,8 @@ function buildSlices(): { total: number; slices: Slice[] } {
 }
 
 export function ExpensesBySupplierPieChart() {
-  const { total, slices } = React.useMemo(() => buildSlices(), []);
+  const { supplierBills } = useFinancePrototypeState();
+  const { total, slices } = React.useMemo(() => buildSlicesFromBills(supplierBills), [supplierBills]);
 
   return (
     <div style={{ width: "100%", minWidth: 0, height: "100%", display: "flex", flexDirection: "column", gap: 8 }}>
