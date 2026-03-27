@@ -7,6 +7,15 @@ import { Popover } from "../../ui/Popover";
 import { SidePanel } from "../../ui/SidePanel";
 import type { BillableWorkItem, DraftLine } from "../../domain/types";
 import { formatCurrency } from "../../domain/format";
+import {
+  clampPct,
+  computeInvoiceTotals,
+  computeLineNet,
+  computeLineVat,
+  normalizeDraftLine,
+  vatRateFor,
+  type VatCategory
+} from "../../domain/invoicingCalc";
 import { useFinancePrototypeState } from "../../state/FinancePrototypeState";
 import { usePermissions } from "../../state/permissions";
 
@@ -123,8 +132,6 @@ function buildDraftInvoiceNumber(draftId: string) {
   return `INV-${year}-${numericSeed}`;
 }
 
-type VatCategory = NonNullable<DraftLine["vatCategory"]>;
-
 const VAT_OPTIONS: { id: VatCategory; label: string; rate: number }[] = [
   { id: "Standard 24%", label: "24% (Κανονικό)", rate: 0.24 },
   { id: "Reduced 13%", label: "13% (Μειωμένο)", rate: 0.13 },
@@ -133,28 +140,6 @@ const VAT_OPTIONS: { id: VatCategory; label: string; rate: number }[] = [
   { id: "Exempt", label: "Απαλλαγή", rate: 0 },
   { id: "Reverse charge", label: "Αντίστροφη χρέωση", rate: 0 }
 ];
-
-function clampPct(n: number) {
-  if (!Number.isFinite(n)) return 0;
-  return Math.min(100, Math.max(0, n));
-}
-
-function vatRateFor(category: VatCategory) {
-  return VAT_OPTIONS.find((o) => o.id === category)?.rate ?? 0.24;
-}
-
-function computeLineNet(l: DraftLine) {
-  const qty = Number.isFinite(l.quantity) ? (l.quantity as number) : 1;
-  const unitPrice = Number.isFinite(l.unitPrice) ? (l.unitPrice as number) : Number.isFinite(l.amount) ? l.amount : 0;
-  const discountPct = clampPct(Number.isFinite(l.discountPct) ? (l.discountPct as number) : 0);
-  const net = qty * unitPrice * (1 - discountPct / 100);
-  return Number.isFinite(net) ? net : 0;
-}
-
-function computeLineVat(l: DraftLine) {
-  const cat = (l.vatCategory ?? "Standard 24%") as VatCategory;
-  return computeLineNet(l) * vatRateFor(cat);
-}
 
 export function InvoiceDraftBuilderPage() {
   const { draftId } = useParams();
@@ -489,15 +474,7 @@ export function InvoiceDraftBuilderPage() {
 
   // Normalize legacy lines (pre-migration) into computed schema.
   const normalizedLines = React.useMemo(() => {
-    return lines.map((l) => {
-      const qty = Number.isFinite(l.quantity) ? (l.quantity as number) : 1;
-      const unitPrice = Number.isFinite(l.unitPrice) ? (l.unitPrice as number) : Number.isFinite(l.amount) ? l.amount : 0;
-      const discountPct = Number.isFinite(l.discountPct) ? (l.discountPct as number) : 0;
-      const vatCategory = (l.vatCategory ?? "Standard 24%") as VatCategory;
-      const unit = l.unit ?? "ea";
-      const next: DraftLine = { ...l, quantity: qty, unitPrice, discountPct, vatCategory, unit, amount: computeLineNet({ ...l, quantity: qty, unitPrice, discountPct }) };
-      return next;
-    });
+    return lines.map(normalizeDraftLine);
   }, [lines]);
 
   React.useEffect(() => {
@@ -507,19 +484,15 @@ export function InvoiceDraftBuilderPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resolvedDraftId]);
 
-  const totalNet = normalizedLines.reduce((a, l) => a + computeLineNet(l), 0);
-  const totalVat = normalizedLines.reduce((a, l) => a + computeLineVat(l), 0);
-  const totalGross = totalNet + totalVat;
-  const totalOtherTaxes = 0;
-  const totalPreDiscount = normalizedLines.reduce((a, l) => {
-    const qty = Number.isFinite(l.quantity) ? (l.quantity as number) : 1;
-    const unitPrice = Number.isFinite(l.unitPrice) ? (l.unitPrice as number) : Number.isFinite(l.amount) ? l.amount : 0;
-    const v = qty * unitPrice;
-    return a + (Number.isFinite(v) ? v : 0);
-  }, 0);
-  const totalDiscount = Math.max(0, totalPreDiscount - totalNet);
+  const totals = React.useMemo(() => computeInvoiceTotals(normalizedLines), [normalizedLines]);
+  const totalNet = totals.totalNet;
+  const totalVat = totals.totalVat;
+  const totalOtherTaxes = totals.totalOtherTaxes;
+  const totalGross = totals.grandTotal;
+  const totalPreDiscount = totals.totalPreDiscount;
+  const totalDiscount = totals.totalDiscount;
   const netAfterDiscountAndCharges = totalNet + totalOtherTaxes;
-  const grandTotal = netAfterDiscountAndCharges + totalVat;
+  const grandTotal = totals.grandTotal;
   const currency = lines[0]?.currency ?? draftCurrency ?? "EUR";
   const customLines = normalizedLines.filter((l) => l.sourceId.startsWith("custom_"));
   const hasSourceLines = normalizedLines.some((l) => !l.sourceId.startsWith("custom_"));

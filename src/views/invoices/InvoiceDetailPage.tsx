@@ -181,6 +181,62 @@ export function InvoiceDetailPage() {
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {inv.document ? (
+          <Card title="Issued document snapshot">
+            <div className="finance-kv-grid" style={{ marginBottom: 10 }}>
+              <div>
+                <div className="finance-kv__label">Series / Invoice no</div>
+                <div>{`${inv.document.header.series ?? "—"} / ${inv.document.header.invoiceNumber ?? "—"}`}</div>
+              </div>
+              <div>
+                <div className="finance-kv__label">Billing entity</div>
+                <div>{inv.document.header.billingEntity ?? "—"}</div>
+              </div>
+              <div>
+                <div className="finance-kv__label">Payment terms</div>
+                <div>{inv.document.header.paymentTerms ?? "—"}</div>
+              </div>
+              <div>
+                <div className="finance-kv__label">VAT total</div>
+                <div>{formatCurrency(inv.document.totals.totalVat, inv.currency)}</div>
+              </div>
+              <div>
+                <div className="finance-kv__label">Net total</div>
+                <div>{formatCurrency(inv.document.totals.totalNet, inv.currency)}</div>
+              </div>
+            </div>
+
+            <div className="finance-table-wrap">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Ref</th>
+                    <th>Περιγραφή</th>
+                    <th className="num">Qty</th>
+                    <th className="num">Unit price</th>
+                    <th className="num">Disc %</th>
+                    <th>VAT</th>
+                    <th className="num">Net</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {inv.document.lines.map((l) => (
+                    <tr key={l.id}>
+                      <td style={{ fontFamily: "var(--font-mono)", fontSize: 12 }}>{l.sourceId.startsWith("custom_") ? "—" : l.sourceId}</td>
+                      <td>{l.description}</td>
+                      <td className="num">{String(l.quantity ?? 1)}</td>
+                      <td className="num">{formatCurrency(l.unitPrice ?? l.amount ?? 0, l.currency)}</td>
+                      <td className="num">{String(l.discountPct ?? 0)}</td>
+                      <td className="muted">{l.vatCategory ?? "Standard 24%"}</td>
+                      <td className="num">{formatCurrency(l.amount, l.currency)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        ) : null}
+
         <Card title="Συνδεδεμένη χρεώσιμη εργασία (μόνο ανάγνωση)">
           <div className="finance-table-wrap">
             <table className="table">

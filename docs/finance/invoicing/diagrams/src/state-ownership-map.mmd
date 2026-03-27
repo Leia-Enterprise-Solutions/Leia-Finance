@@ -1,0 +1,31 @@
+%% State ownership map (v1 prototype) — highlight drift points.
+flowchart LR
+  subgraph UI["UI — Invoice Draft Builder"]
+    L1["Local state<br/>header fields, lines while editing"]:::ui
+    P1["Derived preview<br/>VAT preview, gross totals"]:::preview
+  end
+
+  subgraph STORE["Prototype store — FinancePrototypeState<br/>in-memory, seeded"]
+    D1["InvoiceDraft + draftLinesByDraftId<br/>drafts"]:::store
+    I1["Invoice<br/>issued, minimal"]:::store
+    R1["ReceivableWorkItem<br/>outstanding"]:::store
+    B1["BillableWorkItem<br/>status/reservation/linkage"]:::store
+    A1["AuditEvent + notes"]:::store
+  end
+
+  L1 -->|Save| D1
+  L1 -->|Issue calls Save first| I1
+  I1 --> R1
+  I1 -->|linkage| B1
+  I1 --> A1
+
+  P1 -.->|UI-only preview| L1
+  P1 -.->|ΔΕΝ αποθηκεύεται ως canonical total| I1
+
+  classDef ui fill:#fff7ed,stroke:#fb923c,color:#7c2d12;
+  classDef preview fill:#fdf2f8,stroke:#db2777,color:#831843;
+  classDef store fill:#eff6ff,stroke:#3b82f6,color:#1e3a8a;
+
+  classDef warn fill:#fef2f2,stroke:#ef4444,color:#7f1d1d;
+  W1[["Drift σημείο: UI δείχνει VAT-inclusive totals,<br/>store issues net-only Invoice.total → επηρεάζει ReceivableWorkItem.outstanding."]]:::warn
+  P1 -.-> W1

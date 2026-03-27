@@ -190,6 +190,12 @@ High.
 ### Τι επαληθεύτηκε
 - Τα βασικά entry points και η end-to-end prototype ροή draft→issue→invoice→receivable είναι παρούσα και λειτουργεί ως state-only flow.
 
+### Κρίσιμα verified ευρήματα (high-signal)
+- **Canonical source of truth**: `src/state/FinancePrototypeState.tsx` (in-memory, seeded από `src/mock/data.ts`) — δεν εντοπίστηκε persistence/API layer στο repo. (Δες `docs/analysis/invoicing_flows_and_states.md`, `docs/analysis/invoicing_system_map.md` “Repository coverage statement”.)
+- **Draft vs issued data model**: ο `InvoiceDraftBuilderPage` μοντελοποιεί πλούσιο header+lines, αλλά το issued `Invoice` είναι truncated (δεν κρατά lines/header snapshot). (Δες `docs/analysis/invoicing_domain_and_calculations.md` §§1–3.)
+- **Totals ασυνέπεια (net vs VAT-inclusive)**: ο builder δείχνει VAT-inclusive totals, ενώ το store εκδίδει net-only `Invoice.total` και `ReceivableWorkItem.outstanding`. (Δες `docs/analysis/invoicing_flows_and_states.md` “Flow D” και `docs/analysis/invoicing_consistency_audit.md` §1.)
+- **Transmission/myData/E3/ΣΤ.9 είναι placeholders**: υπάρχουν ως UI/fields/types αλλά χωρίς downstream adapter/workflow. (Δες `docs/analysis/invoicing_domain_and_calculations.md` §7 και `docs/analysis/invoicing_consistency_audit.md` §§5–6.)
+
 ### Τι παραμένει αβέβαιο / άγνωστο (θα τεκμηριωθεί στα επόμενα passes)
 - Αν υπάρχει “κρυμμένη” υποστήριξη myData/compliance σε docs ή stories (μη κώδικα) που δεν έχει χαρτογραφηθεί πλήρως.
 - Αν υπάρχουν παράλληλες/legacy υλοποιήσεις (π.χ. δεύτερα copies σε `src\views\...` vs `src/views/...` φαίνονται στο git status) που μπορεί να μπερδεύουν build/resolve σε Windows.

@@ -12,6 +12,7 @@ import type {
   PurchaseRequestStatus,
   SupplierBillStatus
 } from "../domain/types";
+import { computeInvoiceTotals, normalizeDraftLine } from "../domain/invoicingCalc";
 import {
   auditEvents as initialAuditEvents,
   billableWork as initialBillableWork,
@@ -24,16 +25,8 @@ import {
   supplierBills as initialSupplierBills
 } from "../mock/data";
 
-function computeDraftNetTotal(lines: DraftLine[]) {
-  return lines.reduce((a, l) => {
-    const qty = Number.isFinite(l.quantity) ? (l.quantity as number) : 1;
-    const unitPrice = Number.isFinite(l.unitPrice) ? (l.unitPrice as number) : Number.isFinite(l.amount) ? l.amount : 0;
-    const discountPct = Number.isFinite(l.discountPct) ? (l.discountPct as number) : 0;
-    const discountFactor = 1 - Math.min(100, Math.max(0, discountPct)) / 100;
-    const net = qty * unitPrice * discountFactor;
-    const fallback = Number.isFinite(l.amount) ? l.amount : 0;
-    return a + (Number.isFinite(net) ? net : fallback);
-  }, 0);
+function computeDraftGrandTotal(lines: DraftLine[]) {
+  return computeInvoiceTotals(lines).grandTotal;
 }
 
 type CollectionNote = {
@@ -188,11 +181,12 @@ export function FinancePrototypeStateProvider({ children }: { children: React.Re
         });
       },
       setDraftLines: (draftId, lines) => {
-        setDraftLinesByDraftId((prev) => ({ ...prev, [draftId]: lines }));
+        const normalized = lines.map(normalizeDraftLine);
+        setDraftLinesByDraftId((prev) => ({ ...prev, [draftId]: normalized }));
         setInvoiceDrafts((prev) =>
           prev.map((d) => {
             if (d.id !== draftId) return d;
-            const total = computeDraftNetTotal(lines);
+            const total = computeDraftGrandTotal(normalized);
             const nextStatus: InvoiceDraft["status"] =
               d.status === "Issued" ? "Issued" : lines.length === 0 ? "In Progress" : "Ready to Issue";
             return {
@@ -225,7 +219,7 @@ export function FinancePrototypeStateProvider({ children }: { children: React.Re
       },
       issueDraft: (draftId, payload) => {
         const draft = invoiceDrafts.find((d) => d.id === draftId) ?? null;
-        const lines = draftLinesByDraftId[draftId] ?? [];
+        const lines = (draftLinesByDraftId[draftId] ?? []).map(normalizeDraftLine);
         if (!draft || lines.length === 0) return null;
 
         invoiceSeqRef.current += 1;
@@ -239,7 +233,8 @@ export function FinancePrototypeStateProvider({ children }: { children: React.Re
             d.setDate(d.getDate() + 30);
             return d.toISOString().slice(0, 10);
           })();
-        const total = computeDraftNetTotal(lines);
+        const totals = computeInvoiceTotals(lines);
+        const total = totals.grandTotal;
         const currency = lines[0]?.currency ?? draft.currency ?? "EUR";
 
         const inv: Invoice = {
@@ -254,7 +249,27 @@ export function FinancePrototypeStateProvider({ children }: { children: React.Re
           paid: 0,
           status: "Issued",
           transmission: "Pending",
-          owner: payload.owner
+          owner: payload.owner,
+          draftId,
+          document: {
+            header: {
+              documentType: draft.documentType,
+              paymentWay: draft.paymentWay,
+              billingEntity: draft.billingEntity,
+              contractRef: draft.contractRef,
+              customerReference: draft.customerReference,
+              subject: draft.subject,
+              paymentTerms: draft.paymentTerms,
+              externalNote: draft.externalNote,
+              internalNote: draft.internalNote,
+              series: draft.series,
+              invoiceNumber: draft.invoiceNumber,
+              relatedDocument: draft.relatedDocument,
+              movement: draft.movement
+            },
+            lines,
+            totals
+          }
         };
 
         setInvoices((prev) => [inv, ...prev]);

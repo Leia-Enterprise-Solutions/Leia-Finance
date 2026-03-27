@@ -30,11 +30,41 @@ export type Invoice = {
   issueDate: string;
   dueDate: string;
   currency: string;
+  /** Grand total (net + VAT + other taxes). */
   total: number;
   paid: number;
   status: InvoiceStatus;
   transmission: TransmissionStatus;
   owner: string;
+
+  /** Prototype: snapshot of issued document contents (v2). */
+  draftId?: string;
+  document?: {
+    header: {
+      documentType?: string;
+      paymentWay?: string;
+      billingEntity?: string;
+      contractRef?: string;
+      customerReference?: string;
+      subject?: string;
+      paymentTerms?: "Net 15" | "Net 30" | "Net 45";
+      externalNote?: string;
+      internalNote?: string;
+      series?: string;
+      invoiceNumber?: string;
+      relatedDocument?: InvoiceDraft["relatedDocument"];
+      movement?: InvoiceDraft["movement"];
+    };
+    lines: DraftLine[];
+    totals: {
+      totalPreDiscount: number;
+      totalDiscount: number;
+      totalNet: number;
+      totalVat: number;
+      totalOtherTaxes: number;
+      grandTotal: number;
+    };
+  };
 };
 
 export type InvoiceDraft = {

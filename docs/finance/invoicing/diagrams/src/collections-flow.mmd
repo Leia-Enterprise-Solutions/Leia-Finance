@@ -1,0 +1,12 @@
+%% Collections follow-up flow (v1 prototype)
+flowchart TD
+  A["Issued Invoice / Receivable<br/>στο prototype store"] --> B["Aging / overdue review<br/>Worklist Collections"]
+  B --> C["Follow-up note / owner context<br/>addCollectionNote"]
+  C --> D{Πρόοδος πληρωμής;}
+  D -->|Όχι| B
+  D -->|Ναι| E["Μείωση outstanding / ενημέρωση paid state<br/>όπου/όσο υποστηρίζεται στο prototype"]
+  E --> F["Paid / Collected<br/>κλείσιμο απαίτησης"]
+
+  classDef note fill:#f0fdf4,stroke:#22c55e,color:#14532d;
+  N1[["Σημείωση: στο v1 δεν υπάρχει end-to-end payment registration workflow.<br/>Η “πρόοδος πληρωμής” μπορεί να είναι seeded/mock."]]:::note
+  E -.-> N1

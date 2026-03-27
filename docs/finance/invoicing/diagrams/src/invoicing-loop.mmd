@@ -1,0 +1,10 @@
+%% Invoicing loop (v1 prototype) — Greek labels, minimal semantics.
+flowchart LR
+  BW["Billable Work<br/>προς τιμολόγηση"] --> DR["Invoice Draft<br/>προσχέδιο"]
+  DR --> IS["Issued Invoice / Receivable<br/>έκδοση στο prototype store"]
+  IS --> CO["Collections follow-up<br/>aging/overdue/notes"]
+  CO --> CC["Collected Cash<br/>είσπραξη/κλείσιμο απαίτησης"]
+
+  classDef note fill:#fff7ed,stroke:#fb923c,color:#7c2d12;
+  N1[["Σημείωση: v1 = UI + in-memory store.<br/>Δεν υπάρχει backend/persistence ή compliance automation."]]:::note
+  DR -.-> N1
