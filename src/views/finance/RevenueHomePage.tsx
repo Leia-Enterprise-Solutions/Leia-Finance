@@ -31,7 +31,10 @@ export function RevenueHomePage() {
         </div>
         <div className="row">
           <button className="btn primary" onClick={() => navigate("/finance/revenue/drafts/builder")}>
-            Νέο πρόχειρο
+            <span className="row" style={{ gap: 8, alignItems: "center" }}>
+              <i className="bi bi-plus-lg" aria-hidden="true" />
+              Νέο τιμολόγιο
+            </span>
           </button>
         </div>
       </div>

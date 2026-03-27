@@ -20,6 +20,12 @@ export function CriticalPointsPanel({
   nextSteps: CriticalPointItem[];
 }) {
   const navigate = useNavigate();
+  const [tab, setTab] = React.useState<"risks" | "next">(() => (risks.length ? "risks" : "next"));
+
+  React.useEffect(() => {
+    if (tab === "risks" && risks.length === 0 && nextSteps.length > 0) setTab("next");
+    if (tab === "next" && nextSteps.length === 0 && risks.length > 0) setTab("risks");
+  }, [risks.length, nextSteps.length, tab]);
 
   const renderItem = (it: CriticalPointItem) => (
     <button
@@ -52,24 +58,32 @@ export function CriticalPointsPanel({
     </button>
   );
 
+  const list = tab === "risks" ? risks : nextSteps;
+  const empty = tab === "risks" ? "Δεν υπάρχουν κρίσιμα ρίσκα." : "Δεν υπάρχουν εκκρεμότητες.";
+
   return (
     <div className="finance-stack">
-      <div>
-        <div className="finance-section-label">
-          Κίνδυνοι
-        </div>
-        <div className="finance-critical-list">
-          {risks.length ? risks.map(renderItem) : <div className="muted">Δεν υπάρχουν κρίσιμα ρίσκα.</div>}
-        </div>
+      <div className="finance-tabs">
+        <button
+          type="button"
+          className={`finance-tab ${tab === "risks" ? "finance-tab--active" : ""}`}
+          onClick={() => setTab("risks")}
+          aria-pressed={tab === "risks"}
+        >
+          Κίνδυνοι <span className="finance-tab__count">{risks.length}</span>
+        </button>
+        <button
+          type="button"
+          className={`finance-tab ${tab === "next" ? "finance-tab--active" : ""}`}
+          onClick={() => setTab("next")}
+          aria-pressed={tab === "next"}
+        >
+          Επόμενα βήματα <span className="finance-tab__count">{nextSteps.length}</span>
+        </button>
       </div>
 
-      <div>
-        <div className="finance-section-label">
-          Επόμενα βήματα
-        </div>
-        <div className="finance-critical-list">
-          {nextSteps.length ? nextSteps.map(renderItem) : <div className="muted">Δεν υπάρχουν εκκρεμότητες.</div>}
-        </div>
+      <div className="finance-critical-list finance-critical-list--scroll">
+        {list.length ? list.map(renderItem) : <div className="muted">{empty}</div>}
       </div>
     </div>
   );

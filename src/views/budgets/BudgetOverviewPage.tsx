@@ -117,9 +117,10 @@ export function BudgetOverviewPage() {
         </div>
       </div>
 
-      <Card title="Φίλτρα">
-        <div className="filters">
-          <div className="field" style={{ minWidth: 220 }}>
+      <div className="invoice-filters-bar">
+        <div className="invoice-filters-row">
+          <div className="invoice-filters-main">
+            <div className="field invoice-filter-field">
             <label>Τμήμα</label>
             <select className="select" value={dept} onChange={(e) => setDept(e.target.value)}>
               {departments.map((d) => (
@@ -128,44 +129,61 @@ export function BudgetOverviewPage() {
                 </option>
               ))}
             </select>
-          </div>
-          <div className="field" style={{ minWidth: 220 }}>
-            <label>Έργο</label>
-            <select className="select" value={project} onChange={(e) => setProject(e.target.value)}>
-              {projects.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="field" style={{ minWidth: 220 }}>
-            <label>Εργασία</label>
-            <select className="select" value={task} onChange={(e) => setTask(e.target.value)}>
-              {tasks.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="field" style={{ minWidth: 180 }}>
-            <label>Σήμα</label>
-            <select
-              className="select"
-              value={signal}
-              onChange={(e) => setSignal(e.target.value as BudgetSignal | "All")}
+            </div>
+            <div className="field invoice-filter-field">
+              <label>Έργο</label>
+              <select className="select" value={project} onChange={(e) => setProject(e.target.value)}>
+                {projects.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field invoice-filter-field">
+              <label>Εργασία</label>
+              <select className="select" value={task} onChange={(e) => setTask(e.target.value)}>
+                {tasks.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field invoice-filter-field">
+              <label>Σήμα</label>
+              <select
+                className="select"
+                value={signal}
+                onChange={(e) => setSignal(e.target.value as BudgetSignal | "All")}
+              >
+                <option value="All">Όλα</option>
+                <option value="Healthy">Healthy</option>
+                <option value="Warning">Warning</option>
+                <option value="Breach">Breach</option>
+              </select>
+            </div>
+            <button
+              className="btn ghost btn--sm"
+              onClick={() => {
+                setDept("All");
+                setProject("All");
+                setTask("All");
+                setSignal("All");
+              }}
+              title="Εκκαθάριση φίλτρων"
             >
-              <option value="All">Όλα</option>
-              <option value="Healthy">Healthy</option>
-              <option value="Warning">Warning</option>
-              <option value="Breach">Breach</option>
-            </select>
+              <span>Εκκαθάριση</span>
+            </button>
           </div>
-          <Chip tone="neutral">{filtered.length} γραμμές</Chip>
-          <Chip tone="danger">{filtered.filter((l) => l.signal === "Breach").length} breach</Chip>
+          <div className="invoice-filters-right">
+            <div className="row" style={{ gap: 8 }}>
+              <Chip tone="neutral">{filtered.length} γραμμές</Chip>
+              <Chip tone="danger">{filtered.filter((l) => l.signal === "Breach").length} breach</Chip>
+            </div>
+          </div>
         </div>
-      </Card>
+      </div>
 
       <div className="finance-spacer" />
 

@@ -6,6 +6,8 @@ import { Chip } from "../../ui/Chip";
 import { formatCurrency, formatInt, formatCurrencyCompact } from "../../domain/format";
 import { budgetLines } from "../../mock/data";
 import type { InvoiceStatus } from "../../domain/types";
+import type { DateRangePreset } from "../../state/dateRangeTypes";
+import { computePreset } from "../../state/dateRangePresets";
 import { InvoicedVsCollectedChart } from "./charts/InvoicedVsCollectedChart";
 import { CashFlowChart } from "./charts/CashFlowChart";
 import { ExpensesBySupplierPieChart } from "./charts/ExpensesBySupplierPieChart";
@@ -22,6 +24,36 @@ function sum(nums: number[]) {
 export function DashboardPage() {
   const navigate = useNavigate();
   const { invoices, paymentsQueue, receivables, supplierBills, auditEvents } = useFinancePrototypeState();
+  const [cashflowRangeMonths, setCashflowRangeMonths] = React.useState<3 | 6 | 12>(6);
+  const [receivablesRangePreset, setReceivablesRangePreset] = React.useState<DateRangePreset>("month");
+  const [payablesRangePreset, setPayablesRangePreset] = React.useState<DateRangePreset>("month");
+
+  function ymdToLocalStart(ymd: string) {
+    // Interpret YYYY-MM-DD as local day start to match date pickers.
+    const [y, m, d] = ymd.split("-").map((x) => Number(x));
+    return new Date(y, (m ?? 1) - 1, d ?? 1, 0, 0, 0, 0);
+  }
+
+  const receivablesRange = React.useMemo(() => computePreset(receivablesRangePreset), [receivablesRangePreset]);
+  const payablesRange = React.useMemo(() => computePreset(payablesRangePreset), [payablesRangePreset]);
+
+  const receivablesInRange = React.useMemo(() => {
+    const start = receivablesRange.start.getTime();
+    const end = receivablesRange.end.getTime();
+    return receivables.filter((r) => {
+      const t = ymdToLocalStart(r.dueDate).getTime();
+      return Number.isFinite(t) && t >= start && t <= end;
+    });
+  }, [receivables, receivablesRange.start, receivablesRange.end]);
+
+  const payablesInRange = React.useMemo(() => {
+    const start = payablesRange.start.getTime();
+    const end = payablesRange.end.getTime();
+    return supplierBills.filter((b) => {
+      const t = ymdToLocalStart(b.dueDate).getTime();
+      return Number.isFinite(t) && t >= start && t <= end;
+    });
+  }, [supplierBills, payablesRange.start, payablesRange.end]);
 
   const grossInvoiced = sum(invoices.map((i) => i.total));
   const collected = sum(invoices.map((i) => i.paid));
@@ -29,20 +61,18 @@ export function DashboardPage() {
     supplierBills.filter((b) => b.status === "Paid").map((b) => b.amount)
   );
   const netCash = collected - expensesPaid;
-  const outReceivables = sum(receivables.map((r) => r.outstanding));
-  const outPayables = sum(
-    supplierBills.filter((b) => b.status !== "Paid").map((b) => b.amount)
-  );
+  const outReceivables = sum(receivablesInRange.map((r) => r.outstanding));
+  const outPayables = sum(payablesInRange.filter((b) => b.status !== "Paid").map((b) => b.amount));
   const committedSpend = sum(budgetLines.map((b) => b.committed));
-  const overdueRecCount = receivables.filter((r) => r.signal === "Overdue").length;
-  const dueSoonRecCount = receivables.filter((r) => r.signal === "Due Soon").length;
-  const notDueRecCount = receivables.filter((r) => r.signal === "Not Due").length;
-  const overduePayCount = supplierBills.filter((b) => b.status === "Overdue").length;
-  const blockedPayCount = supplierBills.filter((b) => b.status === "Blocked").length;
-  const blockedPayAmount = sum(supplierBills.filter((b) => b.status === "Blocked").map((b) => b.amount));
+  const overdueRecCount = receivablesInRange.filter((r) => r.signal === "Overdue").length;
+  const dueSoonRecCount = receivablesInRange.filter((r) => r.signal === "Due Soon").length;
+  const notDueRecCount = receivablesInRange.filter((r) => r.signal === "Not Due").length;
+  const overduePayCount = payablesInRange.filter((b) => b.status === "Overdue").length;
+  const blockedPayCount = payablesInRange.filter((b) => b.status === "Blocked").length;
+  const blockedPayAmount = sum(payablesInRange.filter((b) => b.status === "Blocked").map((b) => b.amount));
   const blockedPayments = paymentsQueue.filter((p) => p.readiness === "Blocked").length;
-  const payReady = supplierBills.filter((b) => b.status === "Ready").length;
-  const payBlocked = supplierBills.filter((b) => b.status === "Blocked").length;
+  const payReady = payablesInRange.filter((b) => b.status === "Ready").length;
+  const payBlocked = payablesInRange.filter((b) => b.status === "Blocked").length;
 
   // —— Zone 2: 4 premium summary widgets (strongest emphasis)
   const topWidgets = [
@@ -88,7 +118,7 @@ export function DashboardPage() {
   ];
 
   // —— Zone 3: Operational status panels (receivables + payables)
-  const recSublabel = `${formatInt(receivables.length)} ανοικτές · Μη ληξιπρ. ${notDueRecCount} · Σύντομα ${dueSoonRecCount} · Ληξιπρ. ${overdueRecCount}`;
+  const recSublabel = `${formatInt(receivablesInRange.length)} ανοικτές · Μη ληξιπρ. ${notDueRecCount} · Σύντομα ${dueSoonRecCount} · Ληξιπρ. ${overdueRecCount}`;
   const paySublabel = `Έτοιμες ${payReady} · Μπλοκ. ${payBlocked} · Ληξιπρ. ${overduePayCount}`;
 
   const criticalRisks = [
@@ -288,6 +318,19 @@ export function DashboardPage() {
             sublabel={recSublabel}
             ctaLabel="Προβολή απαιτήσεων"
             ctaTo="/finance/revenue/collections"
+            headerRight={
+              <select
+                className="select overview-domain-panel__range"
+                value={receivablesRangePreset}
+                onChange={(e) => setReceivablesRangePreset(e.target.value as DateRangePreset)}
+                aria-label="Περίοδος απαιτήσεων"
+              >
+                <option value="month">Μήνας</option>
+                <option value="last_month">Τελευταίος μήνας</option>
+                <option value="ytd">YTD</option>
+                <option value="lytd">LYTD</option>
+              </select>
+            }
           >
             <AgingSnapshot kind="receivables" compact />
           </OverviewDomainPanel>
@@ -298,6 +341,19 @@ export function DashboardPage() {
             sublabel={paySublabel}
             ctaLabel="Προβολή υποχρεώσεων"
             ctaTo="/finance/spend/payments"
+            headerRight={
+              <select
+                className="select overview-domain-panel__range"
+                value={payablesRangePreset}
+                onChange={(e) => setPayablesRangePreset(e.target.value as DateRangePreset)}
+                aria-label="Περίοδος υποχρεώσεων"
+              >
+                <option value="month">Μήνας</option>
+                <option value="last_month">Τελευταίος μήνας</option>
+                <option value="ytd">YTD</option>
+                <option value="lytd">LYTD</option>
+              </select>
+            }
           >
             <AgingSnapshot kind="payables" compact />
             <div className="overview-domain-panel__supporting">
@@ -314,8 +370,22 @@ export function DashboardPage() {
           <CriticalPointsPanel risks={criticalRisks} nextSteps={criticalNextSteps} />
         </Card>
 
-        <Card title="Ταμειακή ροή">
-          <CashFlowChart />
+        <Card
+          title="Ταμειακή ροή"
+          right={
+            <select
+              className="select"
+              value={String(cashflowRangeMonths)}
+              onChange={(e) => setCashflowRangeMonths(Number(e.target.value) as 3 | 6 | 12)}
+              aria-label="Εύρος ταμειακής ροής"
+            >
+              <option value="3">3 μήνες</option>
+              <option value="6">6 μήνες</option>
+              <option value="12">12 μήνες</option>
+            </select>
+          }
+        >
+          <CashFlowChart months={cashflowRangeMonths} />
         </Card>
 
         <Card title="Εκδόσεις vs Εισπράξεις">
@@ -334,8 +404,13 @@ export function DashboardPage() {
           <Card
             title="Audit Trail / Activity Log"
             right={
-              <Link to="/finance/control/audit" className="btn btn--sm">
-                Προβολή όλων
+              <Link
+                to="/finance/control/audit"
+                className="btn btn--sm"
+                aria-label="Προβολή όλων"
+                title="Προβολή όλων"
+              >
+                <i className="bi bi-eye" aria-hidden="true" />
               </Link>
             }
           >

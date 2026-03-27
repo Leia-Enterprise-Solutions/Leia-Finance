@@ -62,9 +62,10 @@ export function EmployeeCostPage() {
         </div>
       </div>
 
-      <Card title="Filter">
-        <div className="filters">
-          <div className="field" style={{ minWidth: 240 }}>
+      <div className="invoice-filters-bar">
+        <div className="invoice-filters-row">
+          <div className="invoice-filters-main">
+            <div className="field invoice-filter-field invoice-filter-field--wide">
             <label>Search</label>
             <input
               className="input"
@@ -72,30 +73,44 @@ export function EmployeeCostPage() {
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
+            </div>
+            <div className="field invoice-filter-field">
+              <label>Project</label>
+              <select className="select" value={project} onChange={(e) => setProject(e.target.value)}>
+                {projects.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field invoice-filter-field">
+              <label>Period</label>
+              <select className="select" value={period} onChange={(e) => setPeriod(e.target.value)}>
+                {periods.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              className="btn ghost btn--sm"
+              onClick={() => {
+                setQ("");
+                setProject("All");
+                setPeriod("All");
+              }}
+              title="Εκκαθάριση φίλτρων"
+            >
+              <span>Εκκαθάριση</span>
+            </button>
           </div>
-          <div className="field" style={{ minWidth: 220 }}>
-            <label>Project</label>
-            <select className="select" value={project} onChange={(e) => setProject(e.target.value)}>
-              {projects.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </select>
+          <div className="invoice-filters-right">
+            <Chip tone="neutral">{filtered.length} rows</Chip>
           </div>
-          <div className="field" style={{ minWidth: 180 }}>
-            <label>Period</label>
-            <select className="select" value={period} onChange={(e) => setPeriod(e.target.value)}>
-              {periods.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </select>
-          </div>
-          <Chip tone="neutral">{filtered.length} rows</Chip>
         </div>
-      </Card>
+      </div>
 
       <div className="finance-spacer" />
 

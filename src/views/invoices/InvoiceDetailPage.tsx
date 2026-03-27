@@ -75,13 +75,15 @@ export function InvoiceDetailPage() {
             {inv.project ? ` • ${inv.project}` : ""}
           </p>
         </div>
-        <div className="row">
-          <Link className="btn" to="/finance/revenue/invoices">
-            Back to list
-          </Link>
-          <Link className="btn" to={`/finance/revenue/collections?q=${encodeURIComponent(inv.number)}`}>
-            Μετάβαση στις Εισπράξεις
-          </Link>
+        <div className="finance-actions-row">
+          <div className="finance-box finance-actions-secondary">
+            <Link className="btn ghost btn--sm" to="/finance/revenue/invoices">
+              Back to list
+            </Link>
+            <Link className="btn ghost btn--sm" to={`/finance/revenue/collections?q=${encodeURIComponent(inv.number)}`}>
+              Μετάβαση στις Εισπράξεις
+            </Link>
+          </div>
           <ActionButton
             variant="primary"
             onClick={() => {

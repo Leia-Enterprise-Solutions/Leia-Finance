@@ -24,6 +24,18 @@ import {
   supplierBills as initialSupplierBills
 } from "../mock/data";
 
+function computeDraftNetTotal(lines: DraftLine[]) {
+  return lines.reduce((a, l) => {
+    const qty = Number.isFinite(l.quantity) ? (l.quantity as number) : 1;
+    const unitPrice = Number.isFinite(l.unitPrice) ? (l.unitPrice as number) : Number.isFinite(l.amount) ? l.amount : 0;
+    const discountPct = Number.isFinite(l.discountPct) ? (l.discountPct as number) : 0;
+    const discountFactor = 1 - Math.min(100, Math.max(0, discountPct)) / 100;
+    const net = qty * unitPrice * discountFactor;
+    const fallback = Number.isFinite(l.amount) ? l.amount : 0;
+    return a + (Number.isFinite(net) ? net : fallback);
+  }, 0);
+}
+
 type CollectionNote = {
   id: string;
   at: string;
@@ -180,7 +192,7 @@ export function FinancePrototypeStateProvider({ children }: { children: React.Re
         setInvoiceDrafts((prev) =>
           prev.map((d) => {
             if (d.id !== draftId) return d;
-            const total = lines.reduce((a, l) => a + (Number.isFinite(l.amount) ? l.amount : 0), 0);
+            const total = computeDraftNetTotal(lines);
             const nextStatus: InvoiceDraft["status"] =
               d.status === "Issued" ? "Issued" : lines.length === 0 ? "In Progress" : "Ready to Issue";
             return {
@@ -219,14 +231,15 @@ export function FinancePrototypeStateProvider({ children }: { children: React.Re
         invoiceSeqRef.current += 1;
         const invId = `inv_${invoiceSeqRef.current}`;
         const now = new Date();
-        const issueDate = now.toISOString().slice(0, 10);
-        const dueDate = (() => {
-          // Prototype: keep existing invoice-like due terms simple (Net 30 default).
-          const d = new Date(now);
-          d.setDate(d.getDate() + 30);
-          return d.toISOString().slice(0, 10);
-        })();
-        const total = lines.reduce((a, l) => a + l.amount, 0);
+        const issueDate = draft.issueDate ?? now.toISOString().slice(0, 10);
+        const dueDate =
+          draft.dueDate ??
+          (() => {
+            const d = new Date(now);
+            d.setDate(d.getDate() + 30);
+            return d.toISOString().slice(0, 10);
+          })();
+        const total = computeDraftNetTotal(lines);
         const currency = lines[0]?.currency ?? draft.currency ?? "EUR";
 
         const inv: Invoice = {

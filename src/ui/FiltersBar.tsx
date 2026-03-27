@@ -10,7 +10,7 @@ export function FiltersBar({
 }: {
   children: React.ReactNode;
   right?: React.ReactNode;
-  moreLabel?: string;
+  moreLabel?: React.ReactNode;
   morePlacement?: "bottom-start" | "bottom-end";
   maxVisible?: number;
 }) {
@@ -35,7 +35,7 @@ export function FiltersBar({
             <Popover
               placement={morePlacement}
               trigger={({ ref, onClick, "aria-expanded": ariaExpanded }) => (
-                <button ref={ref} className="btn" onClick={onClick} aria-expanded={ariaExpanded}>
+                <button ref={ref} className="btn btn--sm" onClick={onClick} aria-expanded={ariaExpanded}>
                   {moreLabel}
                 </button>
               )}

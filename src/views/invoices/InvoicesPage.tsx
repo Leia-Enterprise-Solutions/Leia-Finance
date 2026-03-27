@@ -4,11 +4,26 @@ import { Card } from "../../ui/Card";
 import { Chip } from "../../ui/Chip";
 import { SidePanel } from "../../ui/SidePanel";
 import { ActionButton } from "../../ui/ActionButton";
-import { FiltersBar } from "../../ui/FiltersBar";
+import { Popover } from "../../ui/Popover";
 import type { Invoice, InvoiceStatus, TransmissionStatus } from "../../domain/types";
 import { formatCurrency, daysBetween } from "../../domain/format";
 import { getEnumParam, getStringParam } from "../../router/query";
 import { useFinancePrototypeState } from "../../state/FinancePrototypeState";
+
+type SortKey =
+  | "number"
+  | "client"
+  | "project"
+  | "issueDate"
+  | "dueDate"
+  | "daysOver"
+  | "total"
+  | "paid"
+  | "outstanding"
+  | "status"
+  | "transmission";
+
+type SortDir = "asc" | "desc";
 
 function toneForInvoiceStatus(s: InvoiceStatus) {
   if (s === "Paid") return "success";
@@ -47,6 +62,10 @@ export function InvoicesPage() {
   const [selected, setSelected] = React.useState<Invoice | null>(null);
   const [noteEditorOpen, setNoteEditorOpen] = React.useState(false);
   const [noteDraft, setNoteDraft] = React.useState("");
+  const [sortKey, setSortKey] = React.useState<SortKey>("dueDate");
+  const [sortDir, setSortDir] = React.useState<SortDir>("desc");
+  const [page, setPage] = React.useState(1);
+  const pageSize = 10;
 
   React.useEffect(() => {
     const url = new URL(window.location.href);
@@ -80,9 +99,96 @@ export function InvoicesPage() {
   });
 
   const now = new Date();
+  const sorted = React.useMemo(() => {
+    const arr = filtered.slice();
+    const cmp = (a: Invoice, b: Invoice) => {
+      const daysOverA = now > new Date(a.dueDate) ? daysBetween(now, new Date(a.dueDate)) : 0;
+      const daysOverB = now > new Date(b.dueDate) ? daysBetween(now, new Date(b.dueDate)) : 0;
+      const outstandingA = Math.max(0, a.total - a.paid);
+      const outstandingB = Math.max(0, b.total - b.paid);
+      let res = 0;
+      switch (sortKey) {
+        case "number":
+          res = a.number.localeCompare(b.number);
+          break;
+        case "client":
+          res = a.client.localeCompare(b.client);
+          break;
+        case "project":
+          res = (a.project ?? "").localeCompare(b.project ?? "");
+          break;
+        case "issueDate":
+          res = a.issueDate.localeCompare(b.issueDate);
+          break;
+        case "dueDate":
+          res = a.dueDate.localeCompare(b.dueDate);
+          break;
+        case "daysOver":
+          res = daysOverA - daysOverB;
+          break;
+        case "total":
+          res = a.total - b.total;
+          break;
+        case "paid":
+          res = a.paid - b.paid;
+          break;
+        case "outstanding":
+          res = outstandingA - outstandingB;
+          break;
+        case "status":
+          res = a.status.localeCompare(b.status);
+          break;
+        case "transmission":
+          res = a.transmission.localeCompare(b.transmission);
+          break;
+      }
+      if (res === 0) return a.number.localeCompare(b.number);
+      return sortDir === "asc" ? res : -res;
+    };
+    arr.sort(cmp);
+    return arr;
+  }, [filtered, now, sortDir, sortKey]);
+
+  const onSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((prev) => (prev === "asc" ? "desc" : "asc"));
+      return;
+    }
+    setSortKey(key);
+    setSortDir("asc");
+  };
+
+  const header = (label: string, key: SortKey, className?: string) => (
+    <th className={className}>
+      <button
+        type="button"
+        className={`table-sort ${sortKey === key ? "table-sort--active" : ""}`}
+        onClick={() => onSort(key)}
+        title={`Ταξινόμηση: ${label}`}
+      >
+        <span>{label}</span>
+        <i className={`bi ${sortKey === key ? (sortDir === "asc" ? "bi-chevron-up" : "bi-chevron-down") : "bi-chevron-expand"}`} aria-hidden="true" />
+      </button>
+    </th>
+  );
   const total = filtered.length;
   const overdue = filtered.filter((i) => i.status === "Overdue").length;
   const partial = filtered.filter((i) => i.status === "Partially Paid").length;
+  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pageStart = (safePage - 1) * pageSize;
+  const pageRows = sorted.slice(pageStart, pageStart + pageSize);
+
+  React.useEffect(() => {
+    setPage(1);
+  }, [status, q, dateField, from, to]);
+
+  React.useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const visiblePageStart = Math.max(1, Math.min(safePage - 1, totalPages - 2));
+  const visiblePages = [visiblePageStart, visiblePageStart + 1, visiblePageStart + 2].filter((p) => p >= 1 && p <= totalPages);
 
   return (
     <>
@@ -93,7 +199,10 @@ export function InvoicesPage() {
         </div>
         <div className="row">
           <button className="btn primary" onClick={() => navigate("/finance/revenue/drafts/builder")}>
-            Νέο πρόχειρο
+            <span className="row" style={{ gap: 8, alignItems: "center" }}>
+              <i className="bi bi-plus-lg" aria-hidden="true" />
+              Νέο τιμολόγιο
+            </span>
           </button>
         </div>
       </div>
@@ -106,105 +215,158 @@ export function InvoicesPage() {
           <div className="value">{total}</div>
           <div className="sub">τιμολόγια στην προβολή</div>
         </div>
-        <div className="kpi" role="button" tabIndex={0} onClick={() => setStatus("Overdue")}>
+        <div className="kpi kpi--static">
           <div className="label">
             <span>Ληξιπρόθεσμα</span>
-            <span className="faint">↗</span>
           </div>
           <div className="value">{overdue}</div>
           <div className="sub">σε καθυστέρηση</div>
         </div>
-        <div className="kpi" role="button" tabIndex={0} onClick={() => setStatus("Partially Paid")}>
+        <div className="kpi kpi--static">
           <div className="label">
             <span>Μερικώς εξοφλημένα</span>
-            <span className="faint">↗</span>
           </div>
           <div className="value">{partial}</div>
           <div className="sub">υπόλοιπο ανοικτό</div>
         </div>
       </div>
 
-      <Card
-        title="Φίλτρα"
-        right={
-          <button
-            className="btn"
-            onClick={() => {
-              setStatus("All");
-              setQ("");
-              setDateField("issue");
-              setFrom("");
-              setTo("");
-            }}
-          >
-            Εκκαθάριση
-          </button>
-        }
-      >
-        <FiltersBar
-          moreLabel="Περισσότερα φίλτρα"
-          right={<span className="muted" style={{ fontSize: 12 }}>{total} αποτελέσματα</span>}
-        >
-          <div className="field" style={{ minWidth: 320 }}>
-            <label>Αναζήτηση</label>
-            <input
-              className="input"
-              placeholder="Αναζήτηση: αρ. τιμολογίου, πελάτης, έργο…"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
+      <div className="invoice-filters-bar">
+        <div className="invoice-filters-row">
+          <div className="invoice-filters-main">
+            <div className="field invoice-filter-field invoice-filter-field--wide">
+              <label>Αναζήτηση</label>
+              <input
+                className="input"
+                placeholder="Αναζήτηση: αρ. τιμολογίου, πελάτης, έργο…"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+              />
+            </div>
+            <div className="field invoice-filter-field">
+              <label>Κατάσταση</label>
+              <select className="select" value={status} onChange={(e) => setStatus(e.target.value as InvoiceStatus | "All")}>
+                <option value="All">Όλα</option>
+                <option value="Issued">Εκδόθηκε</option>
+                <option value="Partially Paid">Μερικώς εξοφλημένο</option>
+                <option value="Paid">Εξοφλημένο</option>
+                <option value="Overdue">Ληξιπρόθεσμο</option>
+                <option value="Cancelled">Ακυρώθηκε</option>
+              </select>
+            </div>
+            <div className="field invoice-filter-field">
+              <label>Ημερομηνία</label>
+              <select className="select" value={dateField} onChange={(e) => setDateField(e.target.value as "issue" | "due")}>
+                <option value="issue">Ημ/νία έκδοσης</option>
+                <option value="due">Ημ/νία λήξης</option>
+              </select>
+            </div>
+            <Popover
+              placement="bottom-end"
+              trigger={({ ref, onClick, "aria-expanded": ariaExpanded }) => (
+                <button ref={ref} className="btn btn--sm" onClick={onClick} aria-expanded={ariaExpanded}>
+                  <i className="bi bi-funnel" aria-hidden="true" />
+                  <span>Φίλτρα</span>
+                </button>
+              )}
+            >
+              <div className="filters-more">
+                <div className="filters-more__item">
+                  <div className="field invoice-filter-field">
+                    <label>Από</label>
+                    <input className="input" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+                  </div>
+                </div>
+                <div className="filters-more__item">
+                  <div className="field invoice-filter-field">
+                    <label>Έως</label>
+                    <input className="input" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+                  </div>
+                </div>
+              </div>
+            </Popover>
+            <button
+              className="btn ghost btn--sm"
+              onClick={() => {
+                setStatus("All");
+                setQ("");
+                setDateField("issue");
+                setFrom("");
+                setTo("");
+              }}
+              title="Εκκαθάριση φίλτρων"
+            >
+              <span>Εκκαθάριση</span>
+            </button>
           </div>
-          <div className="field" style={{ minWidth: 220 }}>
-            <label>Κατάσταση</label>
-            <select className="select" value={status} onChange={(e) => setStatus(e.target.value as InvoiceStatus | "All")}>
-              <option value="All">Όλα</option>
-              <option value="Issued">Εκδόθηκε</option>
-              <option value="Partially Paid">Μερικώς εξοφλημένο</option>
-              <option value="Paid">Εξοφλημένο</option>
-              <option value="Overdue">Ληξιπρόθεσμο</option>
-              <option value="Cancelled">Ακυρώθηκε</option>
-            </select>
+          <div className="invoice-filters-right">
+            <div className="invoice-pagination">
+              <button className="btn ghost btn--sm" onClick={() => setPage(1)} disabled={safePage <= 1} title="Πρώτη σελίδα">
+                <i className="bi bi-chevron-double-left" aria-hidden="true" />
+              </button>
+              <button className="btn ghost btn--sm" onClick={() => setPage(Math.max(1, safePage - 1))} disabled={safePage <= 1} title="Προηγούμενη">
+                <i className="bi bi-chevron-left" aria-hidden="true" />
+              </button>
+              {visiblePages.map((p) => (
+                <button
+                  key={p}
+                  className={`btn btn--sm ${p === safePage ? "primary" : "ghost"}`}
+                  onClick={() => setPage(p)}
+                  aria-current={p === safePage ? "page" : undefined}
+                >
+                  {p}
+                </button>
+              ))}
+              <button
+                className="btn ghost btn--sm"
+                onClick={() => setPage(Math.min(totalPages, safePage + 1))}
+                disabled={safePage >= totalPages}
+                title="Επόμενη"
+              >
+                <i className="bi bi-chevron-right" aria-hidden="true" />
+              </button>
+              <button
+                className="btn ghost btn--sm"
+                onClick={() => setPage(totalPages)}
+                disabled={safePage >= totalPages}
+                title="Τελευταία σελίδα"
+              >
+                <i className="bi bi-chevron-double-right" aria-hidden="true" />
+              </button>
+            </div>
           </div>
-          <div className="field" style={{ minWidth: 180 }}>
-            <label>Ημερομηνία</label>
-            <select className="select" value={dateField} onChange={(e) => setDateField(e.target.value as "issue" | "due")}>
-              <option value="issue">Ημ/νία έκδοσης</option>
-              <option value="due">Ημ/νία λήξης</option>
-            </select>
-          </div>
-          <div className="field" style={{ minWidth: 180 }}>
-            <label>Από</label>
-            <input className="input" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-          </div>
-          <div className="field" style={{ minWidth: 180 }}>
-            <label>Έως</label>
-            <input className="input" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-          </div>
-        </FiltersBar>
-      </Card>
+        </div>
+      </div>
 
       <div className="finance-spacer" />
 
-      <Card title="Λίστα τιμολογίων">
+      <Card
+        title="Λίστα τιμολογίων"
+        right={
+          <span className="chip invoice-results-chip" data-tone="neutral">
+            {total} αποτελέσματα
+          </span>
+        }
+      >
         <div className="finance-table-wrap">
           <table className="table">
             <thead>
               <tr>
-                <th>Τιμολόγιο</th>
-                <th>Πελάτης</th>
-                <th>Έργο</th>
-                <th>Έκδοση</th>
-                <th>Λήξη</th>
-                <th className="num">Ημέρες καθυστέρησης</th>
-                <th className="num">Σύνολο</th>
-                <th className="num">Εξοφληθέν</th>
-                <th className="num">Υπόλοιπο</th>
-                <th>Κατάσταση</th>
-                <th>Διαβίβαση</th>
+                {header("Τιμολόγιο", "number")}
+                {header("Πελάτης", "client")}
+                {header("Έργο", "project")}
+                {header("Έκδοση", "issueDate")}
+                {header("Λήξη", "dueDate")}
+                {header("Ημέρες καθυστέρησης", "daysOver", "num")}
+                {header("Σύνολο", "total", "num")}
+                {header("Εξοφληθέν", "paid", "num")}
+                {header("Υπόλοιπο", "outstanding", "num")}
+                {header("Κατάσταση", "status")}
+                {header("Διαβίβαση", "transmission")}
               </tr>
             </thead>
             <tbody>
-              {filtered.map((i) => {
+              {pageRows.map((i) => {
                 const outstanding = Math.max(0, i.total - i.paid);
                 const daysOver = now > new Date(i.dueDate) ? daysBetween(now, new Date(i.dueDate)) : 0;
                 const overdueTint = i.status === "Overdue" ? "rgba(220, 38, 38, 0.08)" : undefined;
@@ -328,14 +490,24 @@ export function InvoicesPage() {
                 </div>
               </div>
             ) : null}
-            <div className="row" style={{ justifyContent: "space-between" }}>
-              <button
-                className="btn ghost btn--sm"
-                onClick={() => navigate(`/finance/revenue/invoices/${selected.id}`)}
-                title="Προβολή πλήρων λεπτομερειών"
-              >
-                Προβολή
-              </button>
+            <div className="finance-actions-row">
+              <div className="finance-box finance-actions-secondary">
+                <button
+                  className="btn ghost btn--sm"
+                  onClick={() => navigate(`/finance/revenue/invoices/${selected.id}`)}
+                  title="Προβολή πλήρων λεπτομερειών"
+                  aria-label="Προβολή πλήρων λεπτομερειών"
+                >
+                  <i className="bi bi-eye" aria-hidden="true" />
+                </button>
+                <button
+                  className="btn ghost btn--sm"
+                  onClick={() => navigate(`/finance/revenue/collections?q=${encodeURIComponent(selected.number)}`)}
+                  title="Μετάβαση στις Απαιτήσεις / Εισπράξεις"
+                >
+                  Εισπράξεις
+                </button>
+              </div>
               <ActionButton
                 variant="primary"
                 onClick={() => {
@@ -345,13 +517,6 @@ export function InvoicesPage() {
               >
                 Καταχώρηση Σημείωσης
               </ActionButton>
-              <button
-                className="btn ghost btn--sm"
-                onClick={() => navigate(`/finance/revenue/collections?q=${encodeURIComponent(selected.number)}`)}
-                title="Μετάβαση στις Απαιτήσεις / Εισπράξεις"
-              >
-                Εισπράξεις
-              </button>
             </div>
 
             {noteEditorOpen ? (
@@ -384,8 +549,10 @@ export function InvoicesPage() {
                       setNoteEditorOpen(false);
                       setNoteDraft("");
                     }}
+                    title="Αποθήκευση σημείωσης"
+                    aria-label="Αποθήκευση σημείωσης"
                   >
-                    Αποθήκευση σημείωσης
+                    <i className="bi bi-check2" aria-hidden="true" />
                   </button>
                 </div>
               </div>

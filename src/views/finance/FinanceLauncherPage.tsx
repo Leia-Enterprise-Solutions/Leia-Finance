@@ -2,7 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 
 type LauncherApp = {
-  key: "overview" | "revenue" | "spend" | "control";
+  key: "overview" | "revenue" | "spend" | "control" | "invoices";
   title: string;
   to: string;
 };
@@ -10,23 +10,28 @@ type LauncherApp = {
 const APPS: LauncherApp[] = [
   {
     key: "overview",
-    title: "Πίνακας Επισκόπησης",
+    title: "Επισκόπηση",
     to: "/finance/overview"
   },
   {
     key: "revenue",
-    title: "Κύκλος Εσόδων / Απαιτήσεων",
+    title: "Έσοδα",
     to: "/finance/revenue"
   },
   {
     key: "spend",
-    title: "Κύκλος Δαπανών / Υποχρεώσεων",
+    title: "Δαπάνες",
     to: "/finance/spend"
   },
   {
     key: "control",
-    title: "Υποστηρικτικό επίπεδο ελέγχου",
+    title: "Έλεγχος",
     to: "/finance/control"
+  },
+  {
+    key: "invoices",
+    title: "Τιμολόγια",
+    to: "/finance/revenue/invoices"
   }
 ];
 
@@ -58,7 +63,11 @@ export function FinanceLauncherPage() {
               ) : (
                 <i
                   className={`finance-launcher__bi bi ${
-                    app.key === "control" ? "bi-shield-check" : "bi-grid"
+                    app.key === "control"
+                      ? "bi-shield-check"
+                      : app.key === "invoices"
+                        ? "bi-receipt"
+                        : "bi-grid"
                   }`}
                   aria-hidden
                 />

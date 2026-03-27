@@ -1,7 +1,6 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
 import { FinanceSubnav } from "../../shell/FinanceSubnav";
-import { DateRangeSwitcher } from "../../shell/DateRangeSwitcher";
 
 export function RevenueLayout() {
   return (
@@ -17,7 +16,6 @@ export function RevenueLayout() {
             ]}
           />
         </div>
-        <DateRangeSwitcher />
       </header>
       <Outlet />
     </div>

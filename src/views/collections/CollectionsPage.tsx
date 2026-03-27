@@ -4,7 +4,7 @@ import { Card } from "../../ui/Card";
 import { Chip } from "../../ui/Chip";
 import { SidePanel } from "../../ui/SidePanel";
 import { ActionButton } from "../../ui/ActionButton";
-import { FiltersBar } from "../../ui/FiltersBar";
+import { Popover } from "../../ui/Popover";
 import type { CollectionSignal, ReceivableWorkItem } from "../../domain/types";
 import { formatCurrency, daysBetween } from "../../domain/format";
 import { getEnumParam, getStringParam } from "../../router/query";
@@ -120,44 +120,74 @@ export function CollectionsPage() {
         </div>
       </div>
 
-      <Card title="Φίλτρα">
-        <FiltersBar
-          moreLabel="Περισσότερα φίλτρα"
-          right={
+      <div className="invoice-filters-bar">
+        <div className="invoice-filters-row">
+          <div className="invoice-filters-main">
+            <div className="field invoice-filter-field invoice-filter-field--wide">
+              <label>Αναζήτηση</label>
+              <input
+                className="input"
+                placeholder="Αναζήτηση: αρ. τιμολογίου ή πελάτης…"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+              />
+            </div>
+            <div className="field invoice-filter-field">
+              <label>Σήμα</label>
+              <select className="select" value={signal} onChange={(e) => setSignal(e.target.value as CollectionSignal | "All")}>
+                <option value="All">Όλα</option>
+                <option value="Not Due">Όχι ληξιπρόθεσμο</option>
+                <option value="Due Soon">Λήγει σύντομα</option>
+                <option value="Overdue">Ληξιπρόθεσμο</option>
+              </select>
+            </div>
+            <Popover
+              placement="bottom-end"
+              trigger={({ ref, onClick, "aria-expanded": ariaExpanded }) => (
+                <button ref={ref} className="btn btn--sm" onClick={onClick} aria-expanded={ariaExpanded}>
+                  <i className="bi bi-funnel" aria-hidden="true" />
+                  <span>Φίλτρα</span>
+                </button>
+              )}
+            >
+              <div className="filters-more">
+                <div className="filters-more__item">
+                  <div className="field invoice-filter-field">
+                    <label>Λήξη από</label>
+                    <input className="input" type="date" value={fromDue} onChange={(e) => setFromDue(e.target.value)} />
+                  </div>
+                </div>
+                <div className="filters-more__item">
+                  <div className="field invoice-filter-field">
+                    <label>Λήξη έως</label>
+                    <input className="input" type="date" value={toDue} onChange={(e) => setToDue(e.target.value)} />
+                  </div>
+                </div>
+              </div>
+            </Popover>
+            <button
+              className="btn ghost btn--sm"
+              onClick={() => {
+                setSignal("All");
+                setQ("");
+                setFromDue("");
+                setToDue("");
+              }}
+              title="Εκκαθάριση φίλτρων"
+            >
+              <span>Εκκαθάριση</span>
+            </button>
+          </div>
+          <div className="invoice-filters-right">
             <div className="row" style={{ gap: 8 }}>
               {signal !== "All" ? <Chip tone={toneForSignal(signal)}>Ενεργό: {signal}</Chip> : null}
-              <span className="muted" style={{ fontSize: 12 }}>{total} αποτελέσματα</span>
+              <span className="muted" style={{ fontSize: 12 }}>
+                {total} αποτελέσματα
+              </span>
             </div>
-          }
-        >
-          <div className="field" style={{ minWidth: 320 }}>
-            <label>Αναζήτηση</label>
-            <input
-              className="input"
-              placeholder="Αναζήτηση: αρ. τιμολογίου ή πελάτης…"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
           </div>
-          <div className="field" style={{ minWidth: 220 }}>
-            <label>Σήμα</label>
-            <select className="select" value={signal} onChange={(e) => setSignal(e.target.value as CollectionSignal | "All")}>
-              <option value="All">Όλα</option>
-              <option value="Not Due">Όχι ληξιπρόθεσμο</option>
-              <option value="Due Soon">Λήγει σύντομα</option>
-              <option value="Overdue">Ληξιπρόθεσμο</option>
-            </select>
-          </div>
-          <div className="field" style={{ minWidth: 180 }}>
-            <label>Λήξη από</label>
-            <input className="input" type="date" value={fromDue} onChange={(e) => setFromDue(e.target.value)} />
-          </div>
-          <div className="field" style={{ minWidth: 180 }}>
-            <label>Λήξη έως</label>
-            <input className="input" type="date" value={toDue} onChange={(e) => setToDue(e.target.value)} />
-          </div>
-        </FiltersBar>
-      </Card>
+        </div>
+      </div>
 
       <div className="finance-spacer" />
 

@@ -4,6 +4,7 @@ import { Card } from "../../ui/Card";
 import { Chip } from "../../ui/Chip";
 import { SidePanel } from "../../ui/SidePanel";
 import { ActionButton } from "../../ui/ActionButton";
+import { Popover } from "../../ui/Popover";
 import type { AuditEvent } from "../../domain/types";
 import { getEnumParam, getStringParam } from "../../router/query";
 import { useFinancePrototypeState } from "../../state/FinancePrototypeState";
@@ -106,9 +107,10 @@ export function AuditTrailPage() {
         </div>
       </div>
 
-      <Card title="Φίλτρα">
-        <div className="filters">
-          <div className="field" style={{ minWidth: 240 }}>
+      <div className="invoice-filters-bar">
+        <div className="invoice-filters-row">
+          <div className="invoice-filters-main">
+            <div className="field invoice-filter-field invoice-filter-field--wide">
             <label>Αναζήτηση</label>
             <input
               className="input"
@@ -116,27 +118,58 @@ export function AuditTrailPage() {
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
+            </div>
+            <div className="field invoice-filter-field">
+              <label>Σοβαρότητα</label>
+              <select className="select" value={sev} onChange={(e) => setSev(e.target.value as AuditEvent["severity"] | "All")}>
+                <option value="All">Όλα</option>
+                <option value="Info">Info</option>
+                <option value="Warning">Warning</option>
+                <option value="Exception">Exception</option>
+              </select>
+            </div>
+            <Popover
+              placement="bottom-end"
+              trigger={({ ref, onClick, "aria-expanded": ariaExpanded }) => (
+                <button ref={ref} className="btn btn--sm" onClick={onClick} aria-expanded={ariaExpanded}>
+                  <i className="bi bi-funnel" aria-hidden="true" />
+                  <span>Φίλτρα</span>
+                </button>
+              )}
+            >
+              <div className="filters-more">
+                <div className="filters-more__item">
+                  <div className="field invoice-filter-field">
+                    <label>Από</label>
+                    <input className="input" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+                  </div>
+                </div>
+                <div className="filters-more__item">
+                  <div className="field invoice-filter-field">
+                    <label>Έως</label>
+                    <input className="input" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+                  </div>
+                </div>
+              </div>
+            </Popover>
+            <button
+              className="btn ghost btn--sm"
+              onClick={() => {
+                setSev("All");
+                setQ("");
+                setFrom("");
+                setTo("");
+              }}
+              title="Εκκαθάριση φίλτρων"
+            >
+              <span>Εκκαθάριση</span>
+            </button>
           </div>
-          <div className="field" style={{ minWidth: 180 }}>
-            <label>Σοβαρότητα</label>
-            <select className="select" value={sev} onChange={(e) => setSev(e.target.value as AuditEvent["severity"] | "All")}>
-              <option value="All">Όλα</option>
-              <option value="Info">Info</option>
-              <option value="Warning">Warning</option>
-              <option value="Exception">Exception</option>
-            </select>
+          <div className="invoice-filters-right">
+            <Chip tone="neutral">{filtered.length} συμβάντα</Chip>
           </div>
-          <div className="field" style={{ minWidth: 180 }}>
-            <label>Από</label>
-            <input className="input" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-          </div>
-          <div className="field" style={{ minWidth: 180 }}>
-            <label>Έως</label>
-            <input className="input" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-          </div>
-          <Chip tone="neutral">{filtered.length} συμβάντα</Chip>
         </div>
-      </Card>
+      </div>
 
       <div className="finance-spacer" />
 

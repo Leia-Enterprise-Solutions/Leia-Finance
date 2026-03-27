@@ -58,6 +58,9 @@ export function DraftsPage() {
     );
   });
 
+  const staleCount = filtered.filter((d) => d.status === "Stale").length;
+  const readyCount = filtered.filter((d) => d.status === "Ready to Issue").length;
+
   React.useEffect(() => {
     const url = new URL(window.location.href);
     if (status === "All") url.searchParams.delete("status");
@@ -80,14 +83,59 @@ export function DraftsPage() {
             Συνέχεια Προσχεδίου
           </button>
           <button className="btn primary" onClick={() => navigate("/finance/revenue/drafts/builder")}>
-            Νέο Πρόχειρο Τιμολογίου
+            <span className="row" style={{ gap: 8, alignItems: "center" }}>
+              <i className="bi bi-plus-lg" aria-hidden="true" />
+              Νέο τιμολόγιο
+            </span>
           </button>
         </div>
       </div>
 
-      <Card title="Φίλτρα">
-        <div className="filters">
-          <div className="field" style={{ minWidth: 240 }}>
+      <div className="kpi-grid kpi-grid--secondary" style={{ gridTemplateColumns: "repeat(3, minmax(140px, 1fr))", marginBottom: 12 }}>
+        <div className="kpi kpi--static" title="Σύνολο προσχεδίων στην προβολή">
+          <div className="label">
+            <span>Προσχέδια</span>
+            <span className="kpi-icon" aria-hidden="true">
+              <i className="bi bi-journal-text" />
+            </span>
+          </div>
+          <div className="value">{filtered.length}</div>
+          <div className="sub">
+            <span>στο φίλτρο</span>
+          </div>
+        </div>
+
+        <div className="kpi kpi--static" title="Παρωχημένα προσχέδια στην προβολή">
+          <div className="label">
+            <span>Παρωχημένα</span>
+            <span className="kpi-icon" aria-hidden="true">
+              <i className="bi bi-hourglass-split" />
+            </span>
+          </div>
+          <div className="value">{staleCount}</div>
+          <div className="sub">
+            <span>χρειάζονται έλεγχο</span>
+          </div>
+        </div>
+
+        <div className="kpi kpi--static" title="Έτοιμα προσχέδια για έκδοση στην προβολή">
+          <div className="label">
+            <span>Έτοιμα</span>
+            <span className="kpi-icon" aria-hidden="true">
+              <i className="bi bi-check2-circle" />
+            </span>
+          </div>
+          <div className="value">{readyCount}</div>
+          <div className="sub">
+            <span>για έκδοση</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="invoice-filters-bar">
+        <div className="invoice-filters-row">
+          <div className="invoice-filters-main">
+            <div className="field invoice-filter-field invoice-filter-field--wide">
             <label>Αναζήτηση</label>
             <input
               className="input"
@@ -95,29 +143,35 @@ export function DraftsPage() {
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
-          </div>
-          <div className="field" style={{ minWidth: 200 }}>
-            <label>Κατάσταση</label>
-            <select
-              className="select"
-              value={status}
-              onChange={(e) => setStatus(e.target.value as InvoiceDraft["status"] | "All")}
+            </div>
+            <div className="field invoice-filter-field">
+              <label>Κατάσταση</label>
+              <select
+                className="select"
+                value={status}
+                onChange={(e) => setStatus(e.target.value as InvoiceDraft["status"] | "All")}
+              >
+                <option value="All">Όλα</option>
+                <option value="In Progress">Σε εξέλιξη</option>
+                <option value="Stale">Παρωχημένο</option>
+                <option value="Ready to Issue">Έτοιμο για έκδοση</option>
+              </select>
+            </div>
+            <button
+              className="btn ghost btn--sm"
+              onClick={() => {
+                setQ("");
+                setStatus("All");
+              }}
+              title="Εκκαθάριση φίλτρων"
             >
-              <option value="All">Όλα</option>
-              <option value="In Progress">Σε εξέλιξη</option>
-              <option value="Stale">Παρωχημένο</option>
-              <option value="Ready to Issue">Έτοιμο για έκδοση</option>
-            </select>
+              <span>Εκκαθάριση</span>
+            </button>
           </div>
-          <Chip tone="neutral">{filtered.length} προσχέδια</Chip>
-          <Chip tone="warning">{filtered.filter((d) => d.status === "Stale").length} παρωχημένα</Chip>
-          <Chip tone="success">
-            {filtered.filter((d) => d.status === "Ready to Issue").length} έτοιμα
-          </Chip>
         </div>
-      </Card>
+      </div>
 
-      <div style={{ height: 14 }} />
+      <div className="finance-spacer" />
 
       <Card title="Λίστα προσχεδίων">
         <div style={{ overflow: "auto" }}>
@@ -242,13 +296,15 @@ export function DraftsPage() {
                 </table>
               </div>
             </div>
-            <div className="row">
-              <button className="btn" onClick={() => navigate(`/finance/revenue/drafts/${selected.id}/builder`)}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <button className="btn primary" onClick={() => navigate(`/finance/revenue/drafts/${selected.id}/builder`)}>
                 Άνοιγμα για Έκδοση
               </button>
-              <button className="btn" onClick={() => setConfirmDiscard(true)}>
-                Απόρριψη και Αποδέσμευση
-              </button>
+              <div className="row" style={{ justifyContent: "flex-end" }}>
+                <button className="btn ghost" onClick={() => setConfirmDiscard(true)}>
+                  Απόρριψη και Αποδέσμευση
+                </button>
+              </div>
             </div>
           </div>
         ) : null}

@@ -1,6 +1,6 @@
 import React from "react";
 
-type Placement = "bottom-start" | "bottom-end";
+type Placement = "bottom-start" | "bottom-end" | "top-start" | "top-end";
 
 export function Popover({
   trigger,
@@ -21,37 +21,6 @@ export function Popover({
 
   const btnRef = React.useRef<HTMLButtonElement | null>(null);
   const panelRef = React.useRef<HTMLDivElement | null>(null);
-
-  const [pos, setPos] = React.useState<{ top: number; left: number; minWidth: number }>({
-    top: 0,
-    left: 0,
-    minWidth: 220
-  });
-
-  const recalc = React.useCallback(() => {
-    const btn = btnRef.current;
-    if (!btn) return;
-    const r = btn.getBoundingClientRect();
-    const top = Math.round(r.bottom + 8 + window.scrollY);
-    const minWidth = Math.max(220, Math.round(r.width));
-    const left =
-      placement === "bottom-end"
-        ? Math.round(r.right + window.scrollX - minWidth)
-        : Math.round(r.left + window.scrollX);
-    setPos({ top, left, minWidth });
-  }, [placement]);
-
-  React.useEffect(() => {
-    if (!open) return;
-    recalc();
-    const onResize = () => recalc();
-    window.addEventListener("resize", onResize);
-    window.addEventListener("scroll", onResize, true);
-    return () => {
-      window.removeEventListener("resize", onResize);
-      window.removeEventListener("scroll", onResize, true);
-    };
-  }, [open, recalc]);
 
   React.useEffect(() => {
     if (!open) return;
@@ -86,7 +55,13 @@ export function Popover({
         <div
           ref={panelRef}
           className="popover-panel"
-          style={{ position: "absolute", top: pos.top, left: pos.left, minWidth: pos.minWidth }}
+          style={{
+            position: "absolute",
+            top: "calc(100% + 8px)",
+            left: placement === "bottom-end" || placement === "top-end" ? "auto" : 0,
+            right: placement === "bottom-end" || placement === "top-end" ? 0 : "auto",
+            minWidth: "max(220px, 100%)"
+          }}
           role="dialog"
           aria-modal="false"
         >

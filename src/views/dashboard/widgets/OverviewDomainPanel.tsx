@@ -8,6 +8,7 @@ export function OverviewDomainPanel({
   sublabel,
   ctaLabel,
   ctaTo,
+  headerRight,
   children
 }: {
   title: string;
@@ -16,6 +17,7 @@ export function OverviewDomainPanel({
   sublabel: string;
   ctaLabel: string;
   ctaTo: string;
+  headerRight?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
@@ -29,9 +31,12 @@ export function OverviewDomainPanel({
           </div>
           <div className="muted overview-domain-panel__sublabel">{sublabel}</div>
         </div>
-        <Link to={ctaTo} className="btn btn--sm">
-          {ctaLabel}
-        </Link>
+        <div className="overview-domain-panel__actions">
+          {headerRight ? <div onClick={(e) => e.stopPropagation()}>{headerRight}</div> : null}
+          <Link to={ctaTo} className="btn btn--sm">
+            {ctaLabel}
+          </Link>
+        </div>
       </div>
       <div className="overview-domain-panel__body card-b">
         {children}

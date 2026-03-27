@@ -4,6 +4,7 @@ import { Card } from "../../ui/Card";
 import { Chip } from "../../ui/Chip";
 import { SidePanel } from "../../ui/SidePanel";
 import { ActionButton } from "../../ui/ActionButton";
+import { Popover } from "../../ui/Popover";
 import type { PurchaseRequest, PurchaseRequestStatus } from "../../domain/types";
 import { formatCurrency } from "../../domain/format";
 import { getEnumParam, getStringParam } from "../../router/query";
@@ -96,9 +97,10 @@ export function PurchaseRequestsPage() {
         </div>
       </div>
 
-      <Card title="Φίλτρα">
-        <div className="filters">
-          <div className="field" style={{ minWidth: 240 }}>
+      <div className="invoice-filters-bar">
+        <div className="invoice-filters-row">
+          <div className="invoice-filters-main">
+            <div className="field invoice-filter-field invoice-filter-field--wide">
             <label>Αναζήτηση</label>
             <input
               className="input"
@@ -106,34 +108,67 @@ export function PurchaseRequestsPage() {
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
-          </div>
-          <div className="field" style={{ minWidth: 200 }}>
-            <label>Κατάσταση</label>
-            <select
-              className="select"
-              value={status}
-              onChange={(e) => setStatus(e.target.value as PurchaseRequestStatus | "All")}
+            </div>
+            <div className="field invoice-filter-field">
+              <label>Κατάσταση</label>
+              <select
+                className="select"
+                value={status}
+                onChange={(e) => setStatus(e.target.value as PurchaseRequestStatus | "All")}
+              >
+                <option value="All">Όλα</option>
+                <option value="Draft">Πρόχειρο</option>
+                <option value="Submitted">Υποβλήθηκε</option>
+                <option value="Returned for Changes">Επιστροφή για διορθώσεις</option>
+                <option value="Approved (Committed)">Εγκεκριμένο (δέσμευση)</option>
+                <option value="Rejected">Απορρίφθηκε</option>
+              </select>
+            </div>
+            <Popover
+              placement="bottom-end"
+              trigger={({ ref, onClick, "aria-expanded": ariaExpanded }) => (
+                <button ref={ref} className="btn btn--sm" onClick={onClick} aria-expanded={ariaExpanded}>
+                  <i className="bi bi-funnel" aria-hidden="true" />
+                  <span>Φίλτρα</span>
+                </button>
+              )}
             >
-              <option value="All">Όλα</option>
-              <option value="Draft">Πρόχειρο</option>
-              <option value="Submitted">Υποβλήθηκε</option>
-              <option value="Returned for Changes">Επιστροφή για διορθώσεις</option>
-              <option value="Approved (Committed)">Εγκεκριμένο (δέσμευση)</option>
-              <option value="Rejected">Απορρίφθηκε</option>
-            </select>
+              <div className="filters-more">
+                <div className="filters-more__item">
+                  <div className="field invoice-filter-field">
+                    <label>Υποβολή από</label>
+                    <input className="input" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+                  </div>
+                </div>
+                <div className="filters-more__item">
+                  <div className="field invoice-filter-field">
+                    <label>Υποβολή έως</label>
+                    <input className="input" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+                  </div>
+                </div>
+              </div>
+            </Popover>
+            <button
+              className="btn ghost btn--sm"
+              onClick={() => {
+                setStatus("All");
+                setQ("");
+                setFrom("");
+                setTo("");
+              }}
+              title="Εκκαθάριση φίλτρων"
+            >
+              <span>Εκκαθάριση</span>
+            </button>
           </div>
-          <div className="field" style={{ minWidth: 180 }}>
-            <label>Υποβολή από</label>
-            <input className="input" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+          <div className="invoice-filters-right">
+            <div className="row" style={{ gap: 8 }}>
+              <Chip tone="warning">{filtered.filter((r) => r.urgency === "Urgent").length} urgent</Chip>
+              <Chip tone="neutral">{filtered.length} requests</Chip>
+            </div>
           </div>
-          <div className="field" style={{ minWidth: 180 }}>
-            <label>Υποβολή έως</label>
-            <input className="input" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-          </div>
-          <Chip tone="warning">{filtered.filter((r) => r.urgency === "Urgent").length} urgent</Chip>
-          <Chip tone="neutral">{filtered.length} requests</Chip>
         </div>
-      </Card>
+      </div>
 
       <div className="finance-spacer" />
 

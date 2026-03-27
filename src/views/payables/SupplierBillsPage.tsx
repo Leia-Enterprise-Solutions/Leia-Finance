@@ -4,7 +4,6 @@ import { Card } from "../../ui/Card";
 import { Chip } from "../../ui/Chip";
 import { SidePanel } from "../../ui/SidePanel";
 import { ActionButton } from "../../ui/ActionButton";
-import { FiltersBar } from "../../ui/FiltersBar";
 import type { SupplierBill, SupplierBillStatus } from "../../domain/types";
 import { formatCurrency, daysBetween } from "../../domain/format";
 import { getEnumParam, getStringParam } from "../../router/query";
@@ -102,45 +101,55 @@ export function SupplierBillsPage() {
         </div>
       </div>
 
-      <Card title="Φίλτρα">
-        <FiltersBar
-          moreLabel="Περισσότερα φίλτρα"
-          right={
+      <div className="invoice-filters-bar">
+        <div className="invoice-filters-row">
+          <div className="invoice-filters-main">
+            <div className="field invoice-filter-field invoice-filter-field--wide">
+              <label>Αναζήτηση</label>
+              <input
+                className="input"
+                placeholder="Αναζήτηση: προμηθευτής ή id…"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+              />
+            </div>
+            <div className="field invoice-filter-field">
+              <label>Κατάσταση</label>
+              <select
+                className="select"
+                value={status}
+                onChange={(e) => setStatus(e.target.value as SupplierBillStatus | "All")}
+              >
+                <option value="All">Όλα</option>
+                <option value="Open">Ανοικτό</option>
+                <option value="Ready">Έτοιμο</option>
+                <option value="Blocked">Μπλοκαρισμένο</option>
+                <option value="Scheduled">Προγραμματισμένο</option>
+                <option value="Paid">Εξοφλημένο</option>
+                <option value="Overdue">Ληξιπρόθεσμο</option>
+              </select>
+            </div>
+            <button
+              className="btn ghost btn--sm"
+              onClick={() => {
+                setStatus("All");
+                setQ("");
+              }}
+              title="Εκκαθάριση φίλτρων"
+            >
+              <span>Εκκαθάριση</span>
+            </button>
+          </div>
+          <div className="invoice-filters-right">
             <div className="row" style={{ gap: 8 }}>
               {status !== "All" ? <Chip tone={toneForBillStatus(status)}>Ενεργό: {status}</Chip> : null}
               <span className="muted" style={{ fontSize: 12 }}>{total} αποτελέσματα</span>
             </div>
-          }
-        >
-          <div className="field" style={{ minWidth: 280 }}>
-            <label>Αναζήτηση</label>
-            <input
-              className="input"
-              placeholder="Αναζήτηση: προμηθευτής ή id…"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
           </div>
-          <div className="field" style={{ minWidth: 220 }}>
-            <label>Κατάσταση</label>
-            <select
-              className="select"
-              value={status}
-              onChange={(e) => setStatus(e.target.value as SupplierBillStatus | "All")}
-            >
-              <option value="All">Όλα</option>
-              <option value="Open">Ανοικτό</option>
-              <option value="Ready">Έτοιμο</option>
-              <option value="Blocked">Μπλοκαρισμένο</option>
-              <option value="Scheduled">Προγραμματισμένο</option>
-              <option value="Paid">Εξοφλημένο</option>
-              <option value="Overdue">Ληξιπρόθεσμο</option>
-            </select>
-          </div>
-        </FiltersBar>
-      </Card>
+        </div>
+      </div>
 
-      <div style={{ height: 14 }} />
+      <div className="finance-spacer" />
 
       <Card title="Λίστα τιμολογίων">
         <div style={{ overflow: "auto" }}>

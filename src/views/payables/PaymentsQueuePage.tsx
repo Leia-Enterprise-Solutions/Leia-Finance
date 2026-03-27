@@ -5,7 +5,6 @@ import { Chip } from "../../ui/Chip";
 import { SidePanel } from "../../ui/SidePanel";
 import { ConfirmDialog } from "../../ui/ConfirmDialog";
 import { ActionButton } from "../../ui/ActionButton";
-import { FiltersBar } from "../../ui/FiltersBar";
 import type { PaymentQueueItem } from "../../domain/types";
 import { purchaseRequests } from "../../mock/data";
 import { formatCurrency, daysBetween } from "../../domain/format";
@@ -305,31 +304,40 @@ export function PaymentsQueuePage() {
         </button>
       </div>
 
-      <Card title="Φίλτρα">
-        <FiltersBar
-          moreLabel="Περισσότερα φίλτρα"
-          right={
+      <div className="invoice-filters-bar">
+        <div className="invoice-filters-row">
+          <div className="invoice-filters-main">
+            <div className="field invoice-filter-field invoice-filter-field--wide">
+              <label>Αναζήτηση</label>
+              <input
+                className="input"
+                placeholder="Αναζήτηση: προμηθευτής ή id…"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+              />
+            </div>
+            <button
+              className="btn ghost btn--sm"
+              onClick={() => {
+                setQ("");
+              }}
+              title="Εκκαθάριση φίλτρων"
+            >
+              <span>Εκκαθάριση</span>
+            </button>
+          </div>
+          <div className="invoice-filters-right">
             <div className="row" style={{ gap: 8 }}>
               <Chip tone="neutral">{segment}</Chip>
               <span className="muted" style={{ fontSize: 12 }}>
                 {total} αποτελέσματα
               </span>
             </div>
-          }
-        >
-          <div className="field" style={{ minWidth: 280 }}>
-            <label>Αναζήτηση</label>
-            <input
-              className="input"
-              placeholder="Αναζήτηση: προμηθευτής ή id…"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
           </div>
-        </FiltersBar>
-      </Card>
+        </div>
+      </div>
 
-      <div style={{ height: 14 }} />
+      <div className="finance-spacer" />
 
       <Card title="Ουρά">
         <div className="finance-table-wrap">

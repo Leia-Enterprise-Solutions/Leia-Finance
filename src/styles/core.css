@@ -6,11 +6,22 @@
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     "Liberation Mono", "Courier New", monospace;
 
-  --text-xs: 12px;
-  --text-sm: 13px;
-  --text-md: 14px;
-  --text-lg: 16px;
-  --text-xl: 18px;
+  --text-xs: 13px;
+  --text-sm: 14px;
+  --text-md: 15px;
+  --text-base: 16px;
+  --text-lg: 17px;
+  --text-xl: 20px;
+
+  /* Global typography baseline scale */
+  --type-body: var(--text-md);
+  --type-label: var(--text-sm);
+  --type-helper: var(--text-xs);
+  --type-table-head: var(--text-xs);
+  --type-card-title: var(--text-base);
+  --type-section-title: var(--text-base);
+  --type-page-title: var(--text-xl);
+  --type-kpi-value: 23px;
 
   --leading-tight: 1.2;
   --leading-normal: 1.45;
@@ -81,10 +92,14 @@ body {
   height: 100%;
 }
 
+html {
+  font-size: 17px;
+}
+
 body {
   margin: 0;
   font-family: var(--font-sans);
-  font-size: var(--text-md);
+  font-size: var(--type-body);
   line-height: var(--leading-normal);
   color: var(--c-text);
   background:

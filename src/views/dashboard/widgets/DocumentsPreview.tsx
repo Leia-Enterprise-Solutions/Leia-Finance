@@ -47,8 +47,13 @@ export function DocumentsPreview({
             </button>
           ))}
         </div>
-        <Link to={viewAllTo} className="btn btn--sm">
-          Προβολή όλων
+        <Link
+          to={viewAllTo}
+          className="btn btn--sm"
+          aria-label="Προβολή όλων"
+          title="Προβολή όλων"
+        >
+          <i className="bi bi-eye" aria-hidden="true" />
         </Link>
       </div>
 
