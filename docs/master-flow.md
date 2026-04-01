@@ -3,6 +3,11 @@
 
 This file contains the corrected large Mermaid workflow aligned to the latest **Finance Management & Monitoring System v1 UI Blueprint**.
 
+Canonical scope note:
+- This workflow is a downstream operational visualization artifact.
+- It does not override module ownership defined in `00`, `00A`, `01`.
+- Any direct cash/reconciliation branch in this file is treated as adjacent/transitional support path, not as a new top-level canonical module.
+
 ### Main corrections applied
 - Fixed the obvious typo: `marSSked` -> `marked`
 - Removed duplicate/conflicting exception node IDs that would break or confuse Mermaid parsing
@@ -109,7 +114,7 @@ flowchart TD
         R34 -->|Yes| R26
 
         R26 --> R36[Outstanding reaches zero]
-        R36 --> R37[Invoice status becomes Paid]
+        R36 --> R37[Receivable status becomes Collected / Closed]
         R37 --> R38[Update dashboard: Gross Invoiced, Income Collected, Outstanding Receivables, Net Cash Movement]
 
         R35 --> EXC3[Exception: Overdue receivable escalation]
@@ -131,7 +136,7 @@ flowchart TD
         P5 --> P6{Approval decision}
         P6 -->|Reject| P7[Request status becomes Rejected]
         P6 -->|Request changes| P8[Return for revision]
-        P6 -->|Approve| P9[Request status becomes Approved / Committed]
+        P6 -->|Approve| P9[Approval outcome becomes Approved (Commitment visible)]
 
         P9 --> P10[Commitment becomes visible in Budget Overview]
         P10 --> P11[Wait for supplier bill / expense document]

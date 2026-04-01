@@ -105,7 +105,7 @@ flowchart TD
     P2 -->|Ναι| P4{Απόφαση}
     P4 -->|Reject| P5[Status = Rejected]
     P4 -->|Request changes| P6[Επιστροφή για αλλαγές]
-    P4 -->|Approve| P7[Status = Approved / Committed]
+    P4 -->|Approve| P7[Status = Approved (Commitment visible)]
     P7 --> P8[Το commitment γίνεται ορατό στο Budget Overview]
     P8 --> P9[Αναμονή supplier bill]
 11. Spend — Supplier Bill Intake & Linkage

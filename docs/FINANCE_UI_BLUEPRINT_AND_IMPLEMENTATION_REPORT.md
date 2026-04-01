@@ -462,9 +462,10 @@ Side panel για invoice/supplier bill από top lists:
 - primary actions (π.χ. “Open full detail”, “Add note” όπου επιτρέπεται)
 
 ##### k. Statuses Shown on This Screen
-Συνοπτικά status chips/badges:
-- Invoice: Draft / Issued / Partially Paid / Paid / Overdue / Cancelled-Credited (αν υπάρχει)
-- Payables: Ready / Blocked / Scheduled / Paid / Overdue
+Συνοπτικά status chips/badges (με αυστηρό state-family separation):
+- Invoice document statuses: Draft / Issued / Cancelled-Credited (αν υπάρχει)
+- Receivable/payment signals: Open / Partially Collected / Collected / Overdue (ως receivable progression, όχι invoice document lifecycle)
+- Payables readiness/execution/signal: Ready / Blocked / Scheduled / Paid / Overdue
 - Budget signals: Healthy / Warning / Breach (βλ. section 10)
 
 ##### l. Empty / Error / Exception States
@@ -2443,9 +2444,9 @@ Important distinction:
 - **Outstanding Receivables**: Το τρέχον σύνολο **outstanding amount** για issued invoices (as of today).
 - **Outstanding Payables**: Το τρέχον σύνολο **open payables** για supplier bills (όχι paid).
 - **Committed Spend**: Το σύνολο των **approved commitments** (π.χ. approved purchase requests) εντός της περιόδου/έκδοσης (ορισμός περιόδου: approval date).
-- **Budget Utilization**: Budget Utilization = (Committed + Actual Paid) / Budgeted για την επιλεγμένη περίοδο και dimension.
+- **Budget Utilization**: Budget Utilization εφαρμόζει canonical anti-overlap discipline και στη v1 baseline διατυπώνεται με ρητό component view (`Committed`, `Actual Paid`, `Budgeted`) χωρίς να επιτρέπεται διπλομέτρηση linked commitment/bill/payment layers.
 
-> **Warning note:** Το metric `Budget Utilization = (Committed + Actual Paid) / Budgeted` είναι προσωρινό για v1 και πρέπει να θεωρείται provisional μέχρι να οριστεί ρητά commitment relief / anti-double-count logic. Μέχρι τότε, η UI πρέπει να εμφανίζει και τα επιμέρους components (`Budgeted`, `Committed`, `Actual Paid`) με σαφή οπτικό διαχωρισμό.
+> **Warning note:** Η ακριβής decomposition formula του `Budget Utilization` μπορεί να παραμένει controlled area, αλλά ο canonical κανόνας commitment relief και anti-overlap είναι ήδη κλειδωμένος. Η UI πρέπει να εμφανίζει τα components (`Budgeted`, `Committed`, `Actual Paid`) με σαφή οπτικό διαχωρισμό και χωρίς semantic διπλομέτρηση.
 - **Overdue Receivables**: Outstanding receivables όπου due date < σήμερα, με sum outstanding και count.
 - **Overdue Payables**: Open payables όπου due date < σήμερα, με sum amount και count.
 
@@ -2476,12 +2477,12 @@ If a custom historical “as-of end of period” mode is later introduced, it mu
 | Metric / Widget | Business meaning (UI) | Primary source module/screen | Primary record type (UI concept) | Primary date semantics | Period-based ή point-in-time | Key exclusions / notes | Architect decision dependency |
 |---|---|---|---|---|---|---|---|
 | Gross Invoiced | Σύνολο εκδοθέντων invoices/receivables μέσα στην περίοδο | Invoices List / Invoice Detail | Issued invoice (receivable) | Issue date | Period-based | Δεν περιλαμβάνει drafts· δεν ισούται με collected | Αν υπάρχουν “credited/cancelled” rules για inclusion/exclusion |
-| Income Collected | Σύνολο καταγεγραμμένων εισπράξεων (cash-in) | Invoice Detail (Payments) + Dashboard | Payment collection entry | Payment date | Period-based | Μπορεί να αφορά invoices άλλης περιόδου | OPEN QUESTION: mode καταχώρησης πληρωμών (manual/imported/hybrid) |
-| Expenses Paid | Σύνολο καταγεγραμμένων πληρωμών (cash-out) | Payments Queue + Supplier Bill Detail | Payment execution entry | Payment date | Period-based | Δεν ισούται με “bills received”· αφορά μόνο executed/paid | OPEN QUESTION: canonical “paid” source (Payments vs Bills flagged paid) |
+| Income Collected | Σύνολο καταγεγραμμένων εισπράξεων (cash-in) | Invoice Detail (Payments) + Dashboard | Payment collection entry | Payment date | Period-based | Μπορεί να αφορά invoices άλλης περιόδου | OPEN QUESTION: input mode detail (manual entry/import) χωρίς αλλαγή canonical cash-in source |
+| Expenses Paid | Σύνολο καταγεγραμμένων πληρωμών (cash-out) | Payments Queue + Supplier Bill Detail | Payment execution entry | Payment date | Period-based | Δεν ισούται με “bills received”· αφορά μόνο executed/paid | Locked: paid source = payment execution records. OPEN QUESTION: allocation/reporting detail only |
 | Net Cash Movement | Collected - Paid εντός περιόδου (cash basis) | Dashboard | Derived metric | Payment date (both inflow/outflow) | Period-based | Δεν είναι κερδοφορία | Εξαρτάται από ορισμό Collected/Paid παραπάνω |
 | Outstanding Receivables | Τρέχον outstanding ποσό σε issued invoices | Collections / Invoices List | Issued invoice (receivable) | As-of date (today ή end-of-period) | Point-in-time | Excludes cancelled/credited; includes overdue+not due | OPEN QUESTION: as-of semantics για dashboard period |
 | Outstanding Payables | Τρέχον open payable ποσό σε supplier bills | Supplier Bills List / Payments Queue | Supplier bill (payable) | As-of date (today ή end-of-period) | Point-in-time | Excludes paid; mismatch/blocked still count as open | OPEN QUESTION: partial payments on payables (supported?) |
-| Committed Spend | Σύνολο εγκεκριμένων commitments (π.χ. approved requests) | Purchase Request Detail/List + Budget | Approved commitment | Approval date (default) | Period-based | Δεν διπλομετράται με supplier bills εκτός αν οριστεί κανόνας | OPEN QUESTION: commitment definition & anti-double-count logic |
+| Committed Spend | Σύνολο εγκεκριμένων commitments (π.χ. approved requests) | Purchase Request Detail/List + Budget | Approved commitment | Approval date (default) | Period-based | Δεν διπλομετράται με supplier bills όπου υπάρχει canonical linkage/relief | OPEN QUESTION: presentation decomposition και threshold policy, όχι ο βασικός anti-overlap κανόνας |
 | Budget Utilization | (Committed + Actual Paid) / Budgeted | Budget Overview + Dashboard | Budget line summary | Period of budget (month/quarter/YTD) | Period-based | Πρέπει να δείχνει components ξεχωριστά | OPEN QUESTION: budget versioning, editability, open payable inclusion |
 | Overdue Receivables | Outstanding όπου due < today | Collections | Issued invoice (receivable) | Due date compared to today | Point-in-time | Χρησιμοποιεί outstanding, όχι total invoice | None (αν οριστεί overdue threshold=due date) |
 | Overdue Payables | Open payables όπου due < today | Payments Queue / Supplier Bills | Supplier bill (payable) | Due date compared to today | Point-in-time | Χρησιμοποιεί open payable amount | None (αν οριστεί overdue threshold=due date) |
