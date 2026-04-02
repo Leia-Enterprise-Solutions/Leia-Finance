@@ -51,12 +51,12 @@ flowchart TD
         R12 --> R13{Approved?}
         R13 -->|No| R13N[Return to draft with comments]
         R13N --> R7
-        R13 -->|Yes| R14[Issue invoice / create receivable]
+        R13 -->|Yes| R14[Issue invoice (issued document truth) + create receivable]
         R11 -->|No| R14
 
         R14 --> R15[Visible in Invoices List and Invoice Detail]
         R15 --> R16{Fiscal / external transmission required?}
-        R16 -->|No| R20[Invoice treated as issued receivable]
+        R16 -->|No| R20[Issued invoice is valid; receivable follow-up continues]
         R16 -->|Yes| R17[Send to fiscal / external channel]
         R17 --> R18{Transmission status?}
         R18 -->|Pending / Unknown| R18P[Show transmission warning / pending state]
@@ -69,10 +69,10 @@ flowchart TD
         R21 --> R22[Visible in Collections / Receivables worklist]
         R22 --> R23{Receipt registered?}
         R23 -->|No| R24[Remain open receivable]
-        R23 -->|Partial| R25[Register partial payment]
-        R23 -->|Full| R26[Register full payment]
+        R23 -->|Partial| R25[Register partial receipt (manual v1)]
+        R23 -->|Full| R26[Register full receipt (manual v1)]
 
-        R25 --> R27[Update paid and outstanding amounts]
+        R25 --> R27[Settlement effect updates outstanding (via allocation)]
         R27 --> R28{Outstanding remains?}
         R28 -->|Yes| R24
         R28 -->|No| R26
@@ -129,17 +129,17 @@ flowchart TD
         P16M --> P18
         P17 --> P19{Required controls satisfied? attachments, due date, approvals}
         P19 -->|No| P18
-        P19 -->|Yes| P20[Payment readiness becomes Ready]
+        P19 -->|Yes| P20[Readiness becomes Ready for Payment]
 
         P18 --> P21[Visible in Payments Queue as Blocked with reason]
         P20 --> P22[Visible in Payments Queue as Ready]
 
         P22 --> P23{Selected for payment batch?}
         P23 -->|No| P22
-        P23 -->|Yes| P24[Prepared / selected for batch]
+        P23 -->|Yes| P24[Selected / Prepared (UI-only)]
         P24 --> P25{Scheduled for payment?}
         P25 -->|No| P24
-        P25 -->|Yes| P26[Payment status becomes Scheduled]
+        P25 -->|Yes| P26[Execution status becomes Scheduled]
         P26 --> P27{Cash-out executed / registered?}
         P27 -->|No| P26
         P27 -->|Yes| P28[Payment status becomes Executed / Paid]
@@ -178,7 +178,7 @@ flowchart TD
 
         B15 --> B16{Budget revision or spend restriction?}
         B16 -->|Revision| B17[Create revised budget version]
-        B16 -->|Restriction| B18[Apply spend restriction]
+        B16 -->|Restriction| B18[Show restriction signal (visibility-only)]
         B17 --> B1
         B18 --> B19[Future requests show restriction warning]
 
@@ -203,7 +203,7 @@ flowchart TD
         C7 -->|No| C4
         C7 -->|Yes| C8[Allocate payment to supplier bill]
 
-        C4 --> C9[Send to reconciliation / finance review queue]
+        C4 --> C9[Send to finance review (adjacent support path)]
         C9 --> C10{Resolved?}
         C10 -->|No| C11[Remain unreconciled]
         C10 -->|Yes| C12[Allocate to correct record]

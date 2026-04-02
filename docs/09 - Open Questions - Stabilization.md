@@ -55,62 +55,19 @@
 
 ## 4. Locked canonical decisions που δεν επανανοίγουν
 
-Το παρόν section καταγράφει αποφάσεις που θεωρούνται ήδη κλειδωμένες για το v1 και δεν αποτελούν αντικείμενο επαναδιαπραγμάτευσης μέσα από το παρόν stabilization document.
+Ο παρακάτω κατάλογος λειτουργεί ως registry ήδη κλειδωμένων canonical αποφάσεων.  
+Δεν ανοίγουν ξανά μέσα από το παρόν stabilization document.
 
-### 4.1 Monitoring shell boundary
-
-Το Overview είναι monitoring shell.  
-Συνοψίζει, επισημαίνει και δρομολογεί.  
-Δεν αποτελεί execution workspace και δεν δημιουργεί operational business state.
-
-### 4.2 Invoice issue boundary
-
-Το Issue στο invoicing είναι semantic transition από draft/preview context σε canonical issued invoice truth.  
-Δεν ισοδυναμεί από μόνο του με πλήρη compliance completion, fiscal completion ή accounting posting completion.
-
-### 4.3 Totals alignment rule
-
-Ισχύει το locked canonical rule:
-
-**Preview totals must become issued totals snapshot.**
-
-Άρα μετά το issue:
-
-- τα preview totals παγώνουν,
-- τα issued totals γίνονται canonical,
-- το downstream receivable derivation στηρίζεται πάνω σε αυτά.
-
-### 4.4 Issued snapshot non-mutability
-
-Η issued financial truth δεν επιτρέπεται να εξαρτάται από μεταγενέστερη αλλαγή σε draft ή preview context.  
-Το ακριβές τεχνικό βάθος του snapshot μπορεί να παραμένει open, αλλά η semantic non-mutability δεν είναι open.
-
-### 4.5 Receivable derivation rule
-
-Το Receivable προκύπτει από issued invoice context και όχι από draft, preview ή notes workflow.  
-Το Receivables module δεν επαναορίζει invoice truth.
-
-### 4.6 Readiness ownership on spend side
-
-Το Spend / Supplier Bills σχηματίζει payable readiness.  
-Το Payments Queue διαβάζει αυτό το outcome και εκτελεί πάνω του.  
-Το queue δεν είναι matching ή readiness formation module.
-
-### 4.7 Unlinked supplier bills fallback
-
-Στο v1, unlinked supplier bills είναι visible ως warning και είναι blocked-by-default για πληρωμή.  
-Αυτό είναι locked fallback behavior μέχρι να ληφθεί διαφορετική formal απόφαση.
-
-### 4.8 State-type separation
-
-Το σύστημα διαχωρίζει ρητά:
-
-- persisted domain status,
-- operational signal,
-- readiness state,
-- UI-only temporary state.
-
-Τα παραπάνω δεν πρέπει να συγχέονται σε generic "status" wording. Το πρόβλημα αυτό είναι ήδη γνωστό ως semantic risk σε περισσότερα από ένα modules.
+| Decision | Status | Authority refs | Locked meaning |
+| --- | --- | --- | --- |
+| Monitoring shell boundary | Locked | `00`, `00A`, `02` | Το `Overview` συνοψίζει, επισημαίνει και δρομολογεί· δεν είναι execution workspace. |
+| Invoice issue boundary | Locked | `00A`, `03` | Το `Issue` είναι semantic transition προς issued truth, όχι πλήρης compliance/accounting completion. |
+| Totals alignment rule | Locked | `00A`, `03` | `Preview totals must become issued totals snapshot`. |
+| Issued snapshot non-mutability | Locked | `00A`, `03` | Η issued truth δεν επηρεάζεται από μεταγενέστερο draft/preview context. |
+| Receivable derivation rule | Locked | `00A`, `05` | Το `Receivable` προκύπτει από issued invoice context, όχι από draft, preview ή workflow notes. |
+| Readiness ownership on spend side | Locked | `01`, `07`, `04` | Το `Spend / Supplier Bills` σχηματίζει readiness· το `Payments Queue` εκτελεί πάνω σε αυτό. |
+| Unlinked supplier bills fallback | Locked | `07`, `04`, UI Blueprint | Unlinked supplier bills είναι visible ως warning και blocked-by-default για πληρωμή στο v1. |
+| State-type separation | Locked | `00A`, UI Blueprint | `domain status`, `operational signal`, `readiness state` και `UI-only temporary state` δεν συγχωνεύονται. |
 
 ## 5. Τι θεωρείται πραγματικό open question στο v1
 

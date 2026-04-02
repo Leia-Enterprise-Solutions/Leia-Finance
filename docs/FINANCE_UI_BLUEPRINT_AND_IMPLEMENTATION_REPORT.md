@@ -5,280 +5,20 @@
 Το παρόν έγγραφο ορίζει ένα **presentation-ready UI Blueprint** για το **Finance Management & Monitoring System v1**: οθόνες, ροές χρήστη, δομή σελίδων, ορατά δεδομένα, φίλτρα, actions, widgets και operational exception states.
 
 ## 1A. How to Read This Document
+Το Blueprint περιγράφει **πώς συμπεριφέρεται η διεπαφή** (screens/contracts).  
+Η canonical επιχειρησιακή σημασία/ownership/rules ορίζονται στα `00/00A/01` και στα module docs (`02+`).
 
-This document is intentionally kept as a single master specification.
+### Authority (UI contract)
+- Αν κάτι εδώ συγκρούεται με `00A` (semantic law), κερδίζει το `00A`.
+- Αν κάτι εδώ συγκρούεται με `01` (module architecture/dependencies), κερδίζει το `01`.
+- Αυτό το έγγραφο δεν “εφευρίσκει” νέες επιχειρησιακές συμπεριφορές· κλειδώνει μόνο UI-safe defaults όπου χρειάζεται για consistency.
 
-To avoid ambiguity, the sections below have different authority levels:
-
-### 1. Product Boundary & Operating Model
-Defines what v1 is and is not, what loops exist, and what role each module plays.
-
-### 2. Canonical Business Rules & Metric Semantics
-Defines state vocabulary, metric meaning, date semantics, and UI-safe fallback rules.
-If a screen description conflicts with this section, this section wins.
-
-### 3. UI Blueprint
-Defines screen roles, layouts, visible fields, actions, empty states, and navigation behavior.
-
-### 4. Screenshot Walkthrough
-Defines presentation order and visual storytelling for demos, reviews, and final reporting.
-This section does not override canonical business rules or screen behavior.
-
-### 5. Open Decisions / Pending Meeting Items
-Defines what is still unresolved and who must decide it before or during build.
-Until a pending item is formally resolved, the locked v1 fallback rule applies.
-
----
-## 2. Scope Boundary
-
-#### Included in v1
-Το v1 περιλαμβάνει ένα επιχειρησιακό επίπεδο παρακολούθησης χρηματοοικονομικής εκτέλεσης (operational finance & monitoring), με σαφείς διακριτές έννοιες:
-
-**Included in v1 core**
-- **Revenue loop**: Billable Work → Invoice Draft → Issued Invoice / Receivable → Collection Follow-up → Collected Cash
-- **Spend loop**: Purchase Request → Approval / Commitment → Supplier Bill → Payment Readiness → Paid Cash Out
-- **Monitoring Overview shell**: `Finance Overview Dashboard` ως monitoring επιφάνεια (KPI widgets, trends, exposure/overdue, drilldowns) και cashflow overview.
-
-**Included in v1 supporting control visibility**
-- **Budget visibility**: `Budget Overview` (budgeted vs committed vs actual paid και variance/remaining).
-- **Audit visibility**: `Audit Trail / Activity Log` (traceability ποιος έκανε τι/πότε/σε ποιο record).
-- **Employee cost visibility**: `Employee Cost View` (operational έλεγχος κόστους με role-based περιορισμούς).
-
-#### Explicitly excluded from v1
-- **Πλήρης λογιστική/λογιστικό καθολικό** (general ledger), journal postings, διπλογραφία.
-- **Φορολογική/νομική μηχανή** για υπολογισμούς, αυτόματη συμμόρφωση, αυτοματοποίηση δηλώσεων.
-- **Αυτόματη διασύνδεση με τράπεζες** ή reconciliation engine (εκτός αν υπάρξει ρητή απόφαση v1).
-- **Πλήρες procurement/ERP** (αποθήκη, παραλαβές, τιμοκατάλογοι, συμβάσεις προμηθευτών ως σύστημα).
-- **Forecasting** (ρητά για v2 μόνο).
-
-#### Reserved for v2
-- **Forecasting**: προβλέψεις εισπράξεων/πληρωμών, scenario planning, projected cash runway.
-- Εμπλουτισμένες αυτοματοποιήσεις (π.χ. προτεινόμενα follow-ups, auto-escalations βάσει κανόνων) εφόσον επιβεβαιωθεί αξία χρήσης.
-
----
-
-## 3. Product Spine
-Το v1 έχει τρεις ρόλους: δύο operational core loops (Revenue, Spend) και μία supporting control layer (Budget / Audit / Employee Cost). Το `Overview` είναι monitoring shell: σηματοδοτεί, δρομολογεί και δίνει drilldowns, δεν λειτουργεί ως workspace εκτέλεσης.
-
-**Revenue loop (core)**
-Billable Work → Invoice Draft → Issued Invoice / Receivable → Collection Follow-up → Collected Cash
-
-Αυτό είναι σωστό γιατί το revenue side πρέπει να διαβάζεται ως “τιμολογώ → παρακολουθώ → εισπράττω”, κάτι που συμβαδίζει και με το πώς οργανώνονται receivables / collections στα finance systems.
-
-**Spend loop (core)**
-Purchase Request → Approval / Commitment → Supplier Bill → Payment Readiness → Paid Cash Out
-
-Αυτό είναι σωστό γιατί το AP side πρέπει να διαβάζεται ως “αίτημα → έγκριση → bill → readiness → payment”. Τα invoice validation / approval / workflow patterns στα AP συστήματα βασίζονται ακριβώς σε αυτή τη διαδοχή.
-
-**Supporting control layer (Budget / Audit / Employee Cost)**
-- `Budget Overview`: ορατότητα budgeted vs committed vs actual paid και variance/remaining.
-- `Audit Trail / Activity Log`: traceability “ποιος έκανε τι/πότε/σε ποιο record”.
-- `Employee Cost View`: operational έλεγχος κόστους και insights (role-based περιορισμούς), χωρίς να γίνεται payroll/accounting.
-
-**Monitoring shell (Overview)**
-Το `Finance Overview Dashboard` παρουσιάζει KPIs, exposure και overdue/risks και οδηγεί τον χρήστη σε συγκεκριμένα operational worklists (Invoices, Collections, Supplier Bills, Payments Queue, Budget drilldowns). Δεν εκτελεί ενέργειες που ανήκουν στα operational loops.
-
-## 4. Navigation Model
-
-Navigation Model (v1 discipline): `Overview → Worklist → Detail → Action → Back`.
-Οι οθόνες organization:
-- το `Overview` (monitoring shell) σηματοδοτεί και δρομολογεί,
-- οι `Worklists` οργανώνουν operational triage/decisions (Revenue/Spend),
-- το `Detail` είναι single-record truth (read-only context + actions όπου επιτρέπεται),
-- το `Action` ολοκληρώνεται και επιστρέφει με συνέπεια σε λίστα/side panel state,
-- το `Back` επανέρχεται στον “ενημερωμένο” next context (χωρίς να χάνεται το information scent).
-
----
-Παρακάτω προτείνεται page/module map για το v1. Κάθε σελίδα έχει ρόλο στη συνολική εκτέλεση.
-
-**Overview (monitoring shell)**
-- **Finance Overview Dashboard**: Ενιαία monitoring επιφάνεια για KPIs, exposure, overdue, trends και drilldowns.
-
-**Revenue (core operational loop)**
-- **Invoices List**: Επιχειρησιακή λίστα τιμολογίων/receivables με φίλτρα, aging, overdue, fiscal/transmission status και bulk actions.
-- **Invoice Drafts List**: Επιχειρησιακή επιφάνεια διαχείρισης drafts (ανακάλυψη, συνέχιση, review, καθαρισμός/ακύρωση), με έλεγχο “stale” και ενδείξεις reserved lines.
-- **Invoice Draft Builder**: Επιφάνεια σύνθεσης draft από billable entries, με σαφή διάκριση υποψηφίων vs επιλεγμένων γραμμών και προ-έλεγχο διπλοτιμολόγησης.
-- **Invoice Detail View**: Πλήρης προβολή issued invoice/receivable με πληρωμές, συνδεδεμένη εργασία, external fiscal/transmission status, timeline.
-- **Collections / Receivables View**: Εξειδικευμένη οθόνη είσπραξης με prioritization βάσει aging/overdue, owner/follow-up και σημειώσεις συλλογής.
-
-**Spend (core operational loop)**
-- **Purchase Requests List**: Λίστα αιτημάτων αγοράς με status, urgency, approver, budget context indicators και attachment signals.
-- **Purchase Request Detail / Approval View**: Λεπτομέρεια αιτήματος για απόφαση έγκρισης/απόρριψης, σχόλια, escalations, σύνδεση με supplier bill.
-- **Supplier Bills / Expenses List**: Λίστα υποχρεώσεων/δαπανών (supplier bills) με match status προς request, readiness, due, payment status, exceptions.
-- **Supplier Bill Detail View**: Λεπτομέρεια supplier bill με mismatch panel, attachments, readiness, payment history και audit.
-- **Payments Queue**: Ενιαίο queue εκτέλεσης πληρωμών (payables), με “ready”, “blocked”, “due soon”, “overdue” ομαδοποιήσεις και batch selection.
-
-**Control (supporting control layer)**
-- **Budget Overview**: Dashboard προϋπολογισμών με version/period selectors, breakdowns, committed vs actual, variance, remaining.
-- **Employee Cost View**: Οθόνη κόστους προσωπικού με περιορισμούς ορατότητας, billable split, allocations και margin-relevant summaries.
-- **Audit Trail / Activity Log**: Κεντρικό χρονολόγιο ενεργειών για auditability, filtering και traceability across modules.
-
----
-
-## 5. Operational Subflows by Core Loop
-
-A. Overview / Monitoring Shell subflows
-O-01 — Revenue signal drilldown
-Purpose: Να μεταφέρει τον χρήστη από KPI / alert σε Revenue worklist.
-Starts at: Finance Overview Dashboard
-Ends at: Invoice Drafts / Invoices / Collections
-Typical trigger: Outstanding receivables, overdue receivables, draft backlog signal
-
-O-02 — Spend signal drilldown
-Purpose: Να μεταφέρει τον χρήστη από KPI / alert σε Spend worklist.
-Starts at: Finance Overview Dashboard
-Ends at: Purchase Requests / Supplier Bills / Payments Queue
-Typical trigger: Outstanding payables, blocked items, due/overdue payables
-
-O-03 — Control signal drilldown
-Purpose: Να μεταφέρει τον χρήστη από monitoring signal σε supporting control screen.
-Starts at: Finance Overview Dashboard
-Ends at: Budget Overview / Audit Trail / Employee Cost View
-Typical trigger: Budget variance, audit/investigation need, cost visibility signal
-
-B. Revenue core subflows
-R-01 — Draft discovery and continuation
-Purpose: Να εντοπίζονται και να συνεχίζονται invoice drafts χωρίς να χάνονται ή να κρατούν αόρατα reservations.
-Starts at: Invoice Drafts List
-Ends at: Invoice Draft Builder
-Typical trigger: Stale draft, review-needed draft, reserved lines warning
-
-R-02 — Draft composition from billable work
-Purpose: Να μετατρέπεται billable work σε draft invoice με ασφαλή επιλογή γραμμών και αποφυγή duplicate invoicing.
-Starts at: Invoice Draft Builder
-Ends at: Saved draft / reviewed draft
-Typical trigger: Available billable entries, source line selection
-
-R-03 — Issued invoice visibility
-Purpose: Να παρακολουθείται το issued receivable μετά την έκδοση.
-Starts at: Invoices List
-Ends at: Invoice Detail View
-Typical trigger: Search, filter, overdue visibility, transmission state
-
-R-04 — Receivable detail review
-Purpose: Να βλέπει ο χρήστης την πλήρη κατάσταση ενός receivable σε μία canonical detail view.
-Starts at: Invoice Detail View
-Ends at: Collections context ή επιστροφή στη λίστα
-Typical trigger: Need for detail review, payment history, linked work, collection notes
-
-R-05 — Collections follow-up
-Purpose: Να οργανώνεται η follow-up εργασία πάνω σε open receivables βάσει overdue, ownership και expected payment date.
-Starts at: Collections / Receivables View
-Ends at: Updated follow-up context ή Invoice Detail View
-Typical trigger: Overdue item, due soon item, missing follow-up, note update
-
-R-06 — Collection outcome / paid-state visibility
-Purpose: Να γίνεται ορατό πότε ένα receivable παραμένει open, είναι partially paid ή κλείνει ως paid/collected.
-Starts at: Invoice Detail View / Collections View
-Ends at: Updated receivable state
-Typical trigger: Payment history update, outstanding reaches zero
-
-C. Spend core subflows
-S-01 — Request intake and triage
-Purpose: Να γίνονται ορατά τα purchase requests με urgency, approver και budget signal.
-Starts at: Purchase Requests List
-Ends at: Purchase Request Detail / Approval View
-Typical trigger: Submitted request, urgent request, missing attachment signal
-
-S-02 — Request decision / approval
-Purpose: Να λαμβάνεται τεκμηριωμένη απόφαση approve / reject / request changes.
-Starts at: Purchase Request Detail / Approval View
-Ends at: Approved / Rejected / Returned for changes
-Typical trigger: Full context review, budget impact, attachments, supplier validation
-
-S-03 — Commitment visibility
-Purpose: Να γίνεται ορατό ότι ένα approved request δημιουργεί spend commitment.
-Starts at: Purchase Request Detail / Approval View
-Ends at: Budget Overview / downstream bill linkage
-Typical trigger: Approved (Committed) state
-
-S-04 — Supplier bill intake and linkage
-Purpose: Να εμφανίζεται μια supplier obligation και να ελέγχεται η σύνδεσή της με approved request.
-Starts at: Supplier Bills / Expenses List
-Ends at: Supplier Bill Detail View
-Typical trigger: New bill, unlinked bill, matched/mismatch state
-
-S-05 — Readiness and mismatch resolution
-Purpose: Να λυθούν mismatches και blockers πριν η bill προχωρήσει προς payment handling.
-Starts at: Supplier Bill Detail View
-Ends at: Ready for payment / still blocked
-Typical trigger: Mismatch, missing attachment, missing due date, policy blocker
-
-S-06 — Payment queue triage
-Purpose: Να διαχωρίζονται ready, blocked, due soon και overdue payables.
-Starts at: Payments Queue
-Ends at: Prepared / Scheduled / Executed state progression
-Typical trigger: Queue review, due pressure, blocked reason review
-
-S-07 — Payment execution / handoff visibility
-Purpose: Να φαίνεται η μετάβαση από payable readiness σε payment handling outcome.
-Starts at: Payments Queue
-Ends at: Executed / Paid state
-Typical trigger: Batch selection, scheduling, execution registration according to v1 handling mode
-
-D. Supporting control layer subflows
-C-01 — Budget variance monitoring
-Purpose: Να γίνονται ορατά budgeted vs committed vs actual paid και οι variance signals.
-Starts at: Budget Overview
-Ends at: Drilldown to commitments / actuals context
-Typical trigger: Warning or breach signal
-
-C-02 — Audit investigation
-Purpose: Να εντοπίζεται ποιος έκανε τι, πότε και πάνω σε ποιο record.
-Starts at: Audit Trail / Activity Log
-Ends at: Target record detail
-Typical trigger: Investigation need, exception review, traceability check
-
-C-03 — Employee cost visibility
-Purpose: Να παρέχεται cost insight με role-based περιορισμούς.
-Starts at: Employee Cost View
-Ends at: Allocation/trend drilldown
-Typical trigger: Cost monitoring, high non-billable signal, visibility request
-
-
-## 5A. Build-Locked Decisions (Current v1 Defaults)
-
-The following decisions are locked for the current v1 UI build unless explicitly changed by product/architect review.
-
-### 1. Canonical “Paid” source
-Paid / Executed states derive from payment execution records.
-
-### 2. Payment registration mode
-v1 uses manual payment registration.
-
-### 3. Partial payment behavior
-Payment execution records may be fully allocated, partially allocated, allocated across multiple target records, or temporarily unallocated.
-
-The UI must apply the following rules:
-
-- Outstanding amount = document total - sum of allocated payment amounts
-- Paid = outstanding amount = 0
-- Partially Paid = allocated payment amount > 0 and outstanding amount > 0
-- Open / Unpaid = allocated payment amount = 0 and outstanding amount = total
-- Unallocated amount warning = payment exists but part of the payment amount is not allocated to a target document
-
-The UI must never infer “Paid” from the existence of a payment record alone.
-It must infer “Paid” only from allocated amount covering the full outstanding balance.
-
-Until finer allocation behavior is formally defined, v1 follows this safe fallback:
-- allow manual payment registration
-- show any unallocated remainder explicitly
-- do not show “Paid” unless the outstanding amount reaches zero
-
-### 4. Unlinked supplier bills
-Unlinked supplier bills are visible as Warning and are blocked-by-default for payment in v1.
-
-### 5. Employee cost visibility fallback
-Until role permissions are finalized, non-privileged roles see aggregate values only.
-
-### 6. Budget versions
-Budget versions are read-only in v1 unless explicitly unlocked later.
-
-### 7. KPI date semantics
-Cash metrics use payment date.
-Invoicing metrics use issue date.
-Commitment metrics use approval date.
-Overdue and aging signals use due date versus today.
+### UI-safe v1 defaults (locked unless revised)
+- **Manual payment registration (v1)**: η UI δεν υπονοεί bank-confirmed truth.
+- **Paid/Executed visibility**: προκύπτει μόνο από payment execution records (όχι από selection/batch).
+- **Unlinked supplier bills**: visible αλλά blocked-by-default για πληρωμή (v1).
+- **Employee cost visibility**: non-privileged roles βλέπουν aggregate-only μέχρι να κλειδώσουν permissions.
+- **KPI date semantics (UI)**: cash→payment date, invoicing→issue date, commitments→approval date, overdue/aging→due date vs today.
 
 ## 6. Global UI Rules
 Οι παρακάτω κανόνες εφαρμόζονται σε όλες τις οθόνες και πρέπει να υλοποιηθούν ως κοινά UI patterns/components.
@@ -2435,7 +2175,7 @@ Important distinction:
 ---
 
 ## 11. Dashboard Metric Definitions (Summary Layer)
-Αυτή η ενότητα είναι σύντομος index. Οι KPI/date semantics δίνονται στην canonical matrix του `## 12`.
+Αυτή η ενότητα είναι σύντομος index (UI labels + intent). Τα πλήρη business meanings/ownership rules ορίζονται στα `00A` και στα module docs.
 
 - **Gross Invoiced**: Το σύνολο των **issued invoices** (εκδοθέντα receivables) εντός της επιλεγμένης περιόδου (με βάση **issue date**). Δεν ισούται με εισπραχθέν.
 - **Income Collected**: Το σύνολο των **cash-in** (καταγεγραμμένες εισπράξεις) εντός της περιόδου (με βάση **payment date**). Μπορεί να αφορά invoices προηγούμενων περιόδων.
@@ -2471,36 +2211,12 @@ If a custom historical “as-of end of period” mode is later introduced, it mu
 
 ---
 
-## 12. Canonical Source-of-Truth Matrix for Metrics (Canonical Layer)
-Ο παρακάτω πίνακας ορίζει, για UI σκοπούς, την **canonical πηγή** και τα **date semantics** κάθε KPI/widget. Δεν ορίζει object model ή persistence — αλλά καθορίζει τι πρέπει να “μετράει” η UI ώστε να αποφεύγεται ασάφεια.
+## 12. KPI Contract Notes (UI Blueprint Layer)
 
-| Metric / Widget | Business meaning (UI) | Primary source module/screen | Primary record type (UI concept) | Primary date semantics | Period-based ή point-in-time | Key exclusions / notes | Architect decision dependency |
-|---|---|---|---|---|---|---|---|
-| Gross Invoiced | Σύνολο εκδοθέντων invoices/receivables μέσα στην περίοδο | Invoices List / Invoice Detail | Issued invoice (receivable) | Issue date | Period-based | Δεν περιλαμβάνει drafts· δεν ισούται με collected | Αν υπάρχουν “credited/cancelled” rules για inclusion/exclusion |
-| Income Collected | Σύνολο καταγεγραμμένων εισπράξεων (cash-in) | Invoice Detail (Payments) + Dashboard | Payment collection entry | Payment date | Period-based | Μπορεί να αφορά invoices άλλης περιόδου | OPEN QUESTION: input mode detail (manual entry/import) χωρίς αλλαγή canonical cash-in source |
-| Expenses Paid | Σύνολο καταγεγραμμένων πληρωμών (cash-out) | Payments Queue + Supplier Bill Detail | Payment execution entry | Payment date | Period-based | Δεν ισούται με “bills received”· αφορά μόνο executed/paid | Locked: paid source = payment execution records. OPEN QUESTION: allocation/reporting detail only |
-| Net Cash Movement | Collected - Paid εντός περιόδου (cash basis) | Dashboard | Derived metric | Payment date (both inflow/outflow) | Period-based | Δεν είναι κερδοφορία | Εξαρτάται από ορισμό Collected/Paid παραπάνω |
-| Outstanding Receivables | Τρέχον outstanding ποσό σε issued invoices | Collections / Invoices List | Issued invoice (receivable) | As-of date (today ή end-of-period) | Point-in-time | Excludes cancelled/credited; includes overdue+not due | OPEN QUESTION: as-of semantics για dashboard period |
-| Outstanding Payables | Τρέχον open payable ποσό σε supplier bills | Supplier Bills List / Payments Queue | Supplier bill (payable) | As-of date (today ή end-of-period) | Point-in-time | Excludes paid; mismatch/blocked still count as open | OPEN QUESTION: partial payments on payables (supported?) |
-| Committed Spend | Σύνολο εγκεκριμένων commitments (π.χ. approved requests) | Purchase Request Detail/List + Budget | Approved commitment | Approval date (default) | Period-based | Δεν διπλομετράται με supplier bills όπου υπάρχει canonical linkage/relief | OPEN QUESTION: presentation decomposition και threshold policy, όχι ο βασικός anti-overlap κανόνας |
-| Budget Utilization | (Committed + Actual Paid) / Budgeted | Budget Overview + Dashboard | Budget line summary | Period of budget (month/quarter/YTD) | Period-based | Πρέπει να δείχνει components ξεχωριστά | OPEN QUESTION: budget versioning, editability, open payable inclusion |
-| Overdue Receivables | Outstanding όπου due < today | Collections | Issued invoice (receivable) | Due date compared to today | Point-in-time | Χρησιμοποιεί outstanding, όχι total invoice | None (αν οριστεί overdue threshold=due date) |
-| Overdue Payables | Open payables όπου due < today | Payments Queue / Supplier Bills | Supplier bill (payable) | Due date compared to today | Point-in-time | Χρησιμοποιεί open payable amount | None (αν οριστεί overdue threshold=due date) |
-
-UI implication όταν υπάρχει ARCHITECT DECISION: μέχρι να αποφασιστεί, η UI πρέπει να εμφανίζει info tooltip “Definition pending” και να κρατά τους υπολογισμούς συνεπείς με το πιο ασφαλές operational νόημα (cash-in/out από payment registrations, open amounts από unpaid records).
-
-### UI fallback rule for unresolved metric dependencies
-
-When a metric depends on an unresolved architect/product decision, the UI must follow the safest operational interpretation and make the limitation explicit.
-
-Current v1 fallback behavior:
-
-- cash-in / cash-out metrics derive from payment registrations
-- paid states derive from payment execution records
-- open / outstanding amounts derive from document total minus allocated payments
-- overdue signals derive from due date versus today
-- unlinked supplier bills remain visible but blocked-by-default for payment
-- if a metric definition is still pending refinement, the UI may show a definition tooltip or note, but must keep the rendered logic internally consistent across dashboard, list, and detail views
+Το Blueprint δεν είναι πηγή semantic law. Για κάθε KPI/widget ισχύει:
+- **Source**: η UI δηλώνει ρητά το primary source screen (worklist/detail) που τροφοδοτεί το widget.
+- **Date semantics**: χρησιμοποιείται το v1 default από το `11A` (εκτός αν υπάρξει ρητή απόφαση αλλαγής).
+- **Unresolved definitions**: αν κάτι εξαρτάται από architect/product decision, η UI δείχνει “Definition pending” και κρατά consistency μεταξύ dashboard, list και detail (χωρίς να αλλάζει business meaning).
 
 ---
 
@@ -2540,18 +2256,17 @@ Until formally decided, the locked v1 defaults described earlier remain in force
 
 1. **Canonical “paid” source** (Open Question #4)
    - Κλειδώνει “Paid/Executed” και το KPI “Expenses Paid”.
-   - Fallback: “Paid” από cash-out registrations (Payments Queue).
+   - Fallback (UI): “Paid/Executed” εμφανίζεται μόνο όταν υπάρχει ρητό execution record (manual v1), ποτέ από selection/batch UI state.
 2. **Payment registration mode** (Open Question #3)
    - Κλειδώνει αν υπάρχει/τι μορφή έχει “register payment” και πώς ενημερώνονται τα statuses.
-   - Fallback: minimal manual registration στο v1.
+   - Fallback: minimal manual registration στο v1 (χωρίς banking inference).
 3. **Partial payment allocation behavior**
-    Κλειδώνει “Partially Paid”, “Unallocated amount” και outstanding updates.
-    Fallback:
-    - allow manual payment registration
-    - compute outstanding as total - allocated payment amount
-    - show “Partially Paid” only when allocated amount > 0 and outstanding > 0
-    - show “Paid” only when outstanding = 0
-    - show “Unallocated amount” warning whenever a payment record exists with remainder not allocated to the target document
+    Κλειδώνει “Partially Paid”, “Unallocated amount” και outstanding visibility.
+    Fallback (UI):
+    - επιτρέπεται manual registration,
+    - η UI δεν “μαντεύει” paid από ύπαρξη payment record,
+    - όπου υπάρχει unallocated remainder, εμφανίζεται ρητά ως warning,
+    - οι ακριβείς derivation κανόνες για outstanding/paid/partial ακολουθούν `00A` και τα module docs (no redefinition εδώ).
 4. **Fiscal / transmission status vocabulary** (Open Question #2)
    - Κλειδώνει status chips, banners και drilldown semantics.
    - Fallback: Pending/Unknown vocabulary μέχρι να οριστούν οι τελικές καταστάσεις.
