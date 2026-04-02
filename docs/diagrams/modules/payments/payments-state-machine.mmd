@@ -1,0 +1,14 @@
+stateDiagram-v2
+  [*] --> Ready
+  Ready --> Selected: Add to batch - UI only
+  Selected --> Prepared: Prepare batch - UI only
+  Prepared --> Scheduled: Mark scheduled
+  Scheduled --> Executed: Register executed or paid
+
+  Ready --> Blocked: Upstream blockers exist
+  Blocked --> Ready: Blocker resolved upstream
+
+  note right of Selected
+    Selected and Prepared are UI-only states.
+    They must not be treated as execution truth.
+  end note

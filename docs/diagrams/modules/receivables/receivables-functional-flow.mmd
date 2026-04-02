@@ -1,0 +1,24 @@
+flowchart TD
+  I0[Issued invoice exists - from Invoicing]
+  R0[Receivable created - base amount from issued snapshot]
+  W0[Worklist prioritization - overdue, aging, outstanding]
+  F0[Follow-up updates - owner, notes, next action, expected date]
+  S0[Settlement effect applied - allocation reduces outstanding]
+  P0{Outstanding now}
+  C0[Collected or Closed - outstanding equals zero]
+  O0[Open or Partial - outstanding above zero]
+
+  I0 --> R0 --> W0 --> F0
+  F0 --> S0 --> P0
+  P0 -->|Above zero| O0 --> W0
+  P0 -->|Equals zero| C0
+
+  subgraph Guards[Guardrails]
+    G1[Overdue is computed - due date vs today and outstanding above zero]
+    G2[Notes and expected date do not change financial truth]
+    G3[No collected without settlement effect]
+  end
+
+  W0 -.-> G1
+  F0 -.-> G2
+  C0 -.-> G3

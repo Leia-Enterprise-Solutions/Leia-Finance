@@ -1,0 +1,162 @@
+flowchart TD
+
+    %% =========================
+    %% ENTRY
+    %% =========================
+    U[User] --> FL[Finance Launcher]
+
+    %% =========================
+    %% MAIN APPS
+    %% =========================
+    FL --> O[Overview]
+    FL --> R[Revenue]
+    FL --> S[Spend]
+    FL --> C[Control]
+
+    %% =========================
+    %% SECTION HOMES
+    %% =========================
+    O --> OH[Finance Home]
+    R --> RH[Revenue Home]
+    S --> SH[Spend Home]
+    C --> CH[Control Home]
+
+    %% =========================
+    %% OVERVIEW BRANCH
+    %% =========================
+    subgraph OV[Overview / Monitoring]
+        OH --> DSH[Finance Overview Dashboard]
+        OH --> AEX[Alerts / Exceptions]
+        OH --> RAC[Recent Activity]
+
+        DSH --> KPI1[Outstanding Receivables]
+        DSH --> KPI2[Outstanding Payables]
+        DSH --> KPI3[Committed Spend]
+        DSH --> KPI4[Budget Utilization]
+        DSH --> KPI5[Overdue Receivables]
+        DSH --> KPI6[Overdue Payables]
+    end
+
+    %% =========================
+    %% REVENUE BRANCH
+    %% =========================
+    subgraph REV[Revenue]
+        RH --> DRL[Invoice Drafts List]
+        RH --> DBL[Invoice Draft Builder]
+        RH --> INVL[Invoices List]
+        RH --> COL[Collections / Receivables]
+
+        INVL --> INVD[Invoice Detail View]
+        DRL --> DBL
+        COL --> INVD
+    end
+
+    %% =========================
+    %% SPEND BRANCH
+    %% =========================
+    subgraph SPD[Spend]
+        SH --> PRL[Purchase Requests List]
+        SH --> SBL[Supplier Bills / Expenses List]
+        SH --> PAYQ[Payments Queue]
+
+        PRL --> PRD[Purchase Request Detail / Approval]
+        SBL --> SBD[Supplier Bill Detail View]
+        PRD --> SBD
+        SBD --> PAYQ
+    end
+
+    %% =========================
+    %% CONTROL BRANCH
+    %% =========================
+    subgraph CTRL[Control]
+        CH --> BUD[Budget Overview]
+        CH --> ECV[Employee Cost View]
+        CH --> AUD[Audit Trail / Activity Log]
+    end
+
+    %% =========================
+    %% REVENUE EXECUTION LOOP
+    %% =========================
+    subgraph RLOOP[Revenue Execution Loop]
+        BW[Billable Work] --> IDR[Invoice Draft]
+        IDR --> IIR[Issued Invoice / Receivable]
+        IIR --> CFL[Collections Follow-up]
+        CFL --> CCI[Collected Cash]
+    end
+
+    %% =========================
+    %% SPEND EXECUTION LOOP
+    %% =========================
+    subgraph SLOOP[Spend Execution Loop]
+        PQR[Purchase Request] --> ACM[Approved Commitment]
+        ACM --> SBB[Supplier Bill]
+        SBB --> PQQ[Payment Queue]
+        PQQ --> PCO[Paid Cash Out]
+    end
+
+    %% =========================
+    %% SCREEN TO FLOW LINKS
+    %% =========================
+    DBL -. builds .-> IDR
+    DRL -. manages .-> IDR
+    INVL -. lists .-> IIR
+    INVD -. shows .-> IIR
+    COL -. executes .-> CFL
+
+    PRL -. creates / tracks .-> PQR
+    PRD -. approves .-> ACM
+    SBL -. lists .-> SBB
+    SBD -. resolves .-> SBB
+    PAYQ -. executes .-> PQQ
+
+    %% =========================
+    %% DASHBOARD DRILLDOWNS
+    %% =========================
+    KPI1 -. drilldown .-> COL
+    KPI2 -. drilldown .-> SBL
+    KPI3 -. drilldown .-> BUD
+    KPI4 -. drilldown .-> BUD
+    KPI5 -. drilldown .-> COL
+    KPI6 -. drilldown .-> PAYQ
+
+    %% =========================
+    %% CROSS-SCREEN LINKS
+    %% =========================
+    INVD -. linked billable work .-> BW
+    INVD -. payment registrations .-> CCI
+    COL -. open invoice detail .-> INVD
+    PRD -. linked supplier bill .-> SBD
+    SBD -. linked request .-> PRD
+    BUD -. commitments .-> PRL
+    BUD -. actual paid .-> PAYQ
+    AUD -. record traceability .-> INVD
+    AUD -. record traceability .-> PRD
+    AUD -. record traceability .-> SBD
+
+    %% =========================
+    %% CONTROL / CONTEXT FEEDS
+    %% =========================
+    BS[Budget Signals] --> BUD
+    BS --> PRD
+    BS --> SBD
+
+    ECS[Employee Cost Visibility] --> ECV
+    ECS --> BUD
+
+    AEV[Audit Events] --> AUD
+    AEV --> INVD
+    AEV --> SBD
+    AEV --> PRD
+
+    CCTX[Client Context] --> INVL
+    CCTX --> INVD
+    CCTX --> COL
+
+    VCTX[Vendor Context] --> PRL
+    VCTX --> SBL
+    VCTX --> SBD
+
+    TCTX[Contract / Terms Context] --> DBL
+    TCTX --> INVD
+    TCTX --> PRD
+    TCTX --> SBD

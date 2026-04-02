@@ -1,0 +1,18 @@
+flowchart LR
+  IN[Input - payable item with readiness outcome from Spend]
+  WB[Workbench - select and prepare batch - UI only]
+  SCH[Schedule - persisted execution status Scheduled]
+  EXE[Execute or register paid - persisted execution status Executed or Paid]
+  OUT[Outputs - cash truth record and downstream visibility]
+
+  IN --> WB --> SCH --> EXE --> OUT
+
+  subgraph Guardrails[Guardrails]
+    G1[Queue does not form readiness - it consumes readiness]
+    G2[Selected or prepared is not equal to scheduled]
+    G3[Scheduled is not equal to executed or paid]
+  end
+
+  IN -.-> G1
+  WB -.-> G2
+  SCH -.-> G3

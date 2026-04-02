@@ -1,0 +1,29 @@
+stateDiagram-v2
+  [*] --> Draft
+  Draft --> Submitted: Submit
+  Submitted --> Approved: Approve
+  Submitted --> Rejected: Reject
+  Submitted --> Draft: Request changes
+  Draft --> Cancelled: Cancel
+  Submitted --> Cancelled: Cancel
+
+  state "Signals - orthogonal" as SIG {
+    [*] --> None
+    None --> Urgent
+    Urgent --> None
+    None --> MissingAttachment
+    MissingAttachment --> None
+    None --> BudgetWarning
+    BudgetWarning --> None
+    None --> BudgetBreach
+    BudgetBreach --> None
+    None --> WaitingForRevision
+    WaitingForRevision --> None
+    None --> LinkedToSupplierBill
+    LinkedToSupplierBill --> None
+  }
+
+  note right of Approved
+    Approved implies Commitment visibility.
+    Commitment is budgetary visibility and not supplier obligation truth.
+  end note

@@ -1,0 +1,22 @@
+flowchart TB
+    subgraph L1[Layer 1: Monitoring Shell]
+        O[Overview<br/>Monitoring & Routing]
+    end
+
+    subgraph L2[Layer 2: Revenue Chain]
+        I[Invoicing<br/>Truth Creation] --> R[Receivables<br/>Follow-up]
+    end
+
+    subgraph L3[Layer 3: Spend Chain]
+        PRC[Purchase Requests / Commitments<br/>Upstream Approval] --> SSB[Spend / Supplier Bills<br/>Readiness Formation]
+        SSB --> PQ[Payments Queue<br/>Execution Handoff]
+    end
+
+    subgraph L4[Layer 4: Controls]
+        C[Controls<br/>Budget - Audit - Cost]
+    end
+
+    %% Dependencies
+    I & R & PRC & SSB & PQ --> C
+    C & I & R & PRC & SSB & PQ --> O
+    O -.-> I & R & PRC & SSB & PQ

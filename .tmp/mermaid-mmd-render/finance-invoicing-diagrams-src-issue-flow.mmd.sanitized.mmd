@@ -1,0 +1,12 @@
+%% Issue flow v1 prototype store transitions
+flowchart LR
+  UI["Invoice Draft Builder<br/>local UI state"] --> S1["Save draft<br/>upsertDraft + setDraftLines"]
+  S1 --> ACT["Issue action<br/>Submit για Έκδοση"]
+  ACT --> INV["Δημιουργία Invoice<br/>minimal issued record"]
+  INV --> REC["Δημιουργία ReceivableWorkItem<br/>outstanding = Invoice.total"]
+  INV --> BW["Ενημέρωση BillableWorkItem<br/>status=Invoiced, invoicedByInvoiceId"]
+  ACT --> AUD["Καταγραφή AuditEvent<br/>invoice issued prototype"]
+
+  classDef note fill:#eff6ff,stroke:#3b82f6,color:#1e3a8a;
+  N1[["Σημείωση: το issued Invoice στο v1 δεν κρατά snapshot header/lines.<br/>Η “αλήθεια γραμμών” μετά το issue ανακτάται έμμεσα από linked billable work."]]:::note
+  INV -.-> N1

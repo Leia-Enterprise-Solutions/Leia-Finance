@@ -1,144 +1,134 @@
-# 03 — Invoice Module
+## 03 — Invoice Module (Ενότητα Τιμολόγησης)
 
-## 1. Σκοπός του εγγράφου
+## 1. Σκοπός του Εγγράφου
 
-Το παρόν έγγραφο ορίζει το `Invoice Module` σε επίπεδο module canon: ρόλο, boundaries, owned truth, surfaces, local lifecycle, issue-readiness gate και handoffs προς άλλα modules.
-Δεν αποτελεί semantic-law (αυτό ορίζεται στο `00A`) ούτε UI blueprint.
+Το παρόν έγγραφο ορίζει την Ενότητα Τιμολόγησης (Invoice Module) σε επίπεδο κανονιστικού προτύπου: τον ρόλο, τα όρια, την ιδιοκτησία της πληροφορίας (owned truth), τις επιφάνειες εργασίας, τον τοπικό κύκλο ζωής, την πύλη ελέγχου έκδοσης (issue-readiness gate) και τις παραδόσεις (handoffs) προς άλλες ενότητες.
 
----
-
-## 2. Ρόλος και boundaries
-
-Το `Invoice Module` είναι το revenue-core module που μετατρέπει `Billable Work` σε **issued invoice document truth** και παραδίδει καθαρό downstream handoff προς `Receivables`.
-
-Boundaries (τι δεν είναι):
-- Δεν είναι `Receivables` (follow-up/collection progression).
-- Δεν είναι `Overview` (monitoring shell).
-- Δεν είναι accounting/compliance engine ή bank/reconciliation truth.
-
-Σημείωση: Το `Issue` είναι semantic transition boundary (per `00A`) και **δεν** αποτελεί απόδειξη πλήρους λογιστικής/φορολογικής/κανονιστικής ολοκλήρωσης.
+Δεν αποτελεί σημασιολογικό νόμο (αυτό ορίζεται στο 00A) ούτε προσχέδιο διεπαφής (UI blueprint).
 
 ---
 
-## 3. Core business concepts του module (capsule)
+## 2. Ρόλος και Όρια
 
-- `Billable Work`: upstream τιμολογήσιμο input.
-- `Invoice Draft` + `Draft Lines`: editable προ-issue σύνθεση.
-- `Issue`: η μετάβαση που κλειδώνει issued snapshot (κανόνες στο `00A`).
-- `Issued Invoice`: το canonical issued record του module (document truth).
-- Downstream handoff: παράγωγο `Receivable` context (owner: `Receivables`, derivation κανόνες στο `00A`).
-- `Transmission / fiscal context`: υποστηρικτική διάσταση, δεν αλλάζει την issued truth.
-- `Audit/Notes/Timeline`: supporting traceability, όχι truth replacement.
+Το Invoice Module είναι η κεντρική ενότητα εσόδων που μετατρέπει την Τιμολογήσιμη Εργασία (Billable Work) σε επίσημη αλήθεια εγγράφου (issued invoice document truth) και εξασφαλίζει την καθαρή παράδοση προς τις Απαιτήσεις (Receivables).
 
----
+Όρια (Τι ΔΕΝ είναι):
+- Δεν είναι η ενότητα Απαιτήσεων (παρακολούθηση είσπραξης / progression).
+- Δεν είναι η Επισκόπηση (Overview) (κέλυφος εποπτείας).
+- Δεν είναι λογιστική μηχανή, μηχανή συμμόρφωσης ή τραπεζική πηγή αλήθειας.
 
-## 4. Module surfaces / operational surfaces (όχι UI spec)
-
-- `Invoice Drafts List`: worklist για draft backlog/συνέχεια.
-- `Invoice Draft Builder`: σύνθεση draft, preview/review και gated `Issue`.
-- `Invoices List`: worklist issued invoices (post-issue visibility).
-- `Invoice Detail View`: canonical issued context + handoff links (προς `Receivables`).
+Σημείωση: Η «Έκδοση» (Issue) αποτελεί όριο σημασιολογικής μετάβασης (κατά το 00A) και δεν αποτελεί τεκμήριο πλήρους λογιστικής, φορολογικής ή κανονιστικής ολοκλήρωσης.
 
 ---
 
-## 5. Core flow του module (local)
+## 3. Βασικές Επιχειρησιακές Έννοιες (Σύνοψη)
 
-```mermaid
-flowchart LR
-    BW[Billable Work]
-    D[Invoice Draft]
-    IS[Issue transition]
-    II[Issued Invoice<br/>document truth]
-    RH[Downstream Receivable handoff]
-
-    BW --> D --> IS --> II --> RH
-```
-
-Τι δείχνει: την local ακολουθία του `Invoicing` μέχρι το downstream handoff.  
-Τι δεν δείχνει: collection/payment progression ως invoice document statuses.
-
-Local flow capsule:
-- Draft discovery/continuation → composition → save/review.
-- `Issue` (gated) → δημιουργία issued record + downstream handoff.
-- Post-issue review: ανάγνωση issued record (χωρίς εξάρτηση από draft mutations).
+- Τιμολογήσιμη Εργασία (Billable Work): Τα δεδομένα εισόδου προς τιμολόγηση.
+- Προσχέδιο Τιμολογίου (Invoice Draft) & Γραμμές Προσχεδίου: Η επεξεργάσιμη σύνθεση πριν την έκδοση.
+- Έκδοση (Issue): Η μετάβαση που «κλειδώνει» το στιγμιότυπο έκδοσης (snapshot), σύμφωνα με τους κανόνες του 00A.
+- Εκδοθέν Τιμολόγιο (Issued Invoice): Το επίσημο ιστορικό αρχείο της ενότητας (document truth).
+- Παράδοση (Handoff): Το παραγόμενο πλαίσιο Απαίτησης (Receivable context) (ιδιοκτησία: Receivables).
+- Διαβίβαση / Φορολογικό Πλαίσιο (Transmission): Υποστηρικτική διάσταση που δεν αλλοιώνει την εκδοθείσα αλήθεια.
 
 ---
 
-## 6. Ownership και outputs (module-local)
+## 4. Επιφάνειες Λειτουργίας (Operational Surfaces)
 
-Owned truth εντός module:
-- `InvoiceDraft` / `DraftLine`: truth της pre-issue σύνθεσης.
-- `Invoice` (issued): **document truth** μετά το `Issue`.
-
-Μη-owned / read-only contexts:
-- `BillableWorkItem`: upstream source context.
-- `Receivable` context: downstream claim (owner: `Receivables`).
-- `Controls` outputs: visibility μόνο (audit/control), όχι ownership.
-
-Module outputs:
-- Issued invoice record (issued snapshot).
-- Deterministic handoff προς `Receivables` (linked context/identifier ώστε να μην υπάρχει αμφισημία downstream).
+- Λίστα Προσχεδίων: Χώρος εργασίας για τη διαχείριση του backlog των προσχεδίων.
+- Εργαλείο Σύνθεσης (Draft Builder): Σύνθεση, προεπισκόπηση και ελεγχόμενη (gated) Έκδοση.
+- Λίστα Τιμολογίων: Ορατότητα των εκδοθέντων παραστατικών (post-issue).
+- Προβολή Λεπτομερειών Τιμολογίου: Επίσημο περιεχόμενο και σύνδεσμοι παράδοσης (προς τις Απαιτήσεις).
 
 ---
 
-## 7. Module-local rules (χωρίς επανάληψη του 00A)
+## 5. Τοπική Ροή Ενότητας (Core Flow)
 
-Το module εφαρμόζει τους canonical κανόνες του `00A` (issue boundary, totals alignment, state-family separation). Σε module επίπεδο, οι πρακτικές συνέπειες είναι:
+Η ροή ακολουθεί την εξής ακολουθία:
 
-- **Draft vs Issued separation**: post-issue, το issued record δεν “εξηγείται” από μεταγενέστερο draft/preview.
-- **No collection statuses στο Invoice**: `Paid/Partially Paid/Overdue/Open` δεν είναι canonical invoice document statuses· ανήκουν στο `Receivables`/cash context.
-- **Transmission είναι orthogonal**: transmission/fiscal signals δεν επαναορίζουν το `Issue` ούτε την issued truth.
+Εντοπισμός/Συνέχιση Προσχεδίου $\rightarrow$ Σύνθεση $\rightarrow$ Αποθήκευση/Ανασκόπηση.
 
----
+Έκδοση (Issue) (μέσω πύλης ελέγχου) $\rightarrow$ Δημιουργία εκδοθέντος αρχείου + Παράδοση downstream.
 
-## 8. Lifecycle & status vocabulary (module-specific)
+Ανασκόπηση μετά την Έκδοση: Ανάγνωση του επίσημου αρχείου (χωρίς εξάρτηση από μετέπειτα αλλαγές σε προσχέδια).
 
-Το `Invoice Module` εκθέτει μόνο module-local vocabulary, συμβατό με το state-family separation του `00A`.
+### Διαγράμματα (Αναφορά)
 
-- **Persisted document statuses (module)**: `Draft`, `Issued`
-- **Readiness states (pre-issue)**: `Ready for Issue`, `Not Ready`
-- **Operational signals (optional)**: `Needs Review`, `Stale` (όπου εφαρμόζεται)
-- **UI-only flags (examples)**: `Unsaved Changes`, `Preview Mode`, `Inline Validation Error`
+#### Διάγραμμα λειτουργικής ροής (semantic boundary στο Issue)
 
-Απαγορεύεται η χρήση downstream receivable/payment outcomes ως invoice document statuses.
+![diagram](./diagrams/_rendered/from_mmd/diagrams-modules-invoice-invoice-functional-flow.mmd.png)
 
----
+#### Διάγραμμα καταστάσεων (document status, readiness, signals)
 
-## 9. Issue-readiness gate (semantic minimum)
-
-Το module ορίζει το ελάχιστο readiness gate για να επιτραπεί το `Issue`, χωρίς να εισάγει implementation detail:
-- Τουλάχιστον μία έγκυρη `DraftLine` με σαφή origin.
-- Συνεπές totals αποτέλεσμα (preview) ώστε να προκύψει issued snapshot χωρίς αμφισημία.
-- Επαρκές billing/customer identity context.
-- Επαρκές issue/date/terms context.
-- Απουσία blocking validation errors που καθιστούν ambiguous την issued truth ή το downstream derivation.
+![diagram](./diagrams/_rendered/from_mmd/diagrams-modules-invoice-invoice-state-machine.mmd.png)
 
 ---
 
-## 10. Relations / handoffs με άλλα modules
+## 6. Ιδιοκτησία και Παραδοτέα (Module Ownership)
 
-- Με `Receivables`: το `Invoicing` παραδίδει issued truth + deterministic handoff. Το `Receivables` αναλαμβάνει progression/collection.
-- Με `Overview`: το `Overview` παρακολουθεί/δρομολογεί, δεν επαναορίζει invoice truth.
-- Με `Controls`: read-only visibility (ιδίως audit), χωρίς ownership.
+Ιδιοκτησία Αλήθειας (εντός ενότητας):
+- Invoice Draft / Draft Line: Η αλήθεια της σύνθεσης πριν την έκδοση.
+- Invoice (Issued): Η αλήθεια του εγγράφου μετά την Έκδοση.
 
-Boundary logic (capsule):
-- Upstream read: `Billable Work`
-- Downstream write/handoff: issued `Invoice` truth → `Receivables` context
+Πλαίσια Ανάγνωσης (Read-only):
+- Billable Work Item: Πλαίσιο πηγής δεδομένων.
+- Receivable Context: Η απαίτηση είσπραξης (ιδιοκτησία: Receivables).
 
----
-
-## 11. v1 limitations / stabilization notes (non-canonical)
-
-Τα παρακάτω είναι **stabilization targets** και δεν αλλάζουν τους canonical κανόνες του `00A`:
-- πιθανό mismatch preview totals vs issued totals σε ορισμένες αναπαραστάσεις
-- minimal issued record / missing full snapshot risk (πέρα από totals)
-- numbering linkage ambiguity μεταξύ draft και issued context
-- transmission status ως placeholder signal χωρίς πλήρες lifecycle policy
-- controlled/open policy για void/cancel/credit
+Παραδοτέα (Outputs):
+- Επίσημο αρχείο τιμολογίου (Issued snapshot).
+- Καθορισμένη παράδοση (Handoff) προς τις Απαιτήσεις με μοναδικά αναγνωριστικά.
 
 ---
 
-## 12. Τελική διατύπωση module statement
+## 7. Τοπικοί Κανόνες Ενότητας
 
-Το `Invoice Module` είναι το canonical revenue-core module του Finance Management & Monitoring System v1: συνθέτει `Invoice Draft` από `Billable Work`, εφαρμόζει gated `Issue` ώστε να παραχθεί issued invoice document truth (issued snapshot per `00A`), και παραδίδει deterministic downstream handoff προς `Receivables`, χωρίς να απορροφά collections/payment progression ή να μετατρέπεται σε monitoring/compliance/accounting surface.
+Η ενότητα εφαρμόζει τους κανόνες του 00A (όριο έκδοσης, ευθυγράμμιση συνόλων). Σε επίπεδο ενότητας, αυτό σημαίνει:
+- Διαχωρισμός Προσχεδίου/Εκδοθέντος: Μετά την έκδοση, το επίσημο αρχείο δεν μεταβάλλεται από μετέπειτα προσχέδια.
+- Όχι Καταστάσεις Είσπραξης στο Τιμολόγιο: Οι ενδείξεις Εξοφλημένο, Ληξιπρόθεσμο, κ.λπ., δεν είναι καταστάσεις του εγγράφου· ανήκουν στις Απαιτήσεις και στο ταμειακό πλαίσιο.
+- Η Διαβίβαση είναι Ορθογώνια: Τα σήματα φορολογικής διαβίβασης δεν επαναορίζουν την Έκδοση ούτε την εκδοθείσα αλήθεια.
+
+---
+
+## 8. Λεξιλόγιο Καταστάσεων (Status Vocabulary)
+
+Μόνιμες Καταστάσεις Εγγράφου: Προσχέδιο (Draft), Εκδοθέν (Issued).
+
+Καταστάσεις Ετοιμότητας (Pre-issue): Έτοιμο προς Έκδοση, Μη Έτοιμο.
+
+Λειτουργικά Σήματα: Απαιτεί Ανασκόπηση, Στάσιμο (Stale).
+
+Ενδείξεις Διεπαφής (UI-only): Μη αποθηκευμένες αλλαγές, Λειτουργία Προεπισκόπησης.
+
+---
+
+## 9. Πύλη Ελέγχου Έκδοσης (Issue-readiness Gate)
+
+Ελάχιστα κριτήρια για να επιτραπεί η Έκδοση:
+- Τουλάχιστον μία έγκυρη γραμμή (Draft Line) με σαφή προέλευση.
+- Συνεπές αποτέλεσμα συνόλων (Preview) για τη δημιουργία καθαρού Snapshot.
+- Πλήρη στοιχεία ταυτότητας πελάτη/χρέωσης.
+- Πλήρη στοιχεία ημερομηνίας και όρων πληρωμής.
+- Απουσία σφαλμάτων επικύρωσης (validation errors) που καθιστούν ασαφή την αλήθεια του εγγράφου.
+
+---
+
+## 10. Σχέσεις και Παραδόσεις (Handoffs)
+
+- Με τις Απαιτήσεις (Receivables): Η Τιμολόγηση παραδίδει την εκδοθείσα αλήθεια. Οι Απαιτήσεις αναλαμβάνουν την πορεία είσπραξης.
+- Με την Επισκόπηση (Overview): Η Επισκόπηση παρακολουθεί και δρομολογεί, χωρίς να επαναορίζει την αλήθεια του τιμολογίου.
+- Με τους Ελεγκτικούς Μηχανισμούς (Controls): Ορατότητα ανάγνωσης (audit), χωρίς ιδιοκτησία.
+
+---
+
+## 11. Περιορισμοί v1 και Σημειώσεις Σταθεροποίησης
+
+- Πιθανές αποκλίσεις μεταξύ συνόλων προεπισκόπησης και τελικών συνόλων σε ορισμένες αναπαραστάσεις.
+- Κίνδυνος ελλιπούς στιγμιότυπου (Snapshot) πέραν των συνόλων (totals).
+- Ασάφεια στη σύνδεση αρίθμησης μεταξύ προσχεδίου και εκδοθέντος.
+- Η κατάσταση διαβίβασης λειτουργεί ως προσωρινό σήμα (placeholder) χωρίς πλήρες lifecycle.
+
+---
+
+## 12. Τελική Διατύπωση Ενότητας
+
+Το Invoice Module αποτελεί την κεντρική ενότητα εσόδων του συστήματος Finance v1: συνθέτει το Προσχέδιο Τιμολογίου από την Τιμολογήσιμη Εργασία, εφαρμόζει μια ελεγχόμενη Έκδοση για την παραγωγή της επίσημης αλήθειας του εγγράφου και εκτελεί την καθορισμένη παράδοση προς τις Απαιτήσεις, χωρίς να απορροφά τη διαχείριση των εισπράξεων ή να μετατρέπεται σε λογιστική επιφάνεια.
 

@@ -1,168 +1,158 @@
-# 06 — Purchase Requests / Commitments Module
+## 07 — Purchase Requests / Commitments Module (Ενότητα Αιτημάτων Αγοράς)
 
 ## 1. Σκοπός του εγγράφου
 
-Το παρόν έγγραφο ορίζει το `Purchase Requests / Commitments Module` σε επίπεδο module canon: role/boundaries, core concepts (request/approval/commitment), local lifecycle/status vocabulary, approval readiness gate, commitment visibility προς `Controls`, και handoff προς `Spend / Supplier Bills`.
-Δεν αποτελεί semantic-law (αυτό ορίζεται στο `00A`) ούτε module map (αυτό ορίζεται στο `01`) ούτε UI blueprint.
+Το παρόν έγγραφο ορίζει την Ενότητα Αιτημάτων Αγοράς & Δεσμεύσεων (Purchase Requests / Commitments) σε επίπεδο κανονιστικού προτύπου: ρόλο/όρια, βασικές έννοιες (αίτημα/έγκριση/δέσμευση), τοπικό κύκλο ζωής, λεξιλόγιο καταστάσεων, πύλη ετοιμότητας έγκρισης, ορατότητα δεσμεύσεων προς τους Ελεγκτικούς Μηχανισμούς (Controls) και παράδοση (handoff) προς τις Δαπάνες / Παραστατικά Προμηθευτών.
+
+Δεν αποτελεί σημασιολογικό νόμο (00A), ούτε χάρτη ενοτήτων (01), ούτε προσχέδιο διεπαφής (UI blueprint).
 
 ---
 
-## 2. Ρόλος και upstream spend boundary
+## 2. Ρόλος και όρια έναρξης δαπάνης (Upstream)
 
-Το module καλύπτει το upstream spend initiation/approval layer: από την καταγραφή ανάγκης δαπάνης έως την απόδοση απόφασης που δημιουργεί **commitment visibility**, πριν από οποιαδήποτε supplier-side obligation.
+Η ενότητα καλύπτει το αρχικό επίπεδο έναρξης και έγκρισης δαπανών: από την καταγραφή της ανάγκης έως την έκδοση απόφασης που δημιουργεί ορατότητα δέσμευσης (commitment visibility), πριν από οποιαδήποτε υποχρέωση προς προμηθευτή.
 
-Module truth:
-- Οργανώνει `Purchase Request` (spend intent) και `Approval Decision`.
-- Δημιουργεί `Commitment` ως distinct concept/visibility μετά από έγκριση.
-- Παράγει downstream linkage context προς `Spend / Supplier Bills` (όχι supplier obligation truth).
+Αλήθεια Ενότητας (Module Truth):
+- Οργανώνει το Αίτημα Αγοράς (Purchase Request) και την Απόφαση Έγκρισης.
+- Δημιουργεί τη Δέσμευση (Commitment) ως διακριτή έννοια μετά την έγκριση.
+- Παράγει πλαίσιο σύνδεσης (linkage context) προς τις Δαπάνες / Παραστατικά Προμηθευτών.
 
-Boundaries (τι δεν είναι):
-- Δεν είναι `Spend / Supplier Bills` (supplier obligation + readiness).
-- Δεν είναι `Payments Queue` (execution).
-- Δεν είναι `Controls/Budget` module· τροφοδοτεί visibility, δεν “αποφασίζει” το control model.
-- Δεν εκτελεί πληρωμές και δεν κατέχει payable truth.
-
----
-
-## 3. Canonical constraints που εφαρμόζει (ως references)
-
-Το module εφαρμόζει (χωρίς να τα επαναορίζει) τους canonical κανόνες των `00A/01`:
-- **Commitment ως ξεχωριστό concept** (όχι bill, όχι payment).
-- **Commitment relief / anti-overlap discipline** σε monitoring/control (κανόνας στο `00A`).
-- **State-family separation**: status/outcome/signals/UI-only δεν συγχωνεύονται.
+Όρια (Τι ΔΕΝ είναι):
+- Δεν είναι η ενότητα Δαπανών / Παραστατικών (υποχρέωση προμηθευτή + ετοιμότητα).
+- Δεν είναι η Ουρά Πληρωμών (εκτέλεση).
+- Δεν είναι η ενότητα Ελέγχου/Budget· τροφοδοτεί με δεδομένα, δεν «αποφασίζει» το μοντέλο ελέγχου.
+- Δεν εκτελεί πληρωμές και δεν κατέχει την αλήθεια των πληρωτέων (payable truth).
 
 ---
 
-## 4. Core concepts (capsule)
+## 3. Κανονιστικοί περιορισμοί (Αναφορές)
 
-- `Purchase Request`: τεκμηριωμένο upstream αίτημα δαπάνης.
-- `Approval Context`: approver, reason, comments, required evidence.
-- `Approval Decision`: `Approve`, `Reject`, `Request Changes`.
-- `Commitment`: εγκεκριμένη δέσμευση (budgetary truth/visibility) πριν το supplier bill.
-- `Commitment Visibility`: παρουσία σε `Controls`/monitoring και ως reference για downstream linkage.
-- `Downstream Linkage Context`: γέφυρα προς `Spend / Supplier Bills` για μελλοντική σύνδεση.
+Η ενότητα εφαρμόζει τους κανόνες των 00A/01:
+- Η Δέσμευση ως ξεχωριστή έννοια: Δεν είναι παραστατικό, δεν είναι πληρωμή.
+- Πειθαρχία αποφυγής διπλομέτρησης (Anti-overlap): Εφαρμογή κανόνων εκτόνωσης δέσμευσης (commitment relief).
+- Διαχωρισμός οικογενειών κατάστασης: Κατάσταση, αποτέλεσμα, σήματα και UI-only flags δεν συγχωνεύονται.
 
 ---
 
-## 5. Inputs και outputs (module-level)
+## 4. Βασικές έννοιες (Σύνοψη)
 
-Inputs:
-- spend need + requester/department/cost center context
-- amount/currency + category/reason/urgency
-- supplier context (όπου υπάρχει ή απαιτείται από policy)
-- attachments/evidence (όπου απαιτείται)
+Αίτημα Αγοράς (Purchase Request): Τεκμηριωμένο αρχικό αίτημα δαπάνης.
 
-Outputs:
-- approval outcome (approve/reject/request changes) + traceability
-- commitment visibility προς `Controls` (`Budget`) και monitoring surfaces
-- downstream linkage context προς `Spend / Supplier Bills`
+Πλαίσιο Έγκρισης (Approval Context): Εγκρίνων, αιτιολογία, σχόλια, απαιτούμενα αποδεικτικά.
 
----
+Απόφαση Έγκρισης: Έγκριση (Approve), Απόρριψη (Reject), Αίτημα Αλλαγών (Request Changes).
 
-## 6. Module surfaces (όχι UI spec)
+Δέσμευση (Commitment): Εγκεκριμένο ποσό (προϋπολογιστική αλήθεια) πριν το παραστατικό προμηθευτή.
 
-- `Purchase Requests List`: upstream triage worklist (review/approval pressure).
-- `Purchase Request Detail / Approval View`: single-record decision surface για approve/reject/request changes.
+Ορατότητα Δέσμευσης: Παρουσία στους Ελεγκτικούς Μηχανισμούς και στην Επισκόπηση.
+
+Πλαίσιο Σύνδεσης (Linkage Context): Γέφυρα προς τις Δαπάνες για μελλοντική αντιστοίχιση.
 
 ---
 
-## 7. Core flow (local)
+## 5. Εισροές και εκροές (Module-level)
 
-```mermaid
-flowchart LR
-    N[Spend Need]
-    PR[Purchase Request]
-    RV[Review & Completeness]
-    AD[Approval Decision]
-    CM[Commitment Visibility]
-    HL[Downstream Linkage Context]
+Εισροές:
+Ανάγκη δαπάνης + πλαίσιο αιτούντος/τμήματος/κέντρου κόστους.
+Ποσό/Νόμισμα + κατηγορία/λόγος/επείγον.
+Στοιχεία προμηθευτή (όπου υπάρχουν ή απαιτούνται).
+Επισυνάψεις/Αποδεικτικά.
 
-    N --> PR --> RV --> AD
-    AD --> CM --> HL
-```
-
-Flow capsule:
-- Καταγραφή request → triage/review → decision outcome.
-- `Approve` → commitment visibility + downstream linkage eligibility.
-- `Reject`/`Request Changes` → no active commitment, αλλά traceable outcome.
-- Controlled revision/cancellation δεν “ξαναγράφει” downstream truth.
+Εκροές:
+Αποτέλεσμα έγκρισης + ιχνηλασιμότητα.
+Ορατότητα δέσμευσης προς Προϋπολογισμό (Budget) και Επισκόπηση.
+Πλαίσιο σύνδεσης (handoff) προς τις Δαπάνες / Παραστατικά Προμηθευτών.
 
 ---
 
-## 8. Lifecycle & status vocabulary (module-specific)
+## 6. Επιφάνειες Λειτουργίας (Operational Surfaces)
 
-**Persisted request statuses**
-- `Draft`
-- `Submitted`
-- `Approved`
-- `Rejected`
-- `Cancelled`
+Λίστα Αιτημάτων Αγοράς: Χώρος εργασίας για διαλογή (triage) και πίεση εγκρίσεων.
 
-**Approval outcomes**
-- `Approve`
-- `Reject`
-- `Request Changes`
-
-**Commitment meaning**
-- `Approved` ⇒ `Committed` (semantic meaning στο module)
-
-**Operational signals (examples)**
-- `Urgent`
-- `Missing Attachment`
-- `Budget Warning`
-- `Budget Breach`
-- `Waiting for Revision`
-- `Linked to Supplier Bill`
-- `No Linked Supplier Bill Yet`
-
-**UI-only flags (examples)**
-- `Selected`
-- `Expanded`
-- `Inline Validation Error`
-- `Approval Panel Active`
-
-Απαγορεύεται η σύγχυση:
-- request status με supplier bill status,
-- commitment meaning με payable readiness,
-- budget signal με persisted status,
-- linkage visibility με approval outcome.
+Προβολή Λεπτομερειών / Έγκρισης: Επιφάνεια λήψης απόφασης (Approve/Reject/Request Changes).
 
 ---
 
-## 9. Approval readiness gate (semantic minimum)
+## 7. Τοπική Ροή Ενότητας (Core Flow)
 
-Για να δοθεί `Approve` (και άρα commitment visibility), το module πρέπει να εκθέτει ελάχιστα:
-- σαφή request identity + requester context
-- amount + spend reason/category
-- επαρκή justification
-- required evidence/attachments όπου η policy το απαιτεί
-- traceable approval actor/outcome
-- απουσία blocking ambiguity που θα έκανε ασαφές το commitment meaning
+![diagram](./../../docs/diagrams/_rendered/from_md/07-Purchase-Requests-Commitments.md/07-Purchase-Requests-Commitments.md-1.svg)
 
-Αν κάτι λείπει: `Request Changes` με explicit reason (όχι “σιωπηλό approve”).
+Καταγραφή αιτήματος $\rightarrow$ Ανασκόπηση $\rightarrow$ Αποτέλεσμα απόφασης.
 
----
+Έγκριση $\rightarrow$ Ορατότητα δέσμευσης + Επιλεξιμότητα σύνδεσης downstream.
 
-## 10. Relations / handoffs
+Απόρριψη / Αίτημα Αλλαγών $\rightarrow$ Καμία ενεργή δέσμευση, αλλά ιχνηλάσιμο αποτέλεσμα.
 
-- Προς `Spend / Supplier Bills`: παρέχει approved/committed context + linkage reference. Δεν δημιουργεί supplier obligation.
-- Προς `Controls (Budget)`: παρέχει commitment visibility + approval traceability.
-- Προς `Overview`: παρέχει committed spend / backlog pressure / drilldown target προς requests worklist.
-- Προς `Payments Queue`: καμία άμεση σχέση· επηρεάζει μόνο έμμεσα μέσω downstream supplier bills.
+Ελεγχόμενη αναθεώρηση/ακύρωση (δεν «ξαναγράφει» την αλήθεια που έχει ήδη παραδοθεί downstream).
 
----
+### Module diagrams (functionality + state transitions)
 
-## 11. v1 limitations / controlled decisions (non-canonical)
+#### Διάγραμμα λειτουργικής ροής - request, approval, commitment visibility
+![diagram](./diagrams/_rendered/from_mmd/diagrams-modules-commitments-commitments-functional-flow.mmd.png)
 
-- role-based approval policy thresholds
-- required-vs-optional attachment policy
-- supplier context mandatory policy πριν από approval
-- controlled cancellation/revision semantics μετά από approval
-- SLA/monitoring για “Approved but not yet linked to Supplier Bill”
-- decomposition/presentation details για anti-double-count (ο relief κανόνας παραμένει canonical στο `00A`)
+#### Διάγραμμα καταστάσεων - request statuses και orthogonal signals
+![diagram](./diagrams/_rendered/from_mmd/diagrams-modules-commitments-commitments-state-machine.mmd.png)
 
 ---
 
-## 12. Final canonical statement
+## 8. Λεξιλόγιο κύκλου ζωής & καταστάσεων
 
-Το `Purchase Requests / Commitments Module` είναι το canonical upstream spend initiation/approval layer του Finance Management & Monitoring System v1: καταγράφει `Purchase Request`, αποδίδει approve/reject/request-changes outcome, δημιουργεί `Commitment` visibility όταν εγκρίνεται, τροφοδοτεί `Controls (Budget)` και monitoring surfaces με committed spend visibility, και παραδίδει downstream linkage context προς `Spend / Supplier Bills`, χωρίς να κατέχει supplier obligation truth ή να εκτελεί πληρωμές.
+Μόνιμες καταστάσεις αιτήματος (Persisted)
+Προσχέδιο (Draft)
+Υποβλήθηκε (Submitted)
+Εγκρίθηκε (Approved)
+Απορρίφθηκε (Rejected)
+Ακυρώθηκε (Cancelled)
+
+Αποτελέσματα Έγκρισης (Outcomes)
+Έγκριση, Απόρριψη, Αίτημα Αλλαγών.
+
+Σημασιολογία Δέσμευσης (Commitment)
+Εγκρίθηκε $\Rightarrow$ Δεσμεύτηκε (η εσωτερική σημασία για την ενότητα).
+
+Λειτουργικά σήματα (Ενδεικτικά)
+Επείγον, Ελλιπές Επισυναπτόμενο, Προειδοποίηση Προϋπολογισμού, Υπέρβαση Προϋπολογισμού, Συνδεδεμένο με Παραστατικό.
+
+---
+
+## 9. Πύλη Ετοιμότητας Έγκρισης (Approval Readiness Gate)
+
+Για να δοθεί Έγκριση (και άρα ορατότητα δέσμευσης), πρέπει να υπάρχουν:
+Σαφής ταυτότητα αιτήματος και αιτούντος.
+Ποσό και λόγος/κατηγορία δαπάνης.
+Επαρκής τεκμηρίωση.
+Απαιτούμενα αποδεικτικά βάσει πολιτικής.
+Ιχνηλάσιμος χρήστης που λαμβάνει την απόφαση.
+Απουσία ασαφειών που θα καθιστούσαν τη δέσμευση αμφίβολη.
+
+---
+
+## 10. Σχέσεις και παραδόσεις (Handoffs)
+
+Προς Δαπάνες / Παραστατικά Προμηθευτών: Παρέχει το εγκεκριμένο πλαίσιο και την αναφορά σύνδεσης. Δεν δημιουργεί υποχρέωση προμηθευτή.
+
+Προς Ελεγκτικούς Μηχανισμούς (Budget): Παρέχει ορατότητα δεσμεύσεων και ιχνηλασιμότητα εγκρίσεων.
+
+Προς Επισκόπηση (Overview): Παρέχει δεδομένα δεσμευμένων δαπανών και πίεση εκκρεμοτήτων.
+
+Προς Ουρά Πληρωμών: Καμία άμεση σχέση (επηρεάζει έμμεσα μέσω των παραστατικών).
+
+---
+
+## 11. Περιορισμοί v1 / Ανοιχτές αποφάσεις
+
+Όρια έγκρισης βάσει ρόλων (thresholds).
+
+Πολιτική υποχρεωτικών επισυναπτόμενων.
+
+Υποχρέωση ύπαρξης προμηθευτή πριν την έγκριση (policy-dependent).
+
+Διαδικασία ακύρωσης/αναθεώρησης μετά την έγκριση.
+
+Παρακολούθηση (SLA) για αιτήματα που εγκρίθηκαν αλλά δεν έχουν συνδεθεί ακόμα με παραστατικό.
+
+---
+
+## 12. Τελική κανονιστική δήλωση
+
+Το Purchase Requests / Commitments Module είναι η κεντρική upstream ενότητα έναρξης και έγκρισης δαπανών του συστήματος Finance v1: καταγράφει το Αίτημα Αγοράς, εκδίδει την απόφαση έγκρισης ή απόρριψης, δημιουργεί Ορατότητα Δέσμευσης κατά την έγκριση, τροφοδοτεί τους Ελεγκτικούς Μηχανισμούς και την Επισκόπηση με δεσμευμένα ποσά, και παραδίδει το πλαίσιο σύνδεσης προς τις Δαπάνες, χωρίς να κατέχει την αλήθεια της υποχρέωσης προμηθευτή ή να εκτελεί πληρωμές.

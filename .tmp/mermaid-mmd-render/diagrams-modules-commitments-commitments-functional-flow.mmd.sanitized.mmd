@@ -1,0 +1,26 @@
+flowchart TD
+  N0[Spend need identified]
+  PR0[Purchase Request created]
+  PR1[Request submitted]
+  AP0[Approval view - evaluate context and evidence]
+  D0{Decision}
+  A0[Approved - Commitment becomes visible]
+  R0[Rejected - no commitment]
+  C0[Request changes - return to requester]
+  L0[Downstream linkage context to Supplier Bills]
+  B0[Budget visibility and monitoring signals]
+
+  N0 --> PR0 --> PR1 --> AP0 --> D0
+  D0 -->|Approve| A0 --> B0 --> L0
+  D0 -->|Reject| R0
+  D0 -->|Request changes| C0 --> PR0
+
+  subgraph Guardrails[Guardrails]
+    G1[Commitment is not a bill and not a payment]
+    G2[Budget warnings are signals and not request status]
+    G3[Linkage visibility does not rewrite approval outcome]
+  end
+
+  A0 -.-> G1
+  B0 -.-> G2
+  L0 -.-> G3

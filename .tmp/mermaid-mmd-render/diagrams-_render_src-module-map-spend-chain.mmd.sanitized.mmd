@@ -1,0 +1,8 @@
+flowchart LR
+    PRC[Purchase Requests / Commitments] --> SSB[Spend / Supplier Bills] --> PQ[Payments Queue]
+    PRC --> O[Overview]
+    SSB --> O
+    PQ --> O
+    PRC --> C[Controls]
+    SSB --> C
+    PQ --> C

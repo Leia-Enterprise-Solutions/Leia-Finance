@@ -1,0 +1,64 @@
+flowchart TD
+    %% Finance Management & Monitoring System — Executive Overview
+
+    U[User] --> L[Finance Launcher]
+
+    L --> O[Overview]
+    L --> R[Revenue]
+    L --> S[Spend]
+    L --> C[Control]
+
+    O --> OH[Finance Home]
+    R --> RH[Revenue Home]
+    S --> SH[Spend Home]
+    C --> CH[Control Home]
+
+    OH --> O1[Dashboard / Alerts / Recent Activity]
+    RH --> R1[Drafts / Invoices / Collections]
+    SH --> S1[Requests / Bills / Payments]
+    CH --> C1[Budgets / Employee Costs / Audit]
+
+    %% Revenue execution loop
+    BW[Billable Work] --> ID[Invoice Draft]
+    ID --> IR[Issued Receivable]
+    IR --> CF[Collections Follow-up]
+    CF --> CC[Collected Cash]
+
+    %% Spend execution loop
+    PR[Purchase Request] --> AC[Approved Commitment]
+    AC --> SB[Supplier Bill]
+    SB --> PQ[Payments Queue]
+    PQ --> PCO[Paid Cash Out]
+
+    %% App-to-loop mapping
+    R1 -.supports.-> BW
+    R1 -.supports.-> ID
+    R1 -.supports.-> IR
+    R1 -.supports.-> CF
+    SH -.supports.-> PR
+    SH -.supports.-> AC
+    SH -.supports.-> SB
+    SH -.supports.-> PQ
+    CH -.oversight.-> IR
+    CH -.oversight.-> SB
+    CH -.oversight.-> PQ
+    O1 -.drilldowns.-> R1
+    O1 -.drilldowns.-> SH
+    O1 -.drilldowns.-> C1
+
+    %% Context / oversight
+    BS[Budget Signals] -.feeds.-> CH
+    EC[Employee Cost Visibility] -.feeds.-> CH
+    AE[Audit Events] -.feeds.-> CH
+    CTX[Client / Vendor / Terms Context] -.feeds.-> R1
+    CTX -.feeds.-> SH
+
+    classDef primary fill:#181c38,stroke:#7c3aed,color:#f3f4f6,stroke-width:1.6px;
+    classDef secondary fill:#10192f,stroke:#325a96,color:#e5e7eb,stroke-width:1.2px;
+    classDef muted fill:#10151f,stroke:#334155,color:#cbd5e1,stroke-width:1px;
+    classDef loop fill:#1b1736,stroke:#8b5cf6,color:#f5f3ff,stroke-width:1.8px;
+
+    class U,L,O,R,S,C,OH,RH,SH,CH primary;
+    class O1,R1,S1,C1 secondary;
+    class BW,ID,IR,CF,CC,PR,AC,SB,PQ,PCO loop;
+    class BS,EC,AE,CTX muted;

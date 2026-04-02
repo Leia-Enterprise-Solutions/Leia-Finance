@@ -1,0 +1,24 @@
+flowchart LR
+    subgraph OPS[Operational modules]
+      I[Invoicing]
+      R[Receivables]
+      PRC[Purchase Requests / Commitments]
+      SSB[Spend / Supplier Bills]
+      PQ[Payments Queue]
+    end
+
+    C[Controls<br/>interpretive/control visibility]
+    O[Overview<br/>monitoring composition]
+
+    I --> C
+    R --> C
+    PRC --> C
+    SSB --> C
+    PQ --> C
+
+    I --> O
+    R --> O
+    PRC --> O
+    SSB --> O
+    PQ --> O
+    C --> O

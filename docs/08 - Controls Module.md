@@ -1,183 +1,153 @@
-# 08 — Controls Module
+## 08 — Controls Module (Ενότητα Ελεγκτικών Μηχανισμών)
 
 ## 1. Σκοπός του εγγράφου
 
-Το παρόν έγγραφο ορίζει το `Controls Module` σε επίπεδο module canon: ρόλο/boundaries, control domains (`Budget`, `Audit Trail`, `Employee Cost Visibility`), control signals, και σχέσεις με `Overview` και operational modules.
-Δεν αποτελεί semantic-law (`00A`), ούτε module map (`01`), ούτε UI blueprint, ούτε accounting/tax engine spec.
+Το παρόν έγγραφο ορίζει την Ενότητα Ελεγκτικών Μηχανισμών (Controls Module) σε επίπεδο κανονιστικού προτύπου: ρόλο/όρια, πεδία ελέγχου (Προϋπολογισμός, Ιστορικό Ελέγχου, Ορατότητα Κόστους Προσωπικού), σήματα ελέγχου και σχέσεις με την Επισκόπηση και τις λειτουργικές ενότητες.
+
+Δεν αποτελεί σημασιολογικό νόμο (00A), ούτε χάρτη ενοτήτων (01), ούτε προσχέδιο διεπαφής (UI blueprint), ούτε προδιαγραφή λογιστικής/φορολογικής μηχανής.
 
 ---
 
-## 2. Ρόλος και boundaries
+## 2. Ρόλος και όρια
 
-Το `Controls Module` είναι το canonical supporting control layer του Finance Management & Monitoring System v1.
+Το Controls Module είναι το κανονιστικό υποστηρικτικό επίπεδο ελέγχου (supporting control layer) του συστήματος Finance v1.
 
-Ο ρόλος του είναι να **ερμηνεύει και να εκθέτει control-relevant πληροφορία** πάνω σε outputs των operational modules, χωρίς execution.
+Ρόλος:
+- Ερμηνεύει και εκθέτει πληροφορίες σχετικές με τον έλεγχο, βασιζόμενο στα δεδομένα (outputs) των λειτουργικών ενοτήτων, χωρίς να εκτελεί δράσεις.
 
-Boundaries (τι δεν είναι):
-- Δεν εκτελεί actions των Revenue/Spend loops (issue/collections/approvals/payment execution).
-- Δεν αντικαθιστά operational workspaces.
-- Δεν είναι monitoring shell (`Overview`)· το `Controls` παρέχει control drilldowns/visibility, όχι routing shell.
-- Δεν δημιουργεί primary transactional truth και δεν επαναορίζει object meanings (δεσμεύεται από `00A`).
-
----
-
-## 3. Core domains του module
-
-Το `Controls Module` αποτελείται από τρεις canonical control περιοχές.
-
-### 3.1 Budget (visibility)
-Ορατότητα **budgeted vs committed vs actual paid**, variance/remaining, και pressure/breach signals. Δεν είναι spend execution.
-
-### 3.2 Audit Trail (evidence)
-Auditability/traceability για cross-module events (actions/changes/approvals/attachments/payment registrations). Δεν είναι operational inbox.
-
-### 3.3 Employee Cost Visibility (insight)
-Ορατότητα labor cost με role restrictions και canonical organizational scope. Δεν είναι payroll/HR execution.
-
-Canonical “ανά μονάδα” scope (δεν ερμηνεύεται ad hoc ανά οθόνη):
-- `business unit`, `department`, `team` (όπου υπάρχει), `legal entity` (όπου απαιτείται)
+Όρια (Τι ΔΕΝ είναι):
+- Δεν εκτελεί ενέργειες στους κύκλους Εσόδων/Δαπανών (έκδοση, είσπραξη, εγκρίσεις, εκτέλεση πληρωμών).
+- Δεν αντικαθιστά τους λειτουργικούς χώρους εργασίας (operational workspaces).
+- Δεν είναι το κέλυφος εποπτείας (Επισκόπηση / Overview)· παρέχει ορατότητα και αναδρομές ελέγχου, όχι τη δομή δρομολόγησης του χρήστη.
+- Δεν δημιουργεί πρωτογενή επιχειρησιακή αλήθεια (transactional truth) και δεν επαναορίζει τη σημασία των αντικειμένων (δεσμεύεται από το 00A).
 
 ---
 
-## 4. Inputs και outputs (read-only)
+## 3. Βασικά Πεδία της Ενότητας (Core Domains)
 
-Inputs (από operational outputs):
-- `Invoicing`, `Receivables`, `Purchase Requests / Commitments`, `Spend / Supplier Bills`, `Payments Queue`
-- approvals/actors/timing/event history
-- cost inputs/allocation inputs όπου υπάρχουν
+Το Controls Module αποτελείται από τρεις κανονιστικές περιοχές ελέγχου:
 
-Outputs:
-- control visibility + drilldowns προς `Overview`
-- audit/evidence views
-- budget/cost insights (role-aware)
+### 3.1 Προϋπολογισμός (Budget Visibility)
 
-Ownership note:
-- Δεν κατέχει invoice/receivable/commitment/supplier bill/payment truth· κατέχει **control contexts & interpreted signals**.
+Ορατότητα Προϋπολογισθέντων vs Δεσμευμένων vs Πραγματικών Πληρωμών, αποκλίσεις/υπόλοιπα και σήματα πίεσης ή υπέρβασης. Δεν αποτελεί εργαλείο εκτέλεσης δαπανών.
 
----
+### 3.2 Ιστορικό Ελέγχου (Audit Trail / Evidence)
 
-## 5. Module-local concepts (capsule)
+Δυνατότητα ελέγχου και ανιχνευσιμότητας (auditability/traceability) για γεγονότα μεταξύ ενοτήτων (ενέργειες, αλλαγές, εγκρίσεις, επισυνάψεις, καταχωρίσεις πληρωμών). Δεν αποτελεί λειτουργικό φάκελο εισερχομένων.
 
-- `BudgetContext` + `Variance` + `Budget Signals` (`Healthy`/`Warning`/`Breach`)
-- `AuditEvent` + `Audit Trail` (searchable/traceable)
-- `EmployeeCostContext` + `Visibility Restriction` (role-aware)
-- `Control Signal`: interpreted signal (όχι νέο transactional object)
+### 3.3 Ορατότητα Κόστους Προσωπικού (Employee Cost Visibility)
+
+Ορατότητα στο κόστος εργασίας με περιορισμούς ρόλων και κανονιστικό οργανωτικό πεδίο (scope). Δεν αποτελεί ενότητα μισθοδοσίας ή εκτέλεσης HR.
+
+Κανονιστικό οργανωτικό πεδίο (ανά μονάδα):
+- Επιχειρησιακή μονάδα (business unit), τμήμα, ομάδα, νομική οντότητα.
 
 ---
 
-## 6. Module surfaces (όχι UI spec)
+## 4. Εισροές και Εκροές (Μόνο Ανάγνωση)
 
-- `Budget Overview`: control visibility + drilldowns (όχι execution).
-- `Audit Trail / Activity Log`: evidence/investigation + click-through.
-- `Employee Cost View`: cost insight + role-aware visibility.
+Εισροές (από λειτουργικά δεδομένα):
+- Δεδομένα από: Τιμολόγηση, Απαιτήσεις, Αιτήματα Αγοράς / Δεσμεύσεις, Δαπάνες, Ουρά Πληρωμών.
+- Εγκρίσεις, χρήστες, χρονισμός και ιστορικό γεγονότων.
+- Εισροές κόστους και κατανομής (allocation).
 
----
+Εκροές:
+- Ορατότητα ελέγχου και αναδρομές (drilldowns) προς την Επισκόπηση.
+- Προβολές τεκμηρίωσης και ιστορικού (audit/evidence).
+- Αναλύσεις προϋπολογισμού και κόστους (με επίγνωση ρόλων πρόσβασης).
 
-## 7. Control visibility flows (high-level)
-
-- Budget: budgeted/committed/actual paid → variance/pressure → drilldown drivers.
-- Audit: search/filter events → event detail → click-through to target record.
-- Employee cost: aggregation/splits → role-aware slices → drilldowns.
-- Control→Overview: control signals + drilldown destinations.
-
----
-
-## 8. Module-local rules (compact)
-
-- **Non-execution**: δεν εκτελεί lifecycle actions των operational modules.
-- **Non-ownership**: δεν δημιουργεί/επαναορίζει transactional truth.
-- **Budget separation**: budgeted vs committed vs actual paid δεν συγχωνεύονται σε “spent”.
-- **Audit evidence minimum**: actor, action, source module, target record, timestamp, (before/after όπου διαθέσιμο).
-- **Click-through**: audit events οδηγούν στο target record.
-- **Role-aware cost visibility**: όπου απαιτείται περιορισμός, aggregate-only ή redacted, όχι ψευδο-ακρίβεια.
-- **Signals ≠ statuses**: control signals είναι interpreted signals, όχι persisted lifecycle states.
+Σημείωση Ιδιοκτησίας:
+- Δεν κατέχει την αλήθεια των τιμολογίων, απαιτήσεων, δεσμεύσεων ή πληρωμών· κατέχει το πλαίσιο ελέγχου και τα ερμηνευμένα σήματα.
 
 ---
 
-## 9. Signals & UI-only states (module-level)
+## 5. Βασικές Έννοιες Ενότητας (Capsule)
 
-Control signals (examples):
-- `Healthy`, `Warning`, `Breach`
-- `Audit Attention`
-- `Visibility Restricted`
-- `Missing Allocation Data`
-- `High Non-Billable Share`
-
-UI-only states (examples):
-- selected event, expanded row, active drilldown, filtered view
-
-Rule: το `Controls` μπορεί να προβάλλει statuses άλλων modules, αλλά δεν τα επαναταξινομεί αυθαίρετα.
+- Πλαίσιο Προϋπολογισμού (BudgetContext): Απόκλιση (Variance) & Σήματα (Healthy / Warning / Breach).
+- Γεγονός Ελέγχου (AuditEvent): Ιστορικό ενεργειών (searchable/traceable).
+- Πλαίσιο Κόστους Προσωπικού: Περιορισμοί ορατότητας βάσει ρόλου (role-aware).
+- Σήμα Ελέγχου (Control Signal): Ερμηνευμένη ένδειξη (όχι νέο επιχειρησιακό αντικείμενο).
 
 ---
 
-## 10. Relations / handoffs
+## 6. Επιφάνειες Ενότητας (Module Surfaces)
 
-### 10.1 Relation με Overview
-Το `Overview` λαμβάνει control signals και drilldowns από το `Controls`, αλλά δεν γίνεται owner των control surfaces.
-
-### 10.2 Relation με Invoicing
-Το `Invoicing` παρέχει outputs και traceability context.
-Το `Controls` δεν επαναορίζει invoice truth.
-
-### 10.3 Relation με Receivables
-Το `Receivables` module παρέχει collection visibility, overdue pressure και audit-relevant follow-up context.
-Το `Controls` δεν γίνεται owner του receivable progression.
-
-### 10.4 Relation με Purchase Requests / Commitments
-Το request / commitment module παρέχει commitment facts και approval events.
-Το `Controls` τα χρησιμοποιεί για budget και audit interpretation.
-
-### 10.5 Relation με Spend / Supplier Bills
-Το spend-side bill module τροφοδοτεί το `Controls` με spend traceability, audit context και budget-relevant linkage visibility.
-
-### 10.6 Relation με Payments Queue
-Το queue παρέχει payment outcomes που ενημερώνουν:
-- budget actual paid
-- audit events
-- overview control-relevant visibility
+- Επισκόπηση Προϋπολογισμού: Ορατότητα ελέγχου και αναδρομές (όχι εκτέλεση).
+- Ιστορικό Ελέγχου / Καταγραφή Δραστηριότητας: Τεκμηρίωση, διερεύνηση και άμεση μετάβαση (click-through) στο αντικείμενο.
+- Προβολή Κόστους Προσωπικού: Ανάλυση κόστους με περιορισμένη ορατότητα βάσει ρόλου.
 
 ---
 
-## 11. In-scope / Out-of-scope (capsule)
+## 7. Ροές Ορατότητας Ελέγχου (High-level)
 
-### In-scope
-- `Budget Overview`
-- `Audit Trail / Activity Log`
-- `Employee Cost View`
-- control signals προς `Overview`
-- traceability / evidence visibility
-- budget interpretation
-- role-based cost visibility
+Προϋπολογισμός: Σύγκριση ποσών $\rightarrow$ εντοπισμός πίεσης $\rightarrow$ αναδρομή στις αιτίες.
 
-### Out-of-scope
-- invoice drafting / issue
-- collections execution
-- request approval execution
-- supplier bill readiness resolution ως primary owner
-- payment execution
-- bank reconciliation engine
-- accounting ledger
-- full compliance engine
-- generic BI / reporting warehouse χωρίς σαφή control σκοπό
+Ιστορικό: Αναζήτηση γεγονότων $\rightarrow$ λεπτομέρειες $\rightarrow$ μετάβαση στην αρχική εγγραφή.
+
+Κόστος Προσωπικού: Συγκέντρωση δεδομένων $\rightarrow$ φιλτράρισμα βάσει ρόλου $\rightarrow$ αναλυτική απεικόνιση.
+
+Ελεγκτικοί Μηχανισμοί $\rightarrow$ Επισκόπηση: Παροχή σημάτων ελέγχου και προορισμών αναδρομής.
+
+### Module diagrams (functionality + signals)
+
+#### Διάγραμμα λειτουργικής ροής - inputs, control views, outputs προς Overview
+![diagram](./diagrams/_rendered/from_mmd/diagrams-modules-controls-controls-functional-flow.mmd.png)
+
+#### Διάγραμμα οικογενειών - budget views, audit evidence, cost visibility, control signals
+![diagram](./diagrams/_rendered/from_mmd/diagrams-modules-controls-controls-state-families.mmd.png)
 
 ---
 
-## 12. Current v1 limits / stabilization notes
+## 8. Τοπικοί Κανόνες Ενότητας (Compact)
 
-### 12.1 Budget limits
-Το `Budget` στο v1 είναι control visibility layer.  
-Δεν πρέπει να παρουσιαστεί πρόωρα ως full planning / forecasting engine.
-
-### 12.2 Audit limits
-Το audit στο v1 πρέπει να δώσει σαφή traceability στα κρίσιμα events.
-Αν δεν υπάρχουν consistent events across modules, αυτό είναι stabilization target και όχι λόγος να θολώσει ο ορισμός του module.
-
-### 12.3 Employee cost limits
-Το `Employee Cost View` εξαρτάται από availability allocation / labor cost inputs.
-Όπου αυτά είναι μερικά ή ατελή, η UI πρέπει να το δείχνει καθαρά ως visibility limitation, όχι σαν ψευδο-ακρίβεια.
+- Μη-εκτέλεση: Δεν εκτελεί ενέργειες του κύκλου ζωής των λειτουργικών ενοτήτων.
+- Μη-ιδιοκτησία: Δεν δημιουργεί ούτε επαναορίζει την επιχειρησιακή αλήθεια.
+- Διαχωρισμός Προϋπολογισμού: Τα προϋπολογισθέντα, τα δεσμευμένα και οι πληρωμές δεν συγχωνεύονται σε ένα γενικό "έξοδο".
+- Ελάχιστη Τεκμηρίωση Ελέγχου: Χρήστης, ενέργεια, ενότητα πηγής, εγγραφή στόχος, χρονική σήμανση (πριν/μετά όπου διατίθεται).
+- Άμεση Μετάβαση (Click-through): Τα γεγονότα ελέγχου οδηγούν στην εγγραφή-στόχο.
+- Σήματα $\neq$ Καταστάσεις: Τα σήματα ελέγχου είναι ερμηνείες, όχι μόνιμες καταστάσεις κύκλου ζωής.
 
 ---
 
-## 13. Final canonical statement
+## 9. Σήματα & Καταστάσεις Διεπαφής (Module-level)
 
-Το `Controls Module` είναι το canonical supporting control layer του Finance Management & Monitoring System v1 και οργανώνεται γύρω από τρεις βασικές περιοχές: `Budget`, `Audit Trail` και `Employee Cost Visibility` ανά οργανωτική μονάδα. Ο ρόλος του είναι να παρέχει control visibility, traceability και cost insight, χωρίς να αντικαθιστά τα operational execution modules. Δεν είναι monitoring shell, δεν είναι operational execution layer και δεν κατέχει primary transactional truth. Παρέχει supporting control logic και drilldown surfaces που τροφοδοτούν το `Overview` και υποστηρίζουν finance, management και audit-oriented χρήση του συστήματος.
+Σήματα Ελέγχου (Ενδεικτικά):
+- Υγιές (Healthy), Προειδοποίηση (Warning), Υπέρβαση (Breach).
+- Απαιτείται Προσοχή Ελέγχου (Audit Attention).
+- Περιορισμένη Ορατότητα (Visibility Restricted).
+- Ελλιπή Δεδομένα Κατανομής.
+
+Καταστάσεις Διεπαφής (UI-only):
+- Επιλεγμένο γεγονός, ανεπτυγμένη γραμμή, ενεργή αναδρομή.
+
+---
+
+## 10. Σχέσεις και Παραδόσεις (Handoffs)
+
+Με την Επισκόπηση (Overview): Η Επισκόπηση λαμβάνει σήματα και προορισμούς αναδρομής, αλλά δεν γίνεται ιδιοκτήτης των επιφανειών ελέγχου.
+
+Με την Τιμολόγηση: Η Τιμολόγηση παρέχει δεδομένα και πλαίσιο ανιχνευσιμότητας.
+
+Με τις Απαιτήσεις: Παροχή ορατότητας εισπράξεων και ιστορικού παρακολούθησης (follow-up).
+
+Με τα Αιτήματα / Δεσμεύσεις: Παροχή δεδομένων δεσμεύσεων και γεγονότων έγκρισης για τον προϋπολογισμό.
+
+Με τις Δαπάνες / Παραστατικά: Παροχή στοιχείων ανιχνευσιμότητας δαπανών και ορατότητας συνδέσεων (linkage).
+
+Με την Ουρά Πληρωμών: Παροχή αποτελεσμάτων πληρωμών για την ενημέρωση των «Πραγματικών Πληρωμών» στον προϋπολογισμό.
+
+---
+
+## 11. Περιορισμοί v1 / Σημειώσεις Σταθεροποίησης
+
+Προϋπολογισμός: Στην έκδοση v1 λειτουργεί ως επίπεδο ορατότητας (visibility layer). Δεν πρέπει να παρουσιάζεται ως πλήρης μηχανή σχεδιασμού ή πρόβλεψης (forecasting).
+
+Ιστορικό Ελέγχου: Απαιτείται συνεπής καταγραφή γεγονότων σε όλες τις ενότητες (stabilization target).
+
+Κόστος Προσωπικού: Εξαρτάται από τη διαθεσιμότητα των δεδομένων κατανομής. Όπου τα δεδομένα είναι ελλιπή, η διεπαφή πρέπει να το δείχνει σαφώς ως περιορισμό ορατότητας και όχι ως ψευδο-ακρίβεια.
+
+---
+
+## 12. Τελική Κανονιστική Δήλωση
+
+Το Controls Module είναι το κανονιστικό υποστηρικτικό επίπεδο ελέγχου του συστήματος Finance v1 και οργανώνεται γύρω από τρεις βασικούς άξονες: Προϋπολογισμός, Ιστορικό Ελέγχου και Ορατότητα Κόστους Προσωπικού. Ο ρόλος του είναι να παρέχει ορατότητα ελέγχου, ανιχνευσιμότητα και γνώση κόστους, χωρίς να υποκαθιστά τις λειτουργικές ενότητες εκτέλεσης. Δεν είναι κέλυφος εποπτείας, δεν είναι επίπεδο λειτουργικής εκτέλεσης και δεν κατέχει πρωτογενή επιχειρησιακή αλήθεια. Παρέχει τη λογική υποστήριξης και τις επιφάνειες αναδρομής που τροφοδοτούν την Επισκόπηση και υποστηρίζουν τη χρήση του συστήματος από τη διοίκηση και τους ελεγκτές.

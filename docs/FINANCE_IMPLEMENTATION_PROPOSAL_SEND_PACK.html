@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>FINANCE_IMPLEMENTATION_PROPOSAL_SEND_PACK.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="finance--%CF%80%CE%B1%CE%BA%CE%AD%CF%84%CE%BF-%CF%80%CF%81%CF%8C%CF%84%CE%B1%CF%83%CE%B7%CF%82-%CF%85%CE%BB%CE%BF%CF%80%CE%BF%CE%AF%CE%B7%CF%83%CE%B7%CF%82-send-pack-v1">Finance — Πακέτο Πρότασης Υλοποίησης (Send Pack) (v1)</h1>
+<h2 id="1-executive-framing-%CE%B4%CE%B9%CE%AC%CE%B2%CE%B1%CF%83%CE%AD-%CF%84%CE%BF-%CF%80%CF%81%CF%8E%CF%84%CE%BF">1) Executive framing (διάβασέ το πρώτο)</h2>
+<h3 id="%CF%84%CE%B9-%CE%B5%CE%AF%CE%BD%CE%B1%CE%B9-%CE%B1%CF%85%CF%84%CF%8C-%CF%84%CE%BF-pack">Τι είναι αυτό το pack</h3>
+<p>Αυτό είναι ένα <strong>proposal pack για alignment υλοποίησης</strong>: συγκεντρώνει την canonical λειτουργική πρόθεση και τα πιο “load‑bearing” διαγράμματα και περιλαμβάνει <strong>τρέχοντα screenshots UI ως οπτικές άγκυρες</strong>.</p>
+<h3 id="%CF%84%CE%B9-%CE%B5%CE%AF%CE%BD%CE%B1%CE%B9-locked-vs-controlled-open">Τι είναι locked vs controlled-open</h3>
+<ul>
+<li><strong>Locked</strong>: όρια/ownership modules, discipline “Overview ως monitoring shell”, λειτουργικό scope ανά module, deterministic drilldowns.</li>
+<li><strong>Controlled-open</strong>: οποιαδήποτε semantics/ορισμοί metrics, thresholds, labels ή συμπεριφορές που έχουν δηλωθεί ρητά ως open στο stabilization (<code>09 - Open Questions - Stabilization</code>).</li>
+</ul>
+<h3 id="%CF%84%CE%B9-%CE%B4%CE%B5%CE%BD-%CE%B5%CE%AF%CE%BD%CE%B1%CE%B9-%CE%B1%CF%85%CF%84%CF%8C">Τι ΔΕΝ είναι αυτό</h3>
+<ul>
+<li><strong>Δεν είναι final UI polish/approval pack</strong></li>
+<li><strong>Δεν είναι final source of truth για το “πώς πρέπει να μοιάζει το UI”</strong></li>
+<li><strong>Δεν αντικαθιστά τα canonical functional specs</strong></li>
+</ul>
+<h3 id="%CE%BA%CE%B1%CE%BD%CF%8C%CE%BD%CE%B1%CF%82-labeling-%CE%B3%CE%B9%CE%B1-screenshots-%CE%BA%CF%81%CE%AF%CF%83%CE%B9%CE%BC%CE%BF">Κανόνας labeling για screenshots (κρίσιμο)</h3>
+<p>Όλα τα screenshots σε αυτό το pack παρουσιάζονται αυστηρά ως ένα από τα παρακάτω:</p>
+<ul>
+<li><strong>Existing UI references / current visual direction</strong></li>
+<li><strong>Indicative screen references aligned to current functional model</strong></li>
+<li><strong>Current screenshots used as visual anchors for the proposed module behavior</strong></li>
+</ul>
+<p>Η canonical αλήθεια ορίζεται από το functional spine (επόμενη ενότητα). Τα screenshots είναι <strong>illustrative</strong>, μπορεί να εξελιχθούν, και δεν πρέπει να χρησιμοποιούνται για να “υπερισχύσουν” των specs.</p>
+<hr>
+<h2 id="2-canonical--functional-spine-must-obey">2) Canonical + functional spine (must obey)</h2>
+<h3 id="canonical-guardrails">Canonical guardrails</h3>
+<ul>
+<li><code>00 - Finance Canonical Brief</code></li>
+<li><code>00A - Finance Domain Model &amp; System Alignment v1</code></li>
+<li><code>01-finance-module-map</code></li>
+<li><code>09 - Open Questions - Stabilization</code></li>
+</ul>
+<h3 id="functional-specifications-10%E2%80%9316">Functional specifications (10–16)</h3>
+<ul>
+<li><code>10 - Invoicing Functional Specification</code></li>
+<li><code>11 - Receivables - Collections Functional Specification</code></li>
+<li><code>12 - Purchase Requests - Commitments Functional Specification</code></li>
+<li><code>13 - Spend - Supplier Bills Functional Specification</code></li>
+<li><code>14 - Payments Queue Functional Specification</code></li>
+<li><code>15 - Controls Functional Specification</code></li>
+<li><code>16 - Overview Functional Specification</code></li>
+</ul>
+<h3 id="supporting-module-canon-overview-specific">Supporting module canon (overview-specific)</h3>
+<ul>
+<li><code>02 - Finance Overview Module</code></li>
+</ul>
+<hr>
+<h2 id="3-%CF%85%CF%80%CE%BF%CF%83%CF%8D%CE%BD%CE%BF%CE%BB%CE%BF-%CE%B4%CE%B9%CE%B1%CE%B3%CF%81%CE%B1%CE%BC%CE%BC%CE%AC%CF%84%CF%89%CE%BD-%CE%BC%CF%8C%CE%BD%CE%BF-load-bearing">3) Υποσύνολο διαγραμμάτων (μόνο load-bearing)</h2>
+<h3 id="top-level-system--architecture">Top-level system / architecture</h3>
+<ul>
+<li><code>01-finance-module-map</code> (περιέχει τον top-level χάρτη σχέσεων + chain diagrams)</li>
+<li><code>finance-management-product-architecture-dark.svg</code> (executive architecture visual)</li>
+</ul>
+<h4 id="system-relationship-map-%CE%B5%CE%B9%CE%BA%CF%8C%CE%BD%CE%B1">System relationship map (εικόνα)</h4>
+<p><img src="diagrams/_rendered/module-map-system-relationship.png" alt=""></p>
+<h3 id="revenue-loop">Revenue loop</h3>
+<ul>
+<li><code>diagrams/revenue-draft</code> (supporting revenue-side flow)</li>
+<li><code>diagrams/revenue-draft_composition</code> (supporting revenue composition view)</li>
+</ul>
+<h4 id="revenue-side-chain-%CE%B5%CE%B9%CE%BA%CF%8C%CE%BD%CE%B1">Revenue-side chain (εικόνα)</h4>
+<p><img src="diagrams/_rendered/module-map-revenue-chain.png" alt=""></p>
+<h3 id="spend-loop">Spend loop</h3>
+<ul>
+<li>Primary reference: Spend chain diagram στο <code>01-finance-module-map</code></li>
+<li>Optional (αν χρειαστεί): <code>diagrams/all_flows_from_master</code> (μόνο subset· απέφυγε να στείλεις “full dump” αν δεν είναι αναγκαίο)</li>
+</ul>
+<h4 id="spend-side-chain-%CE%B5%CE%B9%CE%BA%CF%8C%CE%BD%CE%B1">Spend-side chain (εικόνα)</h4>
+<p><img src="diagrams/_rendered/module-map-spend-chain.png" alt=""></p>
+<h3 id="monitoringcontrol-relation--overview-drilldown-flow">Monitoring/control relation + Overview drilldown flow</h3>
+<ul>
+<li><code>diagrams/overview-control</code></li>
+<li><code>diagrams/overview-spend</code></li>
+<li><code>16 - Overview Functional Specification</code> (Diagram pack: routing + composition + interaction flow)</li>
+</ul>
+<h4 id="monitoring--control-relation-%CE%B5%CE%B9%CE%BA%CF%8C%CE%BD%CE%B1">Monitoring / Control relation (εικόνα)</h4>
+<p><img src="diagrams/_rendered/module-map-monitoring-control-relation.png" alt=""></p>
+<h4 id="overview--routing--composition--behavior--interaction-%CE%B5%CE%B9%CE%BA%CF%8C%CE%BD%CE%B5%CF%82">Overview — routing / composition / behavior / interaction (εικόνες)</h4>
+<p><img src="diagrams/_rendered/overview-kpi-to-drilldown-routing.png" alt=""></p>
+<p><img src="diagrams/_rendered/overview-monitoring-composition.png" alt=""></p>
+<p><img src="diagrams/_rendered/overview-widget-alert-drilldown-behavior.png" alt=""></p>
+<p><img src="diagrams/_rendered/overview-interaction-flow.png" alt=""></p>
+<h4 id="overview-%E2%86%92-controls--spend-drilldown-flows-%CE%B5%CE%B9%CE%BA%CF%8C%CE%BD%CE%B5%CF%82">Overview → Controls / Spend drilldown flows (εικόνες)</h4>
+<p><img src="diagrams/_rendered/overview-drilldown-to-controls-flow.png" alt=""></p>
+<p><img src="diagrams/_rendered/overview-drilldown-to-spend-flow.png" alt=""></p>
+<blockquote>
+<p>Σημείωση: σκόπιμα <strong>δεν</strong> είναι “full diagram dump”. Στο pack πρέπει να μπαίνουν μόνο τα “load-bearing” διαγράμματα.</p>
+</blockquote>
+<hr>
+<h2 id="4-appendix-screenshots--%CE%BF%CF%80%CF%84%CE%B9%CE%BA%CE%AD%CF%82-%CE%B1%CE%BD%CE%B1%CF%86%CE%BF%CF%81%CE%AD%CF%82-%CE%BC%CE%B7-canonical">4) Appendix screenshots / οπτικές αναφορές (μη-canonical)</h2>
+<p>Πηγή: <code>FINANCE_UI_BLUEPRINT</code> → “Screenshot-by-Screenshot Walkthrough”.</p>
+<h3 id="ss-01--finance-core-home-menu">SS-01 — Finance Core Home Menu</h3>
+<ul>
+<li><strong>Label</strong>: Existing UI reference / current visual direction</li>
+<li><strong>Intended module role</strong>: Entry shell προς τα Finance surfaces (tiles routing προς modules)</li>
+<li><strong>Notes</strong>: Indicative· naming/layout των tiles μπορεί να εξελιχθεί</li>
+</ul>
+<p><img src="screens/entry_screen.png" alt=""></p>
+<h3 id="ss-01b--finance-core-home-menu-updated-reference">SS-01b — Finance Core Home Menu (updated reference)</h3>
+<ul>
+<li><strong>Label</strong>: Existing UI reference / current visual direction</li>
+<li><strong>Intended module role</strong>: Entry shell προς τα Finance surfaces (tiles routing προς modules)</li>
+<li><strong>Notes</strong>: Νεότερο screenshot reference· indicative, όχι final UI truth</li>
+</ul>
+<p><img src="screens/main_screen_new.png" alt=""></p>
+<h3 id="ss-02--finance-overview-dashboard">SS-02 — Finance Overview Dashboard</h3>
+<ul>
+<li><strong>Label</strong>: Current screenshot used as a visual anchor for proposed module behavior</li>
+<li><strong>Intended module role</strong>: Monitoring shell (composition + routing), όχι execution</li>
+<li><strong>Notes</strong>: Οποιαδήποτε KPI semantics/thresholds παραμένουν controlled-open per stabilization· το visual composition μπορεί να εξελιχθεί</li>
+</ul>
+<p><img src="screens/overview_dashboard.png" alt=""></p>
+<h3 id="ss-02b--finance-overview-dashboard-updated-reference">SS-02b — Finance Overview Dashboard (updated reference)</h3>
+<ul>
+<li><strong>Label</strong>: Current screenshot used as a visual anchor for proposed module behavior</li>
+<li><strong>Intended module role</strong>: Monitoring shell (composition + routing), όχι execution</li>
+<li><strong>Notes</strong>: Νεότερο screenshot reference· semantics παραμένουν canonical στα specs, όχι στο screenshot</li>
+</ul>
+<p><img src="screens/overview_new.png" alt=""></p>
+<h3 id="ss-03--invoice-drafts-list">SS-03 — Invoice Drafts List</h3>
+<ul>
+<li><strong>Label</strong>: Indicative screen reference aligned to current functional model</li>
+<li><strong>Intended module role</strong>: Invoicing triage (draft creation pipeline)</li>
+<li><strong>Notes</strong>: Columns/actions της λίστας μπορεί να αλλάξουν χωρίς να αλλάξει το functional contract</li>
+</ul>
+<p><img src="screens/invoice_drafts_list.png" alt=""></p>
+<h3 id="ss-04--invoice-draft-builder">SS-04 — Invoice Draft Builder</h3>
+<ul>
+<li><strong>Label</strong>: Indicative screen reference aligned to current functional model</li>
+<li><strong>Intended module role</strong>: Draft assembly (pre-issue)</li>
+<li><strong>Notes</strong>: Layout/components του builder είναι illustrative· το spec ορίζει τη συμπεριφορά</li>
+</ul>
+<p><img src="screens/invoice_draft_builder.png" alt=""></p>
+<h3 id="ss-04b--invoice-draft--new-invoice-header">SS-04b — Invoice Draft / New Invoice (header)</h3>
+<ul>
+<li><strong>Label</strong>: Indicative screen reference aligned to current functional model</li>
+<li><strong>Intended module role</strong>: Draft assembly (pre-issue) — header/identity + key context</li>
+<li><strong>Notes</strong>: Νεότερο screenshot reference· fields/layout μπορεί να αλλάξουν χωρίς αλλαγή στο functional contract</li>
+</ul>
+<p><img src="screens/new_invoice_header.png" alt=""></p>
+<h3 id="ss-04c--invoice-draft--new-invoice-add-work-item">SS-04c — Invoice Draft / New Invoice (add work item)</h3>
+<ul>
+<li><strong>Label</strong>: Indicative screen reference aligned to current functional model</li>
+<li><strong>Intended module role</strong>: Draft assembly (pre-issue) — προσθήκη billable work / work item</li>
+<li><strong>Notes</strong>: Indicative UI· οι κανόνες συμπεριφοράς/validations ορίζονται από το spec</li>
+</ul>
+<p><img src="screens/new_invoice_work_item_add.png" alt=""></p>
+<h3 id="ss-04d--invoice-draft--new-invoice-preview">SS-04d — Invoice Draft / New Invoice (preview)</h3>
+<ul>
+<li><strong>Label</strong>: Indicative screen reference aligned to current functional model</li>
+<li><strong>Intended module role</strong>: Draft assembly (pre-issue) — preview πριν το issue</li>
+<li><strong>Notes</strong>: Preview layout indicative· το “truth” και η συμπεριφορά ορίζονται από το functional spec</li>
+</ul>
+<p><img src="screens/new_invoice_preview.png" alt=""></p>
+<h3 id="ss-05--invoices-list">SS-05 — Invoices List</h3>
+<ul>
+<li><strong>Label</strong>: Existing UI reference / current visual direction</li>
+<li><strong>Intended module role</strong>: Issued invoice worklist (owner: Invoicing)</li>
+<li><strong>Notes</strong>: Filters/status chips είναι illustrative· μη τα αντιμετωπίζεις ως canonical semantics</li>
+</ul>
+<p><img src="screens/invoices_list.png" alt=""></p>
+<h3 id="ss-06--invoice-detail-view-drawer--full">SS-06 — Invoice Detail View (Drawer / Full)</h3>
+<ul>
+<li><strong>Label</strong>: Existing UI reference / current visual direction</li>
+<li><strong>Intended module role</strong>: Invoice read/detail surface (owner: Invoicing)</li>
+<li><strong>Notes</strong>: Drawer vs full layout είναι indicative· το “truth” ορίζεται από το functional spec</li>
+</ul>
+<p><img src="screens/invoice_detail_drawer.png" alt=""></p>
+<p><img src="screens/invoice_detail_full.png" alt=""></p>
+<h3 id="ss-07--collections--receivables-view--drawer">SS-07 — Collections / Receivables View (+ drawer)</h3>
+<ul>
+<li><strong>Label</strong>: Current screenshots used as visual anchors for proposed module behavior</li>
+<li><strong>Intended module role</strong>: Receivables follow-up (owner: Receivables)· operational triage και collection workflow</li>
+<li><strong>Notes</strong>: Το “follow-up state” είναι διακριτό από το issued truth· το UI μπορεί να εξελιχθεί</li>
+</ul>
+<p><img src="screens/receivables_flow.png" alt=""></p>
+<p><img src="screens/receivable_item_drawer.png" alt=""></p>
+<h3 id="ss-08--purchase-requests-list">SS-08 — Purchase Requests List</h3>
+<ul>
+<li><strong>Label</strong>: Indicative screen reference aligned to current functional model</li>
+<li><strong>Intended module role</strong>: Commitments upstream worklist</li>
+<li><strong>Notes</strong>: Το approval UX μπορεί να εξελιχθεί· οι commitment semantics παραμένουν canonical στα specs</li>
+</ul>
+<p><img src="screens/purchase_request_list.png" alt=""></p>
+<h3 id="ss-09--purchase-request-detail--approval-view">SS-09 — Purchase Request Detail / Approval View</h3>
+<ul>
+<li><strong>Label</strong>: Existing UI reference / current visual direction</li>
+<li><strong>Intended module role</strong>: Commitment review/approval detail</li>
+<li><strong>Notes</strong>: Fields/layout είναι indicative· οι approval rules ορίζονται στο functional spec</li>
+</ul>
+<p><img src="screens/purchase_request_detail_full.png" alt=""></p>
+<h3 id="ss-10--supplier-bills--expenses-list">SS-10 — Supplier Bills / Expenses List</h3>
+<ul>
+<li><strong>Label</strong>: Current screenshot used as a visual anchor for proposed module behavior</li>
+<li><strong>Intended module role</strong>: Spend readiness formation worklist (owner: Spend/Supplier Bills)</li>
+<li><strong>Notes</strong>: “Ready/Blocked” πρέπει να παραμείνει διακριτό από execution statuses (βλ. Overview/discipline)</li>
+</ul>
+<p><img src="screens/expenses_bills.png" alt=""></p>
+<h3 id="ss-11--supplier-bill-detail-view">SS-11 — Supplier Bill Detail View</h3>
+<ul>
+<li><strong>Label</strong>: Existing UI reference / current visual direction</li>
+<li><strong>Intended module role</strong>: Spend detail· readiness decision surface</li>
+<li><strong>Notes</strong>: Layout είναι indicative· το readiness logic είναι canonical στο functional spec</li>
+</ul>
+<p><img src="screens/supplier_bill_detail.png" alt=""></p>
+<h3 id="ss-12--payments-queue--execute-batch">SS-12 — Payments Queue (+ execute batch)</h3>
+<ul>
+<li><strong>Label</strong>: Current screenshots used as visual anchors for proposed module behavior</li>
+<li><strong>Intended module role</strong>: Execution handoff workspace (owner: Payments Queue)</li>
+<li><strong>Notes</strong>: Το execution UX μπορεί να εξελιχθεί· δεν πρέπει να “ρουφήξει” readiness ownership</li>
+</ul>
+<p><img src="screens/payments_queue.png" alt=""></p>
+<p><img src="screens/payments_execute_batch.png" alt=""></p>
+<h3 id="ss-13--budget-overview">SS-13 — Budget Overview</h3>
+<ul>
+<li><strong>Label</strong>: Existing UI reference / current visual direction</li>
+<li><strong>Intended module role</strong>: Controls visibility surface (budget monitoring)</li>
+<li><strong>Notes</strong>: Budget semantics μπορεί να είναι controlled-open· μη θεωρείς το visualization ως canonical</li>
+</ul>
+<p><img src="screens/budget_overview.png" alt=""></p>
+<h3 id="ss-14--audit-trail--activity-log--detail">SS-14 — Audit Trail / Activity Log (+ detail)</h3>
+<ul>
+<li><strong>Label</strong>: Existing UI reference / current visual direction</li>
+<li><strong>Intended module role</strong>: Controls/audit visibility (traceability)</li>
+<li><strong>Notes</strong>: Log schema και filters μπορεί να εξελιχθούν· το audit intent παραμένει canonical</li>
+</ul>
+<p><img src="screens/audit_trail_activity_log.png" alt=""></p>
+<p><img src="screens/audit_trail_activity_detail.png" alt=""></p>
+<h3 id="ss-15--employee-cost-view">SS-15 — Employee Cost View</h3>
+<ul>
+<li><strong>Label</strong>: Existing UI reference / current visual direction</li>
+<li><strong>Intended module role</strong>: Controls visibility (cost monitoring)</li>
+<li><strong>Notes</strong>: Indicative· metric definitions μπορεί να είναι controlled-open</li>
+</ul>
+<p><img src="screens/employee_cost_view.png" alt=""></p>
+
+</body>
+</html>

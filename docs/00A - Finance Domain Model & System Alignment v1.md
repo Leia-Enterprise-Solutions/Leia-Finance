@@ -12,8 +12,8 @@
 
 Το σύστημα διαρθρώνεται σε τέσσερις ζώνες, με λογική **Object-First**:
 
-- **Revenue Loop**: Invoice \(\rightarrow\) Receivable \(\rightarrow\) Incoming Payment.
-- **Spend Loop**: Purchase Request \(\rightarrow\) Commitment \(\rightarrow\) Supplier Bill \(\rightarrow\) Outgoing Payment.
+- **Revenue Loop**: Invoice /(/rightarrow/) Receivable /(/rightarrow/) Incoming Payment.
+- **Spend Loop**: Purchase Request /(/rightarrow/) Commitment /(/rightarrow/) Supplier Bill /(/rightarrow/) Outgoing Payment.
 - **Monitoring Shell**: Exposure, Overdue, Upcoming (Computed έννοιες).
 - **Control Logic**: Κανόνες συνέπειας (π.χ. Anti-overlap) που εγγυώνται την ορθότητα της πληροφορίας.
 
@@ -59,9 +59,9 @@
 
 Logic:
 
-\[
-Exposure = (Commitment - Relieved) + Unpaid\ Bills
-\]
+/[
+Exposure = (Commitment - Relieved) + Unpaid/ Bills
+/]
 
 ### 5.3 Monitoring Non-Ownership
 
@@ -121,38 +121,12 @@ Known semantic risks / contradictions to prevent:
 
 ### A1. Revenue Loop
 
-```mermaid
-flowchart LR
-    ID[Invoice Draft]
-    II[Issued Invoice<br/>issued totals snapshot]
-    RCV[Receivable]
-    IP[Incoming Payment]
-
-    ID --> II --> RCV
-    IP --> RCV
-```
+![diagram](./../../docs/diagrams/_rendered/from_md/00A-Finance-Domain-Model-System-Alignment-v1.md/00A-Finance-Domain-Model-System-Alignment-v1.md-1.svg)
 
 ### A2. Spend Loop
 
-```mermaid
-flowchart LR
-    PR[Purchase Request]
-    CM[Commitment]
-    SB[Supplier Bill]
-    OP[Outgoing Payment]
-
-    PR --> CM --> SB --> OP
-```
+![diagram](./../../docs/diagrams/_rendered/from_md/00A-Finance-Domain-Model-System-Alignment-v1.md/00A-Finance-Domain-Model-System-Alignment-v1.md-2.svg)
 
 ### A3. Monitoring / Control Relation
 
-```mermaid
-flowchart LR
-    TR[Transactional Objects<br/>Invoice, Receivable, Commitment,<br/>Supplier Bill, Payments]
-    MON[Monitoring Views<br/>Exposure, Overdue, Upcoming]
-    CTRL[Control Logic<br/>Consistency / Anti-overlap]
-
-    TR --> MON
-    TR --> CTRL
-    CTRL --> MON
-```
+![diagram](./../../docs/diagrams/_rendered/from_md/00A-Finance-Domain-Model-System-Alignment-v1.md/00A-Finance-Domain-Model-System-Alignment-v1.md-3.svg)

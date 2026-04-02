@@ -1,0 +1,297 @@
+flowchart TD
+
+    %% Canonical scope note:
+    %% - Downstream visualization artifact only.
+    %% - Does not override ownership/boundaries from 00, 00A, 01.
+    %% - Direct cash/reconciliation branch is adjacent/transitional support path, not a canonical top-level module.
+
+    %% ======================================================
+    %% FINANCE MANAGEMENT & MONITORING SYSTEM v1
+    %% Master workflow aligned to UI Blueprint / canonical states
+    %% ======================================================
+
+    %% =========================
+    %% ENTRY / CONTEXT
+    %% =========================
+    A0[Start] --> A1[Business or finance event occurs]
+    A1 --> A2{What type of finance event is created?}
+    A2 -->|Billable work / client revenue| R0
+    A2 -->|Purchase / expense need| P0
+    A2 -->|Budget planning / revision| B0
+    A2 -->|Direct receipt / payment registration| C0
+    A2 -->|Audit / reporting / review| D0
+
+    %% =========================
+    %% REVENUE / ORDER TO CASH
+    %% =========================
+    subgraph REV[Revenue / Order-to-Cash]
+        R0[Billable candidate work exists]
+        R0 --> R1{Marked billable and available?}
+        R1 -->|No| R1N[Store as non-billable work]
+        R1N --> X1[Still contributes to labor cost / operational reporting]
+        R1 -->|Yes| R2[Visible in Invoice Draft Builder source list]
+
+        R2 --> R3{Selected into invoice draft?}
+        R3 -->|No| R3N[Remain available in billable pool]
+        R3 -->|Yes| R4[Reserve source lines in Invoice Draft Builder]
+        R4 --> R5[Build draft lines, totals, terms, notes]
+        R5 --> R6{Save draft?}
+        R6 -->|No| R6N[Keep editing in Draft Builder]
+        R6 -->|Yes| R7[Draft visible in Invoice Drafts List]
+
+        R7 --> R8{Draft complete and valid?}
+        R8 -->|No| R8N[Resume draft / edit / remove lines]
+        R8N --> R9{Discard draft?}
+        R9 -->|No| R7
+        R9 -->|Yes| R9D[Discard draft and release reserved lines]
+        R8 -->|Yes| R10[Submit draft for issue]
+
+        R10 --> R11{Internal approval required before issue?}
+        R11 -->|Yes| R12[Route to approver / billing owner]
+        R12 --> R13{Approved?}
+        R13 -->|No| R13N[Return to draft with comments]
+        R13N --> R7
+        R13 -->|Yes| R14[Issue invoice - issued document truth + create receivable]
+        R11 -->|No| R14
+
+        R14 --> R15[Visible in Invoices List and Invoice Detail]
+        R15 --> R16{Fiscal / external transmission required?}
+        R16 -->|No| R20[Issued invoice is valid; receivable follow-up continues]
+        R16 -->|Yes| R17[Send to fiscal / external channel]
+        R17 --> R18{Transmission status?}
+        R18 -->|Pending / Unknown| R18P[Show transmission warning / pending state]
+        R18 -->|Accepted| R20
+        R18 -->|Rejected| R18R[Rejected transmission / correction required]
+        R18P --> R20
+        R18R --> R7
+
+        R20 --> R21[Open receivable created]
+        R21 --> R22[Visible in Collections / Receivables worklist]
+        R22 --> R23{Receipt registered?}
+        R23 -->|No| R24[Remain open receivable]
+        R23 -->|Partial| R25[Register partial receipt - manual v1]
+        R23 -->|Full| R26[Register full receipt - manual v1]
+
+        R25 --> R27[Settlement effect updates outstanding - via allocation]
+        R27 --> R28{Outstanding remains?}
+        R28 -->|Yes| R24
+        R28 -->|No| R26
+
+        R24 --> R29{Due date status}
+        R29 -->|Not due| R30[Collection signal: Not Due]
+        R29 -->|Due soon| R31[Collection signal: Due Soon]
+        R29 -->|Overdue| R32[Collection signal: Overdue]
+        R32 --> R33[Collections owner follow-up / notes / expected date]
+        R33 --> R34{Collected after follow-up?}
+        R34 -->|No| R35[Remain overdue / escalate]
+        R34 -->|Yes| R26
+
+        R26 --> R36[Outstanding reaches zero]
+        R36 --> R37[Receivable status becomes Collected / Closed]
+        R37 --> R38[Update dashboard: Gross Invoiced, Income Collected, Outstanding Receivables, Net Cash Movement]
+
+        R35 --> EXC3[Exception: Overdue receivable escalation]
+        R18R --> EXC1[Exception: Fiscal / transmission rejection]
+    end
+
+    %% =========================
+    %% PROCUREMENT / EXPENSE / PAYABLES
+    %% =========================
+    subgraph PROC[Purchase Request -> Commitment -> Supplier Bill -> Paid Cash Out]
+        P0[Purchase or expense need identified]
+        P0 --> P1[Create purchase request]
+        P1 --> P2[Visible in Purchase Requests List]
+        P2 --> P3[Open Purchase Request Detail / Approval]
+        P3 --> P4{Request complete?}
+        P4 -->|No| P4N[Return to requester for completion]
+        P4 -->|Yes| P5[Show budget context / supplier / attachments / urgency]
+
+        P5 --> P6{Approval decision}
+        P6 -->|Reject| P7[Request status becomes Rejected]
+        P6 -->|Request changes| P8[Return for revision]
+        P6 -->|Approve| P9[Approval outcome becomes Approved - Commitment visible]
+
+        P9 --> P10[Commitment becomes visible in Budget Overview]
+        P10 --> P11[Wait for supplier bill / expense document]
+        P11 --> P12{Supplier bill received?}
+        P12 -->|No| P11
+        P12 -->|Yes| P13[Record supplier bill]
+        P13 --> P14[Visible in Supplier Bills List and Bill Detail]
+
+        P14 --> P15{Linked to approved request?}
+        P15 -->|No| P15U[Unlinked supplier bill warning]
+        P15 -->|Yes| P16{Matches approved request?}
+
+        P16 -->|No| P16M[Mismatch detected: amount/category/supplier]
+        P16 -->|Yes| P17[Match status: Matched]
+
+        P15U --> P18[Bill is blocked by default pending policy / override]
+        P16M --> P18
+        P17 --> P19{Required controls satisfied? attachments, due date, approvals}
+        P19 -->|No| P18
+        P19 -->|Yes| P20[Readiness becomes Ready for Payment]
+
+        P18 --> P21[Visible in Payments Queue as Blocked with reason]
+        P20 --> P22[Visible in Payments Queue as Ready]
+
+        P22 --> P23{Selected for payment batch?}
+        P23 -->|No| P22
+        P23 -->|Yes| P24[Selected / Prepared - UI-only]
+        P24 --> P25{Scheduled for payment?}
+        P25 -->|No| P24
+        P25 -->|Yes| P26[Execution status becomes Scheduled]
+        P26 --> P27{Cash-out executed / registered?}
+        P27 -->|No| P26
+        P27 -->|Yes| P28[Payment status becomes Executed / Paid]
+
+        P28 --> P29[Supplier bill becomes Paid / closed]
+        P29 --> P30[Update dashboard: Expenses Paid, Outstanding Payables, Net Cash Movement]
+
+        P18 --> EXC2[Exception: Supplier mismatch / blocked payable]
+        P21 --> EXC5[Exception: Unresolved blocked payment]
+    end
+
+    %% =========================
+    %% BUDGET / CONTROL
+    %% =========================
+    subgraph BUD[Budgeting / Budget Control]
+        B0[Create or revise budget version]
+        B0 --> B1[Budget version visible in Budget Overview]
+        B1 --> B2[Define period and breakdown: department / category / project]
+        B2 --> B3[Publish approved budget version]
+        B3 --> B4[Budget lines available for monitoring]
+
+        B4 --> B5{Approved commitment created?}
+        B5 -->|Yes| B6[Increase committed amount]
+        B5 -->|No| B7{Paid expense registered?}
+        B7 -->|Yes| B8[Increase actual paid amount]
+        B7 -->|No| B9{Refresh remaining / variance anyway?}
+        B9 -->|No| B10[Keep current monitoring state]
+        B9 -->|Yes| B11[Recalculate remaining / variance]
+
+        B6 --> B11
+        B8 --> B11
+        B11 --> B12{Budget signal}
+        B12 -->|Healthy| B13[Healthy status]
+        B12 -->|Warning| B14[Warning: approaching threshold]
+        B12 -->|Breach| B15[Breach: over budget / escalation needed]
+
+        B15 --> B16{Budget revision or spend restriction?}
+        B16 -->|Revision| B17[Create revised budget version]
+        B16 -->|Restriction| B18[Show restriction signal - visibility-only]
+        B17 --> B1
+        B18 --> B19[Future requests show restriction warning]
+
+        B15 --> EXC4[Exception: Budget overrun warning]
+    end
+
+    %% =========================
+    %% DIRECT CASH / REGISTRATION / RECONCILIATION
+    %% =========================
+    subgraph CASH[Direct Receipt / Payment Registration / Reconciliation]
+        C0[Receipt or payment is registered manually/imported]
+        C0 --> C1{Cash event type}
+        C1 -->|Customer receipt| C2[Try to match issued invoice]
+        C1 -->|Supplier payment| C3[Try to match supplier bill]
+        C1 -->|Unmatched movement| C4[Create unmatched cash movement]
+
+        C2 --> C5{Matching invoice found?}
+        C5 -->|No| C4
+        C5 -->|Yes| C6[Allocate receipt to invoice]
+
+        C3 --> C7{Matching supplier bill found?}
+        C7 -->|No| C4
+        C7 -->|Yes| C8[Allocate payment to supplier bill]
+
+        C4 --> C9[Send to finance review - adjacent support path]
+        C9 --> C10{Resolved?}
+        C10 -->|No| C11[Remain unreconciled]
+        C10 -->|Yes| C12[Allocate to correct record]
+
+        C6 --> C13[Update receivable status / collections widgets]
+        C8 --> C14[Update payable status / payments widgets]
+        C12 --> C13
+        C12 --> C14
+
+        C11 --> EXC6[Exception: Unreconciled cash movement]
+    end
+
+    %% =========================
+    %% EMPLOYEE COST / RESOURCE VISIBILITY
+    %% =========================
+    subgraph COST[Employee Cost / Resource Visibility]
+        E0[Work hours / allocations exist]
+        E0 --> E1[Apply employee or team cost rates]
+        E1 --> E2[Calculate labor cost by employee / team / project / period]
+        E2 --> E3{Billable or non-billable labor?}
+        E3 -->|Billable| E4[Supports margin-relevant visibility]
+        E3 -->|Non-billable| E5[Supports internal cost / overhead visibility]
+        E4 --> E6[Visible in Employee Cost View]
+        E5 --> E6
+    end
+
+    %% =========================
+    %% AUDIT / REPORTING / OVERSIGHT
+    %% =========================
+    subgraph GOV[Audit / Reporting / Operational Oversight]
+        D0[Open dashboard, list, detail, or audit context]
+        D0 --> D1{Primary screen opened?}
+        D1 -->|Finance Overview Dashboard| D2[Review KPI widgets, trends, drilldowns]
+        D1 -->|Invoices / Invoice Detail / Collections| D3[Review receivables, overdue items, collection notes]
+        D1 -->|Purchase Requests / Supplier Bills / Payments Queue| D4[Review commitments, blocked payables, payment readiness]
+        D1 -->|Budget Overview| D5[Review budget vs committed vs actual]
+        D1 -->|Employee Cost View| D6[Review labor cost visibility]
+        D1 -->|Audit Trail| D7[Review actions, changes, approvals, exceptions]
+
+        D2 --> D8[Management insight / action]
+        D3 --> D8
+        D4 --> D8
+        D5 --> D8
+        D6 --> D8
+        D7 --> D8
+
+        D8 --> D9{Need operational action?}
+        D9 -->|No| D10[Monitoring continues]
+        D9 -->|Collect receivable| R33
+        D9 -->|Approve / rework request| P3
+        D9 -->|Resolve blocked bill| P14
+        D9 -->|Revise budget| B17
+        D9 -->|Reconcile cash| C9
+        D9 -->|Investigate audit event| D7
+    end
+
+    %% =========================
+    %% CROSS-MODULE FEEDS
+    %% =========================
+    X1 --> E0
+    R21 --> D3
+    R32 --> D3
+    R38 --> D2
+    P9 --> B5
+    P28 --> B7
+    P29 --> D4
+    C13 --> D2
+    C14 --> D2
+    E6 --> D6
+
+    %% =========================
+    %% AUDIT LOG EVENTS
+    %% =========================
+    R7 --> LOG1[Audit event: draft saved]
+    R14 --> LOG2[Audit event: invoice issued]
+    R26 --> LOG3[Audit event: receipt registered]
+    P9 --> LOG4[Audit event: request approved]
+    P13 --> LOG5[Audit event: supplier bill recorded]
+    P28 --> LOG6[Audit event: payment executed]
+    B17 --> LOG7[Audit event: budget revised]
+    C11 --> LOG8[Audit event: unreconciled cash movement]
+
+    %% =========================
+    %% EXCEPTIONS
+    %% =========================
+    EXC1[Transmission rejected / correction required]
+    EXC2[Supplier bill blocked due to mismatch / missing controls]
+    EXC3[Overdue receivable escalation]
+    EXC4[Budget breach / management attention]
+    EXC5[Blocked payment unresolved]
+    EXC6[Unreconciled cash movement]

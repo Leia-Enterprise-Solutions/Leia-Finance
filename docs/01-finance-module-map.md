@@ -67,115 +67,45 @@
 Το παρακάτω διάγραμμα είναι ο ενοποιημένος χάρτης σχέσεων του v1 (layers + βασικές εξαρτήσεις).  
 Διαβάζεται ως αρχιτεκτονική modules/ownership, όχι ως UI navigation ή λεπτομερές workflow.
 
-```mermaid
-flowchart TB
-    subgraph L1[Layer 1: Monitoring Shell]
-        O[Overview<br/>Monitoring & Routing]
-    end
-
-    subgraph L2[Layer 2: Revenue Chain]
-        I[Invoicing<br/>Truth Creation] --> R[Receivables<br/>Follow-up]
-    end
-
-    subgraph L3[Layer 3: Spend Chain]
-        PRC[Purchase Requests / Commitments<br/>Upstream Approval] --> SSB[Spend / Supplier Bills<br/>Readiness Formation]
-        SSB --> PQ[Payments Queue<br/>Execution Handoff]
-    end
-
-    subgraph L4[Layer 4: Controls]
-        C[Controls<br/>Budget - Audit - Cost]
-    end
-
-    %% Dependencies
-    I & R & PRC & SSB & PQ --> C
-    C & I & R & PRC & SSB & PQ --> O
-    O -.-> I & R & PRC & SSB & PQ
-```
+![diagram](diagrams/_rendered/module-map-system-relationship.svg)
 
 ### Diagram A — Revenue-side chain
 
-```mermaid
-flowchart LR
-    BW[Billable Work] --> I[Invoicing] --> R[Receivables]
-    I --> O[Overview]
-    R --> O
-    I --> C[Controls]
-    R --> C
-```
+![diagram](diagrams/_rendered/module-map-revenue-chain.svg)
 
 ### Diagram B — Spend-side chain
 
-```mermaid
-flowchart LR
-    PRC[Purchase Requests / Commitments] --> SSB[Spend / Supplier Bills] --> PQ[Payments Queue]
-    PRC --> O[Overview]
-    SSB --> O
-    PQ --> O
-    PRC --> C[Controls]
-    SSB --> C
-    PQ --> C
-```
+![diagram](diagrams/_rendered/module-map-spend-chain.svg)
 
 ### Diagram C — Monitoring / Control relation (module επίπεδο)
 
-```mermaid
-flowchart LR
-    subgraph OPS[Operational modules]
-      I[Invoicing]
-      R[Receivables]
-      PRC[Purchase Requests / Commitments]
-      SSB[Spend / Supplier Bills]
-      PQ[Payments Queue]
-    end
-
-    C[Controls<br/>interpretive/control visibility]
-    O[Overview<br/>monitoring composition]
-
-    I --> C
-    R --> C
-    PRC --> C
-    SSB --> C
-    PQ --> C
-
-    I --> O
-    R --> O
-    PRC --> O
-    SSB --> O
-    PQ --> O
-    C --> O
-```
+![diagram](diagrams/_rendered/module-map-monitoring-control-relation.svg)
 
 ---
 
 ## 7. Module Inventory and Roles
 
 ### 7.1 Overview
-- Monitoring shell: συνοψίζει, επισημαίνει προτεραιότητες και δρομολογεί προς owner modules.
-- Δεν δημιουργεί transactional truth και δεν εκτελεί operational actions.
+- Συνοψίζει προτεραιότητες και δρομολογεί τον χρήστη. Δεν δημιουργεί transactional truth.
 
 ### 7.2 Invoicing
-- Revenue core: μετατρέπει `Billable Work` σε issued invoice truth.
-- Τροφοδοτεί downstream το `Receivables` με issued context.
+- Μετατρέπει `Billable Work` σε «εκδοθείσα αλήθεια» του παραστατικού.
+- Τροφοδοτεί το `Receivables` με απαραίτητο context.
 
 ### 7.3 Receivables
-- Revenue follow-up: οργανώνει την παρακολούθηση και είσπραξη issued απαιτήσεων.
-- Δεν νοείται χωρίς upstream issued truth από το `Invoicing`.
+- Οργανώνει την είσπραξη. Απαγορεύεται η χρήση του χωρίς upstream δεδομένα από το Invoicing.
 
 ### 7.4 Purchase Requests / Commitments
-- Upstream spend initiation / approval layer.
-- Παράγει commitment visibility και downstream context προς `Spend / Supplier Bills`.
+- Σημείο έναρξης και έγκρισης δαπάνης. Δημιουργεί την ορατότητα δεσμεύσεων (Commitment visibility).
 
 ### 7.5 Spend / Supplier Bills
-- Supplier obligation + payable readiness layer.
-- Παράγει `Ready / Blocked` outcome προς `Payments Queue`, χωρίς execution ownership.
+- Διαχειρίζεται την υποχρέωση προς τον προμηθευτή. Παράγει το αποτέλεσμα Ready / Blocked για την πληρωμή.
 
 ### 7.6 Payments Queue
-- Downstream execution / handoff workspace για πληρωμές βάσει upstream readiness.
-- Δεν σχηματίζει readiness και δεν λειτουργεί ως matching module.
+- Χώρος εκτέλεσης πληρωμών. Δεν σχηματίζει κριτήρια ετοιμότητας, απλώς τα εφαρμόζει.
 
 ### 7.7 Controls
-- Supporting control layer για `Budget`, `Audit Trail` και `Employee Cost`.
-- Παρέχει control visibility προς `Overview`, χωρίς execution ownership.
+- Παρέχει ορατότητα ελέγχου (Budget, Audit). Δεν κατέχει ownership της εκτέλεσης.
 
 ## 8. Dependency Matrix
 
@@ -193,22 +123,4 @@ flowchart LR
 
 ## 9. Boundary Notes
 
-Το παρόν Module Map δεν είναι:
-- database entity map
-- API dependency tree
-- UI route tree
-- screen blueprint
-- detailed workflow spec
-
-Το έγγραφο διαβάζεται μαζί με:
-- `00 — Finance Canonical Brief`
-- `00A — Finance Domain Model & System Alignment`
-- UI Blueprint
-- module briefs
-- workflow docs
-
----
-
-## 10. Τελική Δήλωση Αρχιτεκτονικής
-
-Το Finance System v1 είναι δομημένο οικοσύστημα όπου η επιχειρησιακή κίνηση (Revenue/Spend) τροφοδοτεί συνεπαγωγικά τον έλεγχο (`Controls`) και την εποπτεία (`Overview`). Η σαφής διάκριση μεταξύ **Creation** (`Invoicing` / `Commitments`), **Readiness** (`Spend / Supplier Bills`) και **Execution** (`Payments Queue`) διατηρεί το σύστημα ελέγξιμο και επεκτάσιμο.
+Το Finance System v1 είναι ένα δομημένο οικοσύστημα όπου η επιχειρησιακή κίνηση (Revenue/Spend) τροφοδοτεί συνεπαγωγικά τον έλεγχο (Controls) και την εποπτεία (Overview). Η σαφής διάκριση μεταξύ Creation (Invoicing / Commitments), Readiness (Spend / Supplier Bills) και Execution (Payments Queue) διατηρεί το σύστημα ελέγξιμο, ασφαλές και επεκτάσιμο.

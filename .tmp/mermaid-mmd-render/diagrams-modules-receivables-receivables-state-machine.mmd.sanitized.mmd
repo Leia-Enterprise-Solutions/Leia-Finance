@@ -1,0 +1,31 @@
+stateDiagram-v2
+  [*] --> Open
+  Open --> PartiallyCollected: Settlement applied and outstanding above zero
+  PartiallyCollected --> PartiallyCollected: Additional settlement applied
+  Open --> Collected: Settlement brings outstanding to zero
+  PartiallyCollected --> Collected: Settlement brings outstanding to zero
+  Collected --> Closed: Administrative closure after collected
+
+  state "Workflow - orthogonal" as WF {
+    [*] --> NoFollowUpYet
+    NoFollowUpYet --> FollowUpActive
+    FollowUpActive --> AwaitingReply
+    AwaitingReply --> FollowUpActive
+    FollowUpActive --> ExpectedPaymentLogged
+    ExpectedPaymentLogged --> FollowUpActive
+    FollowUpActive --> Escalated
+    Escalated --> FollowUpActive
+  }
+
+  state "Signals - computed" as SIG {
+    [*] --> NotDue
+    NotDue --> DueSoon
+    DueSoon --> Overdue
+    Overdue --> HighRiskOverdue
+    Overdue --> NotDue
+  }
+
+  note right of Open
+    Overdue is computed and not user toggled.
+    Workflow states do not change outstanding.
+  end note

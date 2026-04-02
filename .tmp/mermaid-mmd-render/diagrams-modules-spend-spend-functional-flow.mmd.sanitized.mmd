@@ -1,0 +1,27 @@
+flowchart TD
+  B0[Supplier bill recorded]
+  L0{Linked to approved request - if applicable}
+  M0{Match outcome}
+  R0{Readiness decision}
+  Q0[Handoff to Payments Queue - execution workspace]
+  X0[Executed or paid - cash truth owned by Payments Queue]
+
+  B0 --> L0
+  L0 -->|Unlinked| M0
+  L0 -->|Linked| M0
+
+  M0 -->|Matched| R0
+  M0 -->|Mismatch| R0
+
+  R0 -->|Blocked - explicit reason| B0
+  R0 -->|Ready for Payment| Q0 --> X0
+
+  subgraph Guardrails[Guardrails]
+    G1[Readiness is formed in Spend module]
+    G2[Execution state is owned by Payments Queue]
+    G3[Unlinked bills default to Blocked in v1]
+  end
+
+  R0 -.-> G1
+  Q0 -.-> G2
+  L0 -.-> G3

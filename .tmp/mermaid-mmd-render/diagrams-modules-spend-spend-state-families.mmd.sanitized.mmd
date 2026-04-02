@@ -1,0 +1,36 @@
+flowchart LR
+  subgraph STATUS[Bill status - persisted]
+    S1[Recorded]
+    S2[Open]
+    S3[Paid]
+    S4[Closed]
+  end
+
+  subgraph MATCH[Match state - linkage and validation]
+    M1[Unlinked]
+    M2[Linked]
+    M3[Matched]
+    M4[Mismatch]
+  end
+
+  subgraph READY[Readiness - gate to queue]
+    R1[Blocked]
+    R2[Ready for Payment]
+  end
+
+  subgraph EXEC[Execution - owned by Payments Queue]
+    E1[Selected - UI only]
+    E2[Scheduled]
+    E3[Executed]
+  end
+
+  subgraph SIG[Signals - computed]
+    G1[Due Soon]
+    G2[Overdue]
+    G3[Missing Attachment]
+  end
+
+  STATUS --- MATCH
+  MATCH --- READY
+  READY --- EXEC
+  STATUS --- SIG

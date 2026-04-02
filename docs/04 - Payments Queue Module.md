@@ -1,177 +1,175 @@
-# 04 — Payments Queue Module
+## 04 — Payments Queue Module (Ενότητα Ουράς Πληρωμών)
 
 ## 1. Σκοπός του εγγράφου
 
-Το παρόν έγγραφο ορίζει το `Payments Queue Module` σε επίπεδο module canon: entry objects, readiness dependency, execution vocabulary (UI-only vs persisted), priority/filters/actions σε module επίπεδο, handoffs και v1 limits.
-Δεν αποτελεί semantic-law (`00A`), ούτε module map (`01`), ούτε UI blueprint, ούτε bank/reconciliation spec.
+Το παρόν έγγραφο ορίζει την Ενότητα Ουράς Πληρωμών (Payments Queue Module) σε επίπεδο κανονιστικού προτύπου: αντικείμενα εισόδου, εξάρτηση ετοιμότητας, λεξιλόγιο εκτέλεσης (μόνο για τη διεπαφή vs μόνιμα δεδομένα), προτεραιότητα/φίλτρα/ενέργειες σε επίπεδο ενότητας, παραδόσεις (handoffs) και περιορισμούς της έκδοσης v1.
+
+Δεν αποτελεί σημασιολογικό νόμο (00A), ούτε χάρτη ενοτήτων (01), ούτε προσχέδιο διεπαφής (UI blueprint), ούτε προδιαγραφή τραπεζικής συμφιλίωσης (reconciliation).
 
 ---
 
-## 2. Ρόλος και boundaries
+## 2. Ρόλος και όρια
 
-Το `Payments Queue Module` είναι το downstream spend execution / handoff workspace.
+Το Payments Queue Module είναι ο χώρος εργασίας για την εκτέλεση δαπανών / παράδοση (handoff) στο τέλος της αλυσίδας (downstream).
 
-Κύρια δουλειά:
-- διαβάζει `Ready/Blocked` payable context από `Spend / Supplier Bills`,
-- οργανώνει queue triage και priority,
-- υποστηρίζει selection → scheduling → manual execution registration (v1),
-- παράγει execution outcomes που τροφοδοτούν visibility προς `Overview`/`Controls`.
+Κύρια αποστολή:
+- Διαβάζει το πλαίσιο πληρωτέων Ready/Blocked (Έτοιμο/Μπλοκαρισμένο) από την ενότητα Spend / Supplier Bills.
+- Οργανώνει τη διαλογή (triage) και την προτεραιοποίηση της ουράς.
+- Υποστηρίζει τη ροή: επιλογή $\rightarrow$ προγραμματισμός $\rightarrow$ χειροκίνητη καταχώριση εκτέλεσης (v1).
+- Παράγει αποτελέσματα εκτέλεσης που τροφοδοτούν την ορατότητα προς την Επισκόπηση (Overview) και τους Ελεγκτικούς Μηχανισμούς (Controls).
 
-Boundaries (τι δεν είναι):
-- Δεν σχηματίζει readiness (αυτό γίνεται upstream στο `Spend / Supplier Bills`).
-- Δεν είναι upstream mismatch investigation module.
-- Δεν είναι bank reconciliation spec ή generic payment engine.
-- UI-only selection δεν είναι payment lifecycle truth.
-
----
-
-## 3. Τι εισέρχεται στην ουρά (entry objects)
-
-Primary entry:
-- payable context από `Spend / Supplier Bills` με readiness (`Ready for Payment` / `Blocked`) + blocked reasons.
-
-Queue segments:
-- `Ready for Payment`
-- `Blocked` (visible for triage / return-to-resolve)
-- `Due Soon`
-- `Overdue`
-
-Not primary queue objects:
-- revenue-side invoices
-- purchase requests/commitments ως execution rows
-- bank transactions ως source objects
+Όρια (Τι ΔΕΝ είναι):
+- Δεν διαμορφώνει την ετοιμότητα (αυτό γίνεται upstream στο Spend / Supplier Bills).
+- Δεν είναι ενότητα διερεύνησης αποκλίσεων (mismatch investigation).
+- Δεν είναι προδιαγραφή τραπεζικής συμφιλίωσης ή γενική μηχανή πληρωμών.
+- Η επιλογή μόνο στη διεπαφή (UI-only selection) δεν αποτελεί αλήθεια του κύκλου ζωής της πληρωμής.
 
 ---
 
-## 4. Readiness dependency (queue reads, upstream forms)
+## 3. Αντικείμενα εισόδου στην ουρά (Entry Objects)
 
-Το queue δεν σχηματίζει readiness. Απαιτεί:
-- readiness (`Ready`/`Blocked`)
-- blocked reason visibility
-- δρομολόγηση προς source detail για resolve (όχι “fix inside queue”).
+Πρωτογενής είσοδος:
+- Πλαίσιο πληρωτέων από τις Δαπάνες / Παραστατικά Προμηθευτών με ένδειξη ετοιμότητας (Ready for Payment / Blocked) και αιτίες μπλοκαρίσματος.
+
+Τμήματα ουράς (Segments):
+- Έτοιμα προς Πληρωμή (Ready for Payment)
+- Μπλοκαρισμένα (Blocked) (ορατά για διαλογή / επιστροφή προς επίλυση)
+- Λήγουν Σύντομα (Due Soon)
+- Ληξιπρόθεσμα (Overdue)
+
+Τι ΔΕΝ εισέρχεται στην ουρά:
+- Τιμολόγια εσόδων (revenue-side invoices).
+- Αιτήματα αγοράς/Δεσμεύσεις ως γραμμές εκτέλεσης.
+- Τραπεζικές συναλλαγές ως πρωτογενή αντικείμενα (source objects).
 
 ---
 
-## 5. Execution state model (anti-drift)
+## 4. Εξάρτηση ετοιμότητας (Readiness Dependency)
 
-**Persisted execution statuses (v1)**
-- `Scheduled`
-- `Executed / Paid` *(manual registration in v1)*
+Η ουρά δεν διαμορφώνει την ετοιμότητα. Απαιτεί:
+- Κατάσταση ετοιμότητας (Ready/Blocked).
+- Ορατότητα της αιτίας μπλοκαρίσματος.
+- Δρομολόγηση προς τη λεπτομέρεια της πηγής για επίλυση (όχι «διόρθωση εντός της ουράς»).
 
-**UI-only workbench states**
-- `Selected for batch`
-- `Prepared`
+---
 
-Canonical progression:
-`Ready/Blocked -> Selected/Prepared (UI-only) -> Scheduled -> Executed/Paid`
+## 5. Μοντέλο καταστάσεων εκτέλεσης (Execution State Model)
+
+Μόνιμες καταστάσεις εκτέλεσης (v1 - Persisted)
+- Προγραμματισμένο (Scheduled)
+- Εκτελέστηκε / Πληρώθηκε (Executed / Paid) (χειροκίνητη καταχώριση στην έκδοση v1)
+
+Προσωρινές καταστάσεις πάγκου εργασίας (UI-only)
+- Επιλεγμένο για ομαδική επεξεργασία (Selected for batch)
+- Προετοιμασμένο (Prepared)
+
+Κανονιστική εξέλιξη:
+
+Έτοιμο/Μπλοκαρισμένο -> Επιλεγμένο/Προετοιμασμένο (UI-only) -> Προγραμματισμένο -> Εκτελέστηκε/Πληρώθηκε
 
 Ρητές διακρίσεις:
-- `Selected/Prepared` ≠ `Scheduled`
-- `Scheduled` ≠ `Executed / Paid`
-- `Executed / Paid` δεν συνάγεται από selection/batch ύπαρξη
+- Επιλεγμένο/Προετοιμασμένο $\neq$ Προγραμματισμένο
+- Προγραμματισμένο $\neq$ Εκτελέστηκε / Πληρώθηκε
+- Η κατάσταση Εκτελέστηκε / Πληρώθηκε δεν προκύπτει αυτόματα από την ύπαρξη μιας επιλογής ή μιας ομάδας (batch).
 
-```mermaid
-flowchart LR
-    IN[Ready / Blocked<br/>input]
-    UI[Selected / Prepared<br/>UI-only]
-    SCH[Scheduled<br/>persisted]
-    EXE[Executed / Paid<br/>persisted]
-    IN --> UI --> SCH --> EXE
-```
+![diagram](./../../docs/diagrams/_rendered/from_md/04-Payments-Queue-Module.md/04-Payments-Queue-Module.md-1.svg)
 
----
+### Module diagrams (functionality + state transitions)
 
-## 6. Priority model (module-level)
+#### Διάγραμμα λειτουργικής ροής - workbench, scheduling, execution
+![diagram](./diagrams/_rendered/from_mmd/diagrams-modules-payments-payments-functional-flow.mmd.png)
 
-Το v1 priority είναι operational triage (όχι hidden policy engine).
-
-Default reading:
-- `Overdue`
-- `Due Soon`
-- `Ready`
-- `Blocked` που χρειάζονται resolve
-
-Secondary factors (optional):
-- due date ascending
-- overdue severity
-- amount descending
-- grouping by supplier για batch efficiency
+#### Διάγραμμα καταστάσεων - readiness input vs execution truth
+![diagram](./diagrams/_rendered/from_mmd/diagrams-modules-payments-payments-state-machine.mmd.png)
 
 ---
 
-## 7. Filters (module-level)
+## 6. Μοντέλο προτεραιότητας (Module-level)
 
-Τα screen contract details ανήκουν στο UI Blueprint. Εδώ ορίζεται το module-level φίλτρο-σκοπός:
-- segment (`Ready`, `Blocked`, `Due Soon`, `Overdue`)
-- supplier
-- due date range
-- amount range
-- category/department/project
-- linked request exists (yes/no)
-- blocked reason type
+Η προτεραιότητα στην έκδοση v1 αφορά την επιχειρησιακή διαλογή (operational triage) και όχι μια κρυφή μηχανή κανόνων.
 
----
+Προεπιλεγμένη ανάγνωση:
+- Ληξιπρόθεσμα (Overdue)
+- Λήγουν Σύντομα (Due Soon)
+- Έτοιμα (Ready)
+- Μπλοκαρισμένα (Blocked) που απαιτούν επίλυση
 
-## 8. Actions (module-level)
-
-Row actions:
-- open bill detail (resolve blockers upstream)
-- add/remove batch selection (UI-only)
-
-Batch actions:
-- create handoff batch
-- mark as `Scheduled`
-- register `Executed / Paid` (manual, v1)
-
-Forbidden implications:
-- readiness formation inside queue
-- bank-confirmed completion
-- silent status rewrite from checkbox selection
+Δευτερεύοντες παράγοντες (προαιρετικά):
+- Ημερομηνία λήξης (αύξουσα).
+- Σοβαρότητα καθυστέρησης (overdue severity).
+- Ποσό (φθίνουσα).
+- Ομαδοποίηση ανά προμηθευτή για αποτελεσματικότητα.
 
 ---
 
-## 9. Relations / handoffs
+## 7. Φίλτρα (Module-level)
 
-- Με `Spend / Supplier Bills`: readiness + blockers upstream, queue schedules/executes.
-- Με `Purchase Requests / Commitments`: έμμεσο upstream context, όχι approval module.
-- Με `Overview`: drilldown target για spend execution pressure.
-- Με `Controls`: auditability + “paid” visibility inputs.
-
----
-
-## 10. Canonical v1 vocabulary (queue)
-
-Queue segments:
-- `Ready for Payment`, `Blocked`, `Due Soon`, `Overdue`
-
-Execution states:
-- UI-only: `Selected / Prepared`
-- persisted: `Scheduled`, `Executed / Paid`
-
-Blocker language (examples):
-- `Mismatch`
-- `Missing attachment`
-- `Missing due date`
-- `Missing approval / required controls`
-- `Unlinked supplier bill`
+- Τμήμα ουράς (Ready, Blocked, Due Soon, Overdue).
+- Προμηθευτής.
+- Εύρος ημερομηνίας λήξης.
+- Εύρος ποσού.
+- Κατηγορία / Τμήμα / Έργο.
+- Ύπαρξη συνδεδεμένου αιτήματος (ναι/όχι).
+- Τύπος αιτίας μπλοκαρίσματος.
 
 ---
 
-## 11. Current v1 limitations / known open decisions
+## 8. Ενέργειες (Module-level)
 
-Κρίσιμα σημεία που παραμένουν open για σταθεροποίηση:
-- αν το `Scheduled` είναι μόνο queue state ή αποκτά ανεξάρτητο business object
-- πώς ακριβώς καταγράφεται το `Execute` σε επίπεδο payment record
-- αν υπάρχει ρητό payment batch object ή μόνο grouped selection/handoff
-- ποια είναι η πλήρης πολιτική για partial / multi-allocation στο spend side
-- αν θα υπάρξει αργότερα `Confirmed / Reconciled` state ή το v1 σταματά στο `Executed / Paid`
+Ενέργειες γραμμής:
+- Άνοιγμα λεπτομερειών παραστατικού (επίλυση blockers upstream).
+- Προσθήκη/Αφαίρεση από την ομαδική επιλογή (UI-only).
 
-Τα παραπάνω παραμένουν open decisions και δεν πρέπει να καλύπτονται με ασαφή labels.
+Ομαδικές ενέργειες (Batch):
+- Δημιουργία ομαδικής παράδοσης (handoff batch).
+- Σήμανση ως Προγραμματισμένο (Scheduled).
+- Καταχώριση ως Εκτελέστηκε / Πληρώθηκε (Executed / Paid) (χειροκίνητα, v1).
+
+Απαγορευμένες επιπτώσεις:
+- Διαμόρφωση ετοιμότητας εντός της ουράς.
+- Επιβεβαίωση ολοκλήρωσης μέσω τράπεζας (τραπεζική συμφιλίωση).
+- Σιωπηρή αλλαγή κατάστασης μόνο μέσω επιλογής checkbox.
 
 ---
 
-## 12. Final canonical statement
+## 9. Σχέσεις και παραδόσεις (Handoffs)
 
-Το `Payments Queue Module` είναι το downstream execution / handoff workspace του spend side.  
-Λαμβάνει payable context από το `Spend / Supplier Bills`, προβάλλει readiness και blockers, οργανώνει την ουρά σε `Ready`, `Blocked`, `Due Soon` και `Overdue` segments, υποστηρίζει selection, scheduling και execution handoff, και παράγει payment outcomes που ενημερώνουν το monitoring και control layer. Δεν είναι module matching, δεν είναι upstream readiness engine, δεν είναι generic bank/reconciliation system, και δεν έχει άμεση operational σχέση με customer invoices του revenue side.
+- Με τις **Δαπάνες / Παραστατικά Προμηθευτών**: Ετοιμότητα + blockers από upstream, προγραμματισμός/εκτέλεση στην ουρά.
+- Με τα **Αιτήματα / Δεσμεύσεις**: Έμμεσο πλαίσιο πηγής, δεν αποτελεί ενότητα έγκρισης.
+- Με την **Επισκόπηση (Overview)**: Στόχος αναδρομής (drilldown) για την πίεση εκτέλεσης δαπανών.
+- Με τους **Ελεγκτικούς Μηχανισμούς (Controls)**: Εισροές για δυνατότητα ελέγχου (auditability) και ορατότητα πληρωμών.
+
+---
+
+## 10. Κανονιστικό λεξιλόγιο v1 (Ουρά)
+
+Τμήματα Ουράς:
+- Έτοιμα προς Πληρωμή, Μπλοκαρισμένα, Λήγουν Σύντομα, Ληξιπρόθεσμα.
+
+Καταστάσεις Εκτέλεσης:
+- UI-only: Επιλεγμένο / Προετοιμασμένο.
+- Μόνιμες: Προγραμματισμένο, Εκτελέστηκε / Πληρώθηκε.
+
+Γλώσσα Μπλοκαρίσματος (Παραδείγματα):
+- Απόκλιση (Mismatch)
+- Ελλιπές επισυναπτόμενο
+- Ελλιπής ημερομηνία λήξης
+- Εκκρεμεί έγκριση / απαιτούμενοι έλεγχοι
+- Μη συνδεδεμένο παραστατικό προμηθευτή
+
+---
+
+## 11. Περιορισμοί v1 / Ανοιχτές αποφάσεις
+
+- Αν το Προγραμματισμένο παραμένει μόνο κατάσταση της ουράς ή αποκτά ανεξάρτητο επιχειρησιακό αντικείμενο.
+- Πώς ακριβώς καταγράφεται η «Εκτέλεση» σε επίπεδο εγγραφής πληρωμής.
+- Αν θα υπάρξει επίσημο αντικείμενο «Ομαδικής Πληρωμής» (Payment Batch) ή μόνο ομαδοποιημένη επιλογή.
+- Η πλήρης πολιτική για μερικές πληρωμές (partial payments) ή πολλαπλές κατανομές στις δαπάνες.
+- Αν η έκδοση v1 θα περιλαμβάνει κατάσταση Επιβεβαιωμένο / Συμφωνημένο (Confirmed / Reconciled).
+
+---
+
+## 12. Τελική κανονιστική δήλωση
+
+Το Payments Queue Module είναι ο χώρος εργασίας εκτέλεσης και παράδοσης της πλευράς των δαπανών. Λαμβάνει το πλαίσιο πληρωτέων από τις Δαπάνες / Παραστατικά Προμηθευτών, προβάλλει την ετοιμότητα και τα μπλοκαρίσματα, οργανώνει την ουρά σε τμήματα Έτοιμα, Μπλοκαρισμένα, Λήγουν Σύντομα και Ληξιπρόθεσμα, υποστηρίζει την επιλογή, τον προγραμματισμό και την παράδοση εκτέλεσης, και παράγει αποτελέσματα πληρωμών που ενημερώνουν τα επίπεδα εποπτείας και ελέγχου. Δεν είναι ενότητα συμφωνίας (matching), δεν είναι μηχανή παραγωγής ετοιμότητας, δεν είναι γενικό σύστημα τραπεζικής συμφιλίωσης και δεν έχει καμία άμεση λειτουργική σχέση με τα τιμολόγια πελατών της πλευράς των εσόδων.
 

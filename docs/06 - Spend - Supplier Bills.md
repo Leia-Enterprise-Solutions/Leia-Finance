@@ -1,175 +1,155 @@
-# 07 — Spend / Supplier Bills Module
+## 07 — Spend / Supplier Bills Module (Ενότητα Δαπανών)
 
 ## 1. Σκοπός του εγγράφου
 
-Το παρόν έγγραφο ορίζει το `Spend / Supplier Bills Module` σε επίπεδο module canon: owned truth (`Supplier Bill`), linkage/match/mismatch, readiness formation (`Ready/Blocked`), status vocabulary και handoff προς `Payments Queue`.
-Δεν αποτελεί semantic-law (αυτό ορίζεται στο `00A`), ούτε module map (`01`), ούτε UI blueprint.
+Το παρόν έγγραφο ορίζει την Ενότητα Δαπανών & Παραστατικών Προμηθευτών (Spend / Supplier Bills) σε επίπεδο κανονιστικού προτύπου: την ιδιοκτησία της αλήθειας (Supplier Bill), τη σύνδεση/συμφωνία (linkage/match), τη διαμόρφωση ετοιμότητας (Ready/Blocked), το λεξιλόγιο καταστάσεων και την παράδοση (handoff) προς την Ουρά Πληρωμών (Payments Queue).
+
+Δεν αποτελεί σημασιολογικό νόμο (00A), ούτε χάρτη ενοτήτων (01), ούτε προσχέδιο διεπαφής (UI blueprint).
 
 ---
 
-## 2. Ρόλος και boundaries
+## 2. Ρόλος και όρια
 
-Το `Spend / Supplier Bills Module` είναι το spend-side module που κατέχει **supplier obligation truth** (`Supplier Bill`) και σχηματίζει **payable readiness** πριν από payment execution.
+Το Spend / Supplier Bills Module είναι η ενότητα της πλευράς των δαπανών που κατέχει την αλήθεια της υποχρέωσης προς τον προμηθευτή (Supplier Bill) και διαμορφώνει την ετοιμότητα πληρωμής (payable readiness) πριν από την εκτέλεση.
 
-Κύρια δουλειά:
-- καταγράφει/εκφράζει `Supplier Bill` ως payable truth,
-- αξιολογεί linkage (linked/unlinked) και match (matched/mismatch),
-- παράγει readiness (`Ready for Payment` / `Blocked`) με explicit reason,
-- παραδίδει ready/blocked payable context στο `Payments Queue` (execution handoff).
+Κύρια αποστολή:
+- Καταγράφει και εκφράζει το παραστατικό προμηθευτή ως την επίσημη πληρωτέα αλήθεια.
+- Αξιολογεί τη σύνδεση (Linked / Unlinked) και τη συμφωνία (Matched / Mismatch).
+- Παράγει το αποτέλεσμα ετοιμότητας (Έτοιμο προς Πληρωμή / Μπλοκαρισμένο) με ρητή αιτιολογία.
+- Παραδίδει το πλαίσιο πληρωτέων στην Ουρά Πληρωμών (παράδοση προς εκτέλεση).
 
-Boundaries (τι δεν είναι):
-- Δεν είναι upstream initiation/approval (`Purchase Requests / Commitments`).
-- Δεν είναι `Payments Queue` (δεν κάνει scheduling/execution, δεν παράγει cash truth).
-- Δεν είναι treasury/banking/reconciliation engine.
-
----
-
-## 3. Canonical constraints που εφαρμόζει (ως references)
-
-Το module εφαρμόζει (χωρίς να τα επαναορίζει) τους canonical κανόνες του `00A`:
-- **Readiness vs execution separation**: readiness σχηματίζεται εδώ, execution στο `Payments Queue`.
-- **State-family separation**: persisted bill status / match state / readiness state / operational signals / UI-only state δεν συγχωνεύονται.
-- **Commitment relief / anti-overlap**: όπου υπάρχει linkage, το exposure δεν διπλομετράται (κανόνας στο `00A`).
+Όρια (Τι ΔΕΝ είναι):
+- Δεν είναι η ενότητα έναρξης/έγκρισης δαπάνης (Αιτήματα Αγοράς / Δεσμεύσεις).
+- Δεν είναι η Ουρά Πληρωμών (δεν κάνει προγραμματισμό ή εκτέλεση, δεν παράγει ταμειακή αλήθεια).
+- Δεν είναι μηχανή διαχείρισης διαθεσίμων, τραπεζικών συναλλαγών ή συμφιλίωσης (reconciliation).
 
 ---
 
-## 4. Inputs και outputs (module-level)
+## 3. Κανονιστικοί περιορισμοί (Αναφορές)
 
-Inputs:
-- Upstream context από `Purchase Requests / Commitments` (approved/committed reference όπου υπάρχει).
-- Supplier-side bill data (supplier identity, bill reference, invoice/due dates, amount, categorization).
-- Supporting evidence/controls όπου απαιτείται από policy.
-
-Outputs:
-- `Supplier Bill` truth + linkage/match evaluation.
-- Readiness outcome (`Ready for Payment` / `Blocked`) με explicit blocked reason.
-- Payable context handoff προς `Payments Queue` (ready/blocked view).
-- Visibility προς `Overview`/`Controls` (signals/traceability), χωρίς αλλαγή ownership.
+Η ενότητα εφαρμόζει τους κανόνες του 00A:
+- Διαχωρισμός ετοιμότητας και εκτέλεσης: Η ετοιμότητα διαμορφώνεται εδώ, η εκτέλεση στην Ουρά Πληρωμών.
+- Διαχωρισμός οικογενειών κατάστασης: Η μόνιμη κατάσταση παραστατικού, η κατάσταση συμφωνίας, η ετοιμότητα και τα σήματα δεν συγχωνεύονται.
+- Αποφυγή διπλομέτρησης (Anti-overlap): Όπου υπάρχει σύνδεση (linkage), η οικονομική έκθεση (exposure) δεν προσμετράται διπλά.
 
 ---
 
-## 5. Core concepts (capsule)
+## 4. Εισροές και εκροές (Module-level)
 
-- `Supplier Bill`: supplier obligation truth (spend side).
-- Linkage: `Linked` / `Unlinked` (προς upstream context).
-- Match: `Matched` / `Mismatch` (διαφορές/ελλείψεις που επηρεάζουν readiness).
-- Readiness: `Ready for Payment` / `Blocked` + `Blocked Reason`.
-- `Open Payable Amount` (open amount) + `Overdue` (computed signal).
+Εισροές:
+- Πλαίσιο από τα Αιτήματα Αγοράς / Δεσμεύσεις (εγκεκριμένη/δεσμευμένη αναφορά).
+- Δεδομένα παραστατικού (ταυτότητα προμηθευτή, αναφορά παραστατικού, ημερομηνίες έκδοσης/λήξης, ποσό, κατηγοριοποίηση).
+- Αποδεικτικά στοιχεία/έλεγχοι (evidence/controls) βάσει πολιτικής.
 
-v1 rule: **Unlinked bills είναι ορατά αλλά blocked-by-default** για πληρωμή.
-
----
-
-## 6. Module surfaces (όχι UI spec)
-
-- `Supplier Bills / Expenses List`: primary worklist για open payables, readiness, match state και exceptions.
-- `Supplier Bill Detail View`: resolution surface για linkage/mismatch/controls ώστε να αρθεί το `Blocked`.
+Εκροές:
+- Αλήθεια παραστατικού προμηθευτή + αξιολόγηση σύνδεσης/συμφωνίας.
+- Αποτέλεσμα ετοιμότητας (Ready for Payment / Blocked) με ρητή αιτία μπλοκαρίσματος.
+- Παράδοση πλαισίου πληρωτέων προς την Ουρά Πληρωμών.
+- Ορατότητα προς την Επισκόπηση και τους Ελεγκτικούς Μηχανισμούς (σήματα/ανιχνευσιμότητα).
 
 ---
 
-## 7. Core flow (local)
+## 5. Βασικές έννοιες (Σύνοψη)
 
-```mermaid
-flowchart LR
-    CM[Commitment context]
-    SB[Supplier Bill]
-    MM[Match / Mismatch]
-    RDY[Ready / Blocked<br/>readiness outcome]
-    PQ[Downstream Payments Queue]
+- Supplier Bill: Η αλήθεια της υποχρέωσης προς τον προμηθευτή.
+- Σύνδεση (Linkage): Συνδεδεμένο / Μη συνδεδεμένο (προς το αρχικό αίτημα/δέσμευση).
+- Συμφωνία (Match): Σε συμφωνία / Σε απόκλιση (διαφορές που επηρεάζουν την ετοιμότητα).
+- Ετοιμότητα (Readiness): Έτοιμο προς Πληρωμή / Μπλοκαρισμένο + Αιτία.
+- Ανοικτό Πληρωτέο Ποσό (Open Amount) & Ληξιπρόθεσμο (Overdue) (υπολογιζόμενο σήμα).
 
-    CM --> SB --> MM --> RDY --> PQ
-```
-
-Flow capsule:
-- Intake/registration `Supplier Bill`.
-- Linkage + match/mismatch evaluation.
-- Readiness formation (`Ready`/`Blocked` + reason).
-- Handoff προς `Payments Queue` για execution/scheduling (χωρίς execution ownership).
+Κανόνας v1: Τα μη συνδεδεμένα παραστατικά είναι ορατά αλλά μπλοκαρισμένα από προεπιλογή (blocked-by-default) για πληρωμή.
 
 ---
 
-## 8. Module-local rules (anti-drift protections)
+## 6. Επιφάνειες Λειτουργίας (Operational Surfaces)
 
-- **Readiness formation lives here**: readiness δεν “εφευρίσκεται” στο `Payments Queue`.
-- **Stop before execution**: το module δεν εκτελεί πληρωμές, δεν κατέχει cash-out truth.
-- **Unlinked blocked-by-default (v1)**: unlinked bills είναι visible αλλά `Blocked` μέχρι να αποκτήσουν canonical linkage/resolve.
-- **Explicit blocked reason**: κάθε `Blocked` έχει reason visibility (για triage/resolve).
-- **No status collapse**: bill status ≠ match state ≠ readiness ≠ signals ≠ UI-only flags.
+- Λίστα Παραστατικών / Εξόδων: Πρωτογενής λίστα εργασίας για ανοικτά πληρωτέα, ετοιμότητα και εξαιρέσεις.
+- Προβολή Λεπτομερειών Παραστατικού: Επιφάνεια επίλυσης για σύνδεση/αποκλίσεις/ελέγχους ώστε να αρθεί το «Μπλοκαρισμένο».
 
 ---
 
-## 9. Lifecycle & status vocabulary (module-specific)
+## 7. Τοπική Ροή Ενότητας (Core Flow)
 
-Το module εκθέτει μόνο module-local vocabulary, συμβατό με το state-family separation του `00A`.
+![diagram](./../../docs/diagrams/_rendered/from_md/06-Spend-Supplier-Bills.md/06-Spend-Supplier-Bills.md-1.svg)
 
-**Persisted bill statuses**
-- `Recorded`
-- `Open`
-- `Paid`
-- `Closed`
-- `Partially Paid` *(controlled / policy-dependent area στο v1)*
+Εισαγωγή/Καταχώριση Παραστατικού Προμηθευτή.
+Αξιολόγηση Σύνδεσης και Συμφωνίας (Match/Mismatch).
+Διαμόρφωση Ετοιμότητας (Ready/Blocked + Αιτία).
+Παράδοση στην Ουρά Πληρωμών για προγραμματισμό/εκτέλεση.
 
-**Match states**
-- `Linked`
-- `Unlinked`
-- `Matched`
-- `Mismatch`
+### Module diagrams (functionality + state transitions)
 
-**Readiness states**
-- `Ready for Payment`
-- `Blocked`
+#### Διάγραμμα λειτουργικής ροής - linkage, match, readiness, handoff
+![diagram](./diagrams/_rendered/from_mmd/diagrams-modules-spend-spend-functional-flow.mmd.png)
 
-**Operational signals (examples)**
-- `Due Soon`
-- `Overdue`
-- `Missing Attachment`
-- `Missing Due Date`
-- `Missing Approval / Required Controls`
-- `Warning`
-
-**UI-only flags (examples)**
-- `Selected`
-- `Expanded`
-- `Inline Validation Error`
-- `Resolve View Active`
-
-Απαγορεύεται η σύγχυση:
-- bill status με readiness state,
-- readiness με queue execution state,
-- overdue signal με persisted status,
-- linked/match info με blocked reason.
+#### Διάγραμμα οικογενειών καταστάσεων - status vs match vs readiness vs execution vs signals
+![diagram](./diagrams/_rendered/from_mmd/diagrams-modules-spend-spend-state-families.mmd.png)
 
 ---
 
-## 10. Readiness minimum (queue handoff gate)
+## 8. Τοπικοί κανόνες προστασίας (Anti-drift)
 
-Για να αποκτήσει ένα bill readiness=`Ready for Payment` (και να είναι eligible για handoff στο `Payments Queue`), πρέπει να είναι ορατά τουλάχιστον:
-- σαφή supplier bill identity
-- amount και due date
-- linkage/match/exception visibility
-- απουσία unresolved blocking mismatch
-- required controls/evidence/approvals όπου απαιτούνται από policy
-
-Αν κάτι λείπει: `Blocked` με explicit reason visibility.
+- Η διαμόρφωση ετοιμότητας κατοικεί εδώ: Η ετοιμότητα δεν «εφευρίσκεται» στην Ουρά Πληρωμών.
+- Στάση πριν την εκτέλεση: Η ενότητα δεν εκτελεί πληρωμές και δεν κατέχει την ταμειακή αλήθεια (cash-out truth).
+- Μη συνδεδεμένα = Μπλοκαρισμένα (v1): Παραμένουν Blocked μέχρι να αποκτήσουν κανονιστική σύνδεση ή επίλυση.
+- Ρητή αιτία μπλοκαρίσματος: Κάθε μπλοκαρισμένο στοιχείο πρέπει να δείχνει τον λόγο (για διαλογή/επίλυση).
+- Όχι σύμπτυξη καταστάσεων: Η κατάσταση παραστατικού $\neq$ κατάσταση συμφωνίας $\neq$ ετοιμότητα $\neq$ σήματα.
 
 ---
 
-## 11. Relations / handoffs
+## 9. Λεξιλόγιο κύκλου ζωής & καταστάσεων
 
-- Με `Purchase Requests / Commitments`: upstream context για linkage/controls· δεν αντικαθίσταται.
-- Με `Payments Queue`: handoff ready/blocked payable context· το queue εκτελεί, δεν σχηματίζει readiness.
-- Με `Overview`/`Controls`: visibility/signals/traceability, χωρίς ownership.
+Μόνιμες καταστάσεις παραστατικού (Persisted)
+- Καταχωρημένο (Recorded)
+- Ανοικτό (Open)
+- Πληρώθηκε (Paid)
+- Κλειστό (Closed)
+- Μερικώς Πληρωμένο (Partially Paid) (υπό έλεγχο στην v1)
+
+Καταστάσεις Συμφωνίας (Match States)
+- Συνδεδεμένο (Linked) / Μη συνδεδεμένο (Unlinked)
+- Σε συμφωνία (Matched) / Σε απόκλιση (Mismatch)
+
+Καταστάσεις Ετοιμότητας (Readiness States)
+- Έτοιμο προς Πληρωμή (Ready for Payment)
+- Μπλοκαρισμένο (Blocked)
+
+Λειτουργικά σήματα (Ενδεικτικά)
+- Λήγει Σύντομα, Ληξιπρόθεσμο, Ελλιπές Παραστατικό, Εκκρεμεί Έγκριση.
 
 ---
 
-## 12. v1 limitations / controlled decisions (non-canonical)
+## 10. Πύλη Ελέγχου Ετοιμότητας (Handoff Gate)
 
-- policy για partial/multi-allocation σε open payable amount
-- policy για “unlinked αλλά επιτρεπτό να πληρωθεί” (στο v1 default: blocked-by-default)
-- thresholds/controls που ενεργοποιούν blocked reasons (policy-owned)
+Για να θεωρηθεί ένα παραστατικό Ready for Payment, πρέπει να διαθέτει:
+- Σαφή ταυτότητα παραστατικού και προμηθευτή.
+- Ποσό και ημερομηνία λήξης.
+- Ορατότητα σύνδεσης/συμφωνίας.
+- Απουσία ανεπίλυτων αποκλίσεων (blocking mismatches).
+- Απαιτούμενες εγκρίσεις ή αποδεικτικά στοιχεία βάσει πολιτικής.
 
 ---
 
-## 13. Final canonical statement
+## 11. Σχέσεις και παραδόσεις (Handoffs)
 
-Το `Spend / Supplier Bills Module` είναι το canonical spend-side operational readiness module του Finance Management & Monitoring System v1. Παραλαμβάνει upstream approved / committed spend context, οργανώνει το `Supplier Bill` ως πραγματική supplier obligation, εκθέτει linked / unlinked και matched / mismatch evaluation, σχηματίζει `Ready for Payment` ή `Blocked` readiness αποτέλεσμα, και παραδίδει downstream payable context στο `Payments Queue`. Δεν είναι request/approval module, δεν είναι final payment execution module, δεν είναι generic payments screen, και δεν λειτουργεί ως ανεξάρτητη πηγή payables χωρίς upstream spend context.
+Με Αιτήματα / Δεσμεύσεις: Upstream πλαίσιο για σύνδεση/ελέγχους.
+
+Με Ουρά Πληρωμών: Παράδοση πλαισίου ετοιμότητας· η ουρά εκτελεί, δεν διαμορφώνει ετοιμότητα.
+
+Με Επισκόπηση / Ελεγκτικούς Μηχανισμούς: Ορατότητα, σήματα και ανιχνευσιμότητα.
+
+---
+
+## 12. Περιορισμοί v1 / Ανοιχτές αποφάσεις
+
+Πολιτική για μερικές πληρωμές ή πολλαπλές κατανομές σε ανοικτά ποσά.
+
+Πολιτική για «μη συνδεδεμένα αλλά επιτρεπτά προς πληρωμή» παραστατικά.
+
+Όρια και έλεγχοι που ενεργοποιούν τις αιτίες μπλοκαρίσματος.
+
+---
+
+## 13. Τελική κανονιστική δήλωση
+
+Το Spend / Supplier Bills Module είναι η κεντρική ενότητα επιχειρησιακής ετοιμότητας δαπανών του συστήματος Finance v1. Παραλαμβάνει το πλαίσιο εγκεκριμένων/δεσμευμένων δαπανών, οργανώνει το Παραστατικό Προμηθευτή ως πραγματική υποχρέωση, αξιολογεί τη σύνδεση και τη συμφωνία, διαμορφώνει το αποτέλεσμα ετοιμότητας (Ready for Payment ή Blocked) και παραδίδει το πλαίσιο στην Ουρά Πληρωμών. Δεν είναι ενότητα αιτημάτων/εγκρίσεων, δεν είναι η τελική ενότητα εκτέλεσης πληρωμών και δεν λειτουργεί ως ανεξάρτητη πηγή πληρωτέων χωρίς upstream πλαίσιο δαπάνης.

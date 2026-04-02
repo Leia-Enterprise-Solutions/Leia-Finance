@@ -1,0 +1,22 @@
+stateDiagram-v2
+  [*] --> Draft
+  Draft --> Issued: Issue only if Ready
+
+  state Draft {
+    [*] --> NotReady
+    NotReady --> Ready: Valid draft minimum met
+    Ready --> NotReady: Missing required context or blocking error
+  }
+
+  state "Signals - orthogonal" as SIG {
+    [*] --> None
+    None --> NeedsReview
+    NeedsReview --> None
+    None --> Stale
+    Stale --> None
+  }
+
+  note right of Issued
+    Issued is document truth snapshot.
+    Downstream Paid or Overdue lives in Receivables and Cash contexts.
+  end note

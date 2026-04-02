@@ -1,257 +1,163 @@
-# 02 — Finance Overview Module
+## 02 — Finance Overview Module (Ενότητα Επισκόπησης)
 
-## 1. Σκοπός του εγγράφου
+## 1. Σκοπός του Εγγράφου
 
-Το παρόν έγγραφο ορίζει το `Finance Overview Module` σε επίπεδο module canon: ρόλο, όρια, inputs, drilldown contract και βασικά μοντέλα KPI/alerts/filters.
-Δεν αποτελεί implementation spec ή UI blueprint.
+Το παρόν έγγραφο ορίζει την Ενότητα Οικονομικής Επισκόπησης (Finance Overview) ως το κανονιστικό πρότυπο του συστήματος: τον ρόλο, τα όρια, τις εισροές δεδομένων, το συμβόλαιο αναλυτικής απεικόνισης (drilldown) και τα βασικά μοντέλα δεικτών (KPIs), ειδοποιήσεων και φίλτρων.
 
----
-
-## 2. Ταυτότητα, ρόλος και boundaries
-
-Το `Finance Overview Module` είναι το monitoring shell του Finance Management & Monitoring System v1.
-
-Ο ρόλος του είναι να συνοψίζει, να επισημαίνει προτεραιότητες και να δρομολογεί τον χρήστη στα κατάλληλα owner modules (deterministic drilldowns).
-
-Boundaries:
-- Δεν είναι execution workspace και δεν δημιουργεί/μεταβάλλει transactional business truth.
-- Δεν “διορθώνει” ownership ή semantic rules (δεσμεύεται από `00A` και τη δομή του `01`).
+Δεν αποτελεί τεχνική προδιαγραφή υλοποίησης ή προσχέδιο διεπαφής (UI blueprint).
 
 ---
 
-## 3. Σκοπός του module (operational visibility)
+## 2. Ταυτότητα, Ρόλος και Όρια
 
-Το module λύνει πρόβλημα συνολικής ορατότητας και επιχειρησιακής προτεραιοποίησης.  
-Χωρίς αυτό, η πληροφορία παραμένει κατακερματισμένη στα επιμέρους modules.
+Το Finance Overview Module αποτελεί το κέλυφος εποπτείας (monitoring shell) του συστήματος Finance v1.
+
+Ρόλος: Συνοψίζει την πληροφορία, επισημαίνει τις προτεραιότητες και κατευθύνει τον χρήστη στις κατάλληλες ενότητες εκτέλεσης (καθορισμένη αναδρομή / deterministic drilldowns).
+
+Όρια:
+- Δεν αποτελεί χώρο εργασίας εκτέλεσης (execution workspace).
+- Δεν δημιουργεί ούτε μεταβάλλει την πρωτογενή επιχειρησιακή αλήθεια (transactional truth).
+- Δεν υποκαθιστά τους κανόνες ιδιοκτησίας δεδομένων ή τους σημασιολογικούς κανόνες που ορίζονται στα έγγραφα 00A και 01.
+
+---
+
+## 3. Σκοπός της Ενότητας (Επιχειρησιακή Ορατότητα)
+
+Η ενότητα επιλύει το πρόβλημα του κατακερματισμού της πληροφορίας, παρέχοντας μια ενοποιημένη εικόνα προτεραιοποίησης.
 
 Βασικά ερωτήματα που απαντά:
-- Πού βρίσκεται σήμερα η επιχειρησιακή εικόνα Revenue και Spend;
-- Ποια σημεία έχουν τη μεγαλύτερη πίεση (overdue, exposure, blocked, variance);
-- Ποια θέματα απαιτούν άμεση ενέργεια και σε ποιο module;
-- Ποια τάση δείχνουν τα βασικά KPIs;
-
-Το `Overview` λειτουργεί ως σημείο παρατήρησης, ιεράρχησης και drilldown (όχι ως χώρος επίλυσης).
+- Ποια είναι η τρέχουσα εικόνα Εσόδων (Revenue) και Δαπανών (Spend);
+- Πού εντοπίζεται η μεγαλύτερη πίεση (ληξιπρόθεσμα, έκθεση, δεσμευμένα, αποκλίσεις);
+- Ποια θέματα απαιτούν άμεση ενέργεια και σε ποια ενότητα;
+- Ποια είναι η τάση των βασικών δεικτών απόδοσης (KPIs);
 
 ---
 
-## 4. Canonical constraints που εφαρμόζει (ως references)
+## 4. Κανονιστικοί Περιορισμοί (Αναφορές)
 
-Το `Overview` εφαρμόζει (χωρίς να τα επαναορίζει) τους canonical κανόνες του `00A`:
-- **Monitoring non-ownership**: computed views, όχι truth.
-- **Computed monitoring concepts**: `Exposure`, `Overdue`, `Upcoming` ως views/signals.
-- **State-family separation**: status / signal / readiness / UI-only state δεν συγχωνεύονται.
-- **Anti-overlap**: αποφυγή διπλομέτρησης (commitment relief) όπου υπάρχει canonical linkage.
-- **Deterministic drilldowns**: κάθε KPI/alert έχει σταθερό drilldown target.
-
----
-
-## 5. Inputs και εξαρτήσεις (read-only)
-
-Το `Overview` διαβάζει outputs από:
-- `Invoicing`
-- `Receivables`
-- `Purchase Requests / Commitments`
-- `Spend / Supplier Bills`
-- `Payments Queue`
-- `Controls`
-
-Χρησιμοποιεί τα canonical objects/meanings όπως ορίζονται στο `00A`, και τη module δομή/αλυσίδες όπως ορίζονται στο `01`.
+Η Επισκόπηση εφαρμόζει πιστά τους κανόνες του 00A:
+- Μη-ιδιοκτησία Εποπτείας: Παρέχει υπολογιζόμενες προβολές (computed views), όχι πρωτογενή δεδομένα.
+- Έννοιες Εποπτείας: Έκθεση (Exposure), Ληξιπρόθεσμα (Overdue), Επερχόμενα (Upcoming).
+- Διαχωρισμός Καταστάσεων: Σαφής διάκριση μεταξύ κατάστασης (status), σήματος (signal) και ετοιμότητας (readiness).
+- Αποφυγή Διπλομέτρησης (Anti-overlap): Εφαρμογή κανόνων εκτόνωσης δεσμεύσεων (commitment relief).
 
 ---
 
-## 6. Monitoring model (τι “συνθέτει”)
+## 5. Εισροές και Εξαρτήσεις (Μόνο Ανάγνωση)
 
-### 6.1 Summary
-Συνοψίζει βασική εικόνα Revenue και Spend σε ένα ενιαίο monitoring πλαίσιο.
-
-### 6.2 Trends
-Δείχνει μεταβολή βασικών δεικτών στον χρόνο ώστε να είναι ορατή η κατεύθυνση (βελτίωση/επιδείνωση).
-
-### 6.3 Exposure view
-Ενοποιεί εικόνα έκθεσης από canonical inputs, με anti-overlap λογική.
-
-### 6.4 Alerts / exceptions
-Αναδεικνύει ανωμαλίες, πιέσεις και εξαιρέσεις που χρειάζονται άμεση διαχείριση.
-
-### 6.5 Navigation / routing
-Μετατρέπει τα παραπάνω σε καθοδηγούμενη δρομολόγηση προς τα σωστά worklists/details.
+Η Επισκόπηση αντλεί δεδομένα από τις εξής ενότητες:
+- Τιμολόγηση (Invoicing)
+- Απαιτήσεις (Receivables)
+- Αιτήματα Αγορών & Δεσμεύσεις (Purchase Requests / Commitments)
+- Δαπάνες & Παραστατικά Προμηθευτών (Spend / Supplier Bills)
+- Ουρά Πληρωμών (Payments Queue)
+- Ελεγκτικοί Μηχανισμοί (Controls)
 
 ---
 
-## 7. Widget taxonomy (κατηγορίες, όχι UI spec)
+## 6. Μοντέλο Εποπτείας (Σύνθεση Πληροφορίας)
 
-### 7.1 Summary KPI widgets
-Widgets συνοπτικής εικόνας για κατάσταση Revenue/Spend και βασικά υπόλοιπα.
+- Σύνοψη (Summary): Ενοποιημένη εικόνα Εσόδων και Δαπανών.
+- Τάσεις (Trends): Χρονική μεταβολή δεικτών για την ανίχνευση βελτίωσης ή επιδείνωσης.
+- Προβολή Έκθεσης (Exposure View): Συνολική οικονομική έκθεση με λογική αποφυγής διπλομέτρησης.
+- Ειδοποιήσεις & Εξαιρέσεις (Alerts): Ανάδειξη κρίσιμων σημείων που απαιτούν παρέμβαση.
+- Πλοήγηση & Δρομολόγηση: Μετατροπή των ενδείξεων σε άμεση καθοδήγηση προς τις λίστες εργασίας.
 
-### 7.2 Trend widgets
-Widgets που δείχνουν εξέλιξη KPIs στον χρόνο για έγκαιρη ανίχνευση μεταβολών.
+### Διαγράμματα (Αναφορά)
 
-### 7.3 Exposure widgets
-Widgets που αποτυπώνουν έκθεση, με σαφή διάκριση computed monitoring από transactional truth.
+#### Σύνθεση Εποπτείας (monitoring composition)
 
-### 7.4 Alert / exception widgets
-Widgets που εμφανίζουν prioritized εξαιρέσεις με σαφές severity.
+![diagram](./diagrams/_rendered/from_mmd/diagrams-_render_src-overview-monitoring-composition.mmd.png)
 
-### 7.5 Action-oriented list widgets
-Widgets λίστας που δίνουν τα πιο κρίσιμα items και οδηγούν σε drilldown worklists.
+#### Δρομολόγηση KPI προς Αναδρομές (KPI-to-drilldown routing)
 
-### 7.6 Control visibility widgets
-Widgets που φέρνουν ορατότητα από `Budget`, `Audit Trail`, `Employee Cost`.
+![diagram](./diagrams/_rendered/from_mmd/diagrams-_render_src-overview-kpi-to-drilldown-routing.mmd.png)
+
+#### Ροή Αλληλεπίδρασης (interaction flow)
+
+![diagram](./diagrams/_rendered/from_mmd/diagrams-_render_src-overview-interaction-flow.mmd.png)
+
+#### Συμπεριφορά Ειδοποιήσεων και Αναδρομών (alerts → drilldowns)
+
+![diagram](./diagrams/_rendered/from_mmd/diagrams-_render_src-overview-widget-alert-drilldown-behavior.mmd.png)
+
+#### Αναδρομές προς Δαπάνες (overview → spend flow)
+
+![diagram](./diagrams/_rendered/from_mmd/diagrams-_render_src-overview-drilldown-to-spend-flow.mmd.png)
+
+#### Αναδρομές προς Ελέγχους (overview → controls flow)
+
+![diagram](./diagrams/_rendered/from_mmd/diagrams-_render_src-overview-drilldown-to-controls-flow.mmd.png)
 
 ---
 
-## 8. KPI / metric catalog (monitoring semantics + drilldown contract)
+## 7. Ταξινόμηση Widgets (Κατηγοριοποίηση)
 
-Το `Overview` ορίζει **μόνο**: (α) τι δείχνει, (β) από πού διαβάζει, (γ) πού κάνει drilldown.  
-Δεν κλειδώνει formulas/thresholds όπου υπάρχουν stabilization notes.
+- Widgets Συνοπτικών KPIs: Γενική κατάσταση υπολοίπων.
+- Widgets Τάσεων: Εξέλιξη δεικτών στον χρόνο.
+- Widgets Έκθεσης: Αποτύπωση οικονομικού ανοίγματος.
+- Widgets Ειδοποιήσεων: Προτεραιοποιημένες εξαιρέσεις ανά βαθμό κρισιμότητας (severity).
+- Widgets Λιστών Δράσης: Σημαντικότερα στοιχεία με δυνατότητα άμεσης αναδρομής (drilldown).
+- Widgets Ελεγκτικής Ορατότητας: Στοιχεία από Προϋπολογισμό, Ιστορικό Ελέγχου και Κόστος Προσωπικού.
 
-| KPI / Signal | Τροφοδότηση (owner source) | Τύπος | Default drilldown target |
+---
+
+## 8. Κατάλογος Δεικτών & Σημάτων (KPI Catalog)
+
+| Δείκτης / Σήμα | Πηγή Δεδομένων (Owner) | Τύπος | Στόχος Αναδρομής (Drilldown) |
 |---|---|---|---|
-| Outstanding Receivables | `Receivables` | Summary | `Collections / Receivables` |
-| Overdue Receivables | `Receivables` | Alert-oriented | `Collections / Receivables` |
-| Issued Invoice Throughput (period) | `Invoicing` | Trend | `Invoices List` |
-| Committed Spend | `Purchase Requests / Commitments` | Summary / control-relevant | `Purchase Requests List` |
-| Outstanding Payables | `Spend / Supplier Bills` | Summary | `Supplier Bills / Expenses List` |
-| Ready vs Blocked Payables | `Spend / Supplier Bills` (+ execution visibility από `Payments Queue`) | Readiness / bottleneck | `Payments Queue` |
-| Exposure | Revenue + Spend outputs (anti-overlap per `00A`) | Computed cross-system | Primary target ανά subtype (Revenue → `Collections / Receivables`, Spend → `Supplier Bills / Expenses List`) |
-| Upcoming (Receivables / Obligations) | `Receivables`, `Spend / Supplier Bills` (και `Payments Queue` όπου εφαρμόζεται) | Forward-looking | Αντίστοιχο worklist με pre-filtered horizon |
-| Budget Pressure Signal | `Controls` (`Budget`) | Control signal | `Budget Overview` |
-| Audit Attention Signal | `Controls` (`Audit Trail`) | Exception / governance | `Audit Trail` |
+| Ανείσπρακτες Απαιτήσεις | Απαιτήσεις | Σύνοψη | Είσπραξη / Απαιτήσεις |
+| Ληξιπρόθεσμες Απαιτήσεις | Απαιτήσεις | Ειδοποίηση | Είσπραξη / Απαιτήσεις |
+| Ροή Έκδοσης Τιμολογίων | Τιμολόγηση | Τάση | Λίστα Τιμολογίων |
+| Δεσμευμένες Δαπάνες | Αιτήματα / Δεσμεύσεις | Σύνοψη / Έλεγχος | Λίστα Αιτημάτων Αγοράς |
+| Εκκρεμείς Υποχρεώσεις | Δαπάνες / Παραστατικά | Σύνοψη | Λίστα Παραστατικών / Εξόδων |
+| Έτοιμες vs Μπλοκαρισμένες Πληρωμές | Δαπάνες & Ουρά Πληρωμών | Ετοιμότητα | Ουρά Πληρωμών |
+| Οικονομική Έκθεση (Exposure) | Ενοποίηση Εσόδων/Δαπανών | Υπολογιζόμενο | Αντίστοιχη Λίστα (Απαιτήσεις ή Δαπάνες) |
+| Επερχόμενα (Upcoming) | Απαιτήσεις / Δαπάνες | Προβλεπτικό | Φιλτραρισμένη Λίστα (Χρονικός Ορίζοντας) |
+| Πίεση Προϋπολογισμού | Ελεγκτικοί Μηχανισμοί | Σήμα Ελέγχου | Επισκόπηση Προϋπολογισμού |
 
 ---
 
-## 9. Filters model (global consistency)
+## 9. Μοντέλο Φίλτρων (Καθολική Συνέπεια)
 
-### 9.1 Required global filters
-- χρονική περίοδος (period)
-- οργανωτικό scope (π.χ. business unit / entity όπου υποστηρίζεται)
-- πλευρά παρακολούθησης (`Revenue`, `Spend`, `Cross-system`)
+Υποχρεωτικά Καθολικά Φίλτρα: Χρονική περίοδος, Οργανωτικό πεδίο (Business Unit), Πλευρά παρακολούθησης (Έσοδα/Δαπάνες/Μικτό).
 
-### 9.2 Acceptable secondary filters
-- severity
-- ownership / responsible context
-- status family (χωρίς σύγχυση status/signal/readiness)
-- segment tags όπου υπάρχουν canonical labels
+Δευτερεύοντα Φίλτρα: Βαθμός κρισιμότητας, Υπεύθυνος, Οικογένεια κατάστασης (status family).
 
-### 9.3 Filter principles
-- ίδια φίλτρα σημαίνουν ίδιο πράγμα σε όλα τα widgets
-- τα φίλτρα επηρεάζουν visualization και drilldown με συνεπή τρόπο
-- το filter model δεν δημιουργεί νέα business state
+Αρχές Φίλτρων: Ίδιο φίλτρο σημαίνει την ίδια επίδραση σε όλα τα widgets.
 
 ---
 
-## 10. Alerts / exception model
+## 10. Μοντέλο Ειδοποιήσεων & Εξαιρέσεων
 
-### 10.1 Revenue alerts
-- overdue pressure σε receivables
-- υψηλό outstanding χωρίς αντίστοιχη πρόοδο follow-up
+Ειδοποιήσεις Εσόδων: Πίεση ληξιπροθέσμων, υψηλό ανείσπρακτο υπόλοιπο χωρίς ενέργειες follow-up.
 
-### 10.2 Spend alerts
-- blocked payable clusters
-- due/overdue payable pressure
-- mismatch concentration σε supplier obligations
+Ειδοποιήσεις Δαπανών: Συσσώρευση μπλοκαρισμένων πληρωμών, πίεση ληξιπρόθεσμων υποχρεώσεων, αποκλίσεις (mismatch) σε παραστατικά.
 
-### 10.3 Control alerts
-- budget pressure/breach signals
-- audit attention signals
-
-### 10.4 Severity levels
-- `High`: απαιτεί άμεση επιχειρησιακή ενέργεια
-- `Medium`: απαιτεί προτεραιοποίηση εντός κύκλου εργασίας
-- `Low`: απαιτεί παρακολούθηση
-
-### 10.5 Business-level trigger logic
-Οι ειδοποιήσεις βασίζονται σε επιχειρησιακά σήματα και όχι σε UI-only flags.  
-Τα trigger criteria ορίζονται ως business-level κανόνες και όχι ως implementation λεπτομέρειες στο παρόν έγγραφο.
-
-### 10.6 Alert ownership
-Το `Overview` δείχνει και ιεραρχεί alerts.  
-Η επίλυση ανήκει στα αντίστοιχα operational ή control modules.
+Επίπεδα Κρισιμότητας:
+- Υψηλό: Απαιτεί άμεση επιχειρησιακή δράση.
+- Μεσαίο: Απαιτεί προτεραιοποίηση στον τρέχοντα κύκλο.
+- Χαμηλό: Απαιτεί απλή παρακολούθηση.
 
 ---
 
-## 11. Drilldowns (routing contract)
+## 11. Αναδρομές & Δρομολόγηση (Drilldowns)
 
-### 11.1 Revenue drilldowns
-- από draft backlog / stale draft / reservation pressure signals -> `Invoice Drafts List`
-- από issued/throughput KPI -> `Invoices List`
-- από outstanding/overdue KPI -> `Collections / Receivables`
+Η Επισκόπηση λειτουργεί ως σημείο εκκίνησης με το εξής πρότυπο:
 
-### 11.2 Spend drilldowns
-- από commitment signals -> `Purchase Requests List`
-- από payable/mismatch signals -> `Supplier Bills / Expenses List`
-- από readiness/execution signals -> `Payments Queue`
+Επισκόπηση $\rightarrow$ Λίστα Εργασίας $\rightarrow$ Λεπτομέρεια $\rightarrow$ Ενέργεια $\rightarrow$ Επιστροφή.
 
-### 11.3 Control drilldowns
-- από budget signals -> `Budget Overview`
-- από audit signals -> `Audit Trail`
-- από cost visibility signals -> `Employee Cost View`
-
-### 11.4 Drilldown behavior rules
-- deterministic target ανά signal/KPI
-- χωρίς αμφισημία routing
-- χωρίς bypass του κατάλληλου operational module
+Βασικοί Προορισμοί:
+- Λίστα Προσχεδίων Τιμολογίων
+- Λίστα Εκδοθέντων Τιμολογίων
+- Διαχείριση Απαιτήσεων (Collections)
+- Λίστα Αιτημάτων Αγοράς
+- Λίστα Παραστατικών Προμηθευτών / Εξόδων
+- Ουρά Πληρωμών
+- Προϋπολογισμός & Ιστορικό Ελέγχου
 
 ---
 
-## 12. Navigation role (canonical pattern)
+## 12. Τελική Διατύπωση Ενότητας
 
-Το `Overview` λειτουργεί ως σημείο εκκίνησης και δρομολόγησης με το μοτίβο:
-
-`Overview -> Worklist -> Detail -> Action -> Back`
-
-Ο ρόλος του είναι να κατευθύνει τον χρήστη προς το κατάλληλο owner module, όχι να εκτελεί τη ροή μέσα στο ίδιο module.
-
-Βασικοί drilldown προορισμοί:
-- `Invoice Drafts List`
-- `Invoices List`
-- `Collections / Receivables`
-- `Purchase Requests List`
-- `Supplier Bills / Expenses List`
-- `Payments Queue`
-- `Budget Overview`
-- `Audit Trail`
-- `Employee Cost View`
-
----
-
-## 13. In-scope / Out-of-scope (capsule)
-
-### 13.1 In-scope
-- ενοποιημένη monitoring εικόνα
-- KPI, trend και exposure αποτύπωση
-- alerts/exceptions ιεράρχηση
-- deterministic drilldowns
-- control visibility
-
-### 13.2 Out-of-scope
-- issue, collection execution, matching, payment execution
-- owner transactional state management
-- detailed UI blueprint περιγραφή
-- route tree, API contracts, storage schema
-
----
-
-## 14. Σχέση με το Finance Overview Dashboard του UI Blueprint
-
-Το UI Blueprint ορίζει screen behavior, visible fields, actions και exceptions· το παρόν έγγραφο ορίζει μόνο module boundaries, monitoring role και drilldown determinism.
-
----
-
-## 15. Open questions / stabilization notes
-
-- σταθεροποίηση ονομασιών ορισμένων metrics σε διατμηματικό επίπεδο
-- ακριβέστερη decomposition του `Exposure` σε επιμέρους views
-- alert thresholds ανά severity
-- scope preview panels σε detail drilldowns
-- επιτρεπόμενες inline actions στο `Overview` χωρίς παραβίαση monitoring-shell ρόλου
-
-Σημείωση:  
-Τα παραπάνω είναι σημεία σταθεροποίησης και όχι κλειδωμένες implementation αποφάσεις.
-
----
-
-## 16. Τελική διατύπωση module statement
-
-Το `Finance Overview Module` είναι το canonical monitoring shell του Finance Management & Monitoring System v1: συγκεντρώνει computed εικόνα από Revenue, Spend και Controls, επισημαίνει προτεραιότητες, και δρομολογεί με deterministic drilldowns προς τα κατάλληλα execution modules, χωρίς να κατέχει ή να παράγει transactional business truth.
-
+Η Ενότητα Οικονομικής Επισκόπησης αποτελεί το κανονιστικό κέλυφος εποπτείας του Finance v1. Συγκεντρώνει την υπολογιζόμενη εικόνα από τα Έσοδα, τις Δαπάνες και τους Ελεγκτικούς Μηχανισμούς, αναδεικνύει τις προτεραιότητες και δρομολογεί τον χρήστη με απόλυτη ακρίβεια στις ενότητες εκτέλεσης, χωρίς η ίδια να παράγει ή να κατέχει πρωτογενή επιχειρησιακή αλήθεια.

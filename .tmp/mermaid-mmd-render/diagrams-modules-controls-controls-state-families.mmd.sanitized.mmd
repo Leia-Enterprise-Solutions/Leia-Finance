@@ -1,0 +1,30 @@
+flowchart LR
+  subgraph SIG[Control signals - interpreted]
+    S1[Healthy]
+    S2[Warning]
+    S3[Breach]
+    S4[Audit Attention]
+    S5[Visibility Restricted]
+  end
+
+  subgraph BUD[Budget dimensions - computed views]
+    B1[Budgeted]
+    B2[Committed]
+    B3[Actual paid]
+    B4[Variance]
+  end
+
+  subgraph AUD[Audit evidence - events]
+    A1[Event logged]
+    A2[Event detail]
+    A3[Click through to target record]
+  end
+
+  subgraph COST[Employee cost visibility]
+    C1[Aggregate]
+    C2[Role aware slice]
+  end
+
+  BUD --- SIG
+  AUD --- SIG
+  COST --- SIG

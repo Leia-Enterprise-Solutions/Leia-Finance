@@ -1,0 +1,20 @@
+flowchart LR
+  BW[Billable Work - upstream context]
+  DL[Invoice Drafts List - worklist]
+  DB[Draft Builder - compose or edit]
+  RD[Readiness gate - Ready or Not Ready]
+  IS[Issue - semantic boundary]
+  II[Issued Invoice - document truth snapshot]
+  HO[Handoff to Receivables - downstream context link]
+
+  BW --> DL --> DB --> RD
+  RD -->|Not Ready| DB
+  RD -->|Ready| IS --> II --> HO
+
+  subgraph Boundary[Boundary rules]
+    BR1[Post issue draft changes do not rewrite issued snapshot]
+    BR2[No Paid or Overdue statuses inside Invoice document status]
+  end
+
+  II -.-> BR1
+  DL -.-> BR2

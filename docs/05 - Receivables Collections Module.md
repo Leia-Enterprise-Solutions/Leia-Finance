@@ -1,237 +1,172 @@
-# 05 — Receivables / Collections Module
+## 05 — Receivables / Collections Module (Ενότητα Απαιτήσεων)
 
 ## 1. Σκοπός του εγγράφου
 
-Το παρόν έγγραφο ορίζει το `Receivables / Collections Module` σε επίπεδο module canon: ρόλο, boundaries, follow-up model, overdue/aging prioritization, collection context (notes/owner/next action/reminders), status vocabulary και handoffs.
-Δεν αποτελεί semantic-law (αυτό ορίζεται στο `00A`) ούτε UI blueprint.
+Το παρόν έγγραφο ορίζει την Ενότητα Απαιτήσεων & Εισπράξεων (Receivables / Collections) σε επίπεδο κανονιστικού προτύπου: ρόλο, όρια, μοντέλο παρακολούθησης (follow-up), προτεραιοποίηση ληξιπροθέσμων (overdue/aging), πλαίσιο είσπραξης (σημειώσεις/υπεύθυνος/επόμενη ενέργεια/υπενθυμίσεις), λεξιλόγιο καταστάσεων και παραδόσεις (handoffs).
+
+Δεν αποτελεί σημασιολογικό νόμο (00A) ούτε προσχέδιο διεπαφής (UI blueprint).
 
 ---
 
-## 2. Ρόλος και boundaries
+## 2. Ρόλος και όρια
 
-Το `Receivables / Collections Module` είναι το revenue-downstream **worklist-first** follow-up module μετά το `Issue`.
+Το Receivables / Collections Module είναι η ενότητα που έπεται της τιμολόγησης (revenue-downstream) και λειτουργεί με βάση τη λίστα εργασίας (worklist-first) για την παρακολούθηση των εισπράξεων μετά την «Έκδοση» (Issue).
 
-Κύρια δουλειά:
-- οργανώνει την καθημερινή εργασία είσπραξης πάνω σε open receivables (prioritization με βάση overdue/aging/outstanding),
-- κρατά traceable collection context (owner, notes, next action, reminders),
-- παρακολουθεί settlement effect ώστε να ενημερώνεται το outstanding και το closure.
+Κύρια αποστολή:
+- Οργανώνει την καθημερινή εργασία είσπραξης πάνω στις ανοικτές απαιτήσεις (προτεραιοποίηση βάσει καθυστέρησης/παλαίωσης/υπολοίπου).
+- Διατηρεί ανιχνεύσιμο πλαίσιο είσπραξης (υπεύθυνος, σημειώσεις, επόμενη ενέργεια, υπενθυμίσεις).
+- Παρακολουθεί την επίδραση των εξοφλήσεων (settlement effect) ώστε να ενημερώνεται το ανείσπρακτο υπόλοιπο (outstanding) και το κλείσιμο της απαίτησης.
 
-Boundaries (τι δεν είναι):
-- Δεν είναι `Invoicing` (δεν κατέχει invoice document truth).
-- Δεν είναι payment registration engine ή bank/reconciliation truth.
-- Δεν είναι `Overview` (monitoring shell).
-- Δεν είναι CRM playbook· κρατά module-local follow-up canon, όχι πλήρη “collections methodology”.
-
----
-
-## 3. Canonical constraints που εφαρμόζει (ως references)
-
-Το module εφαρμόζει (χωρίς να τα επαναορίζει) τους canonical κανόνες του `00A`:
-- **Downstream non-ownership of invoice truth**: το invoice truth ανήκει στο `Invoicing`.
-- **Receivable derivation από issued truth**: η βάση της απαίτησης προκύπτει από issued snapshot.
-- **Outstanding changes only by settlement**: notes/workflow δεν αλλάζουν financial truth.
-- **Overdue is computed**: signal, όχι manually asserted state.
-- **State-family separation**: receivable status / workflow state / signals / UI-only state δεν συγχωνεύονται.
+Όρια (Τι ΔΕΝ είναι):
+- Δεν είναι η ενότητα Τιμολόγησης (Invoicing) (δεν κατέχει την αλήθεια του εγγράφου).
+- Δεν είναι μηχανή καταχώρισης πληρωμών ή τραπεζική πηγή αλήθειας (reconciliation).
+- Δεν είναι η Επισκόπηση (Overview) (κέλυφος εποπτείας).
+- Δεν είναι CRM playbook· διατηρεί τοπικό κανονιστικό πλαίσιο παρακολούθησης, όχι πλήρη «μεθοδολογία εισπράξεων».
 
 ---
 
-## 4. Inputs και outputs (read-only + follow-up)
+## 3. Κανονιστικοί περιορισμοί (Αναφορές)
 
-Inputs:
-- Από `Invoicing`: issued invoice context (issued totals snapshot, issue/due date, customer identity, references).
-- Από settlement/cash-in context: applied incoming payment effects (όπου υπάρχουν) που επηρεάζουν outstanding/closure.
-- Από χρήστη (operational): owner, notes, next action, expected payment context, reminder/escalation events.
-
-Outputs:
-- Worklist prioritization + follow-up context (operational truth).
-- Receivable progression visibility (open/partial/collected/closed) **βάσει settlement effect**.
-- Signals προς `Overview` (outstanding/overdue/aging/pressure) και auditability προς `Controls`.
+Η ενότητα εφαρμόζει πιστά τους κανόνες του 00A:
+- Μη-ιδιοκτησία της αλήθειας του τιμολογίου: Η αλήθεια ανήκει στην Τιμολόγηση.
+- Παραγωγή απαίτησης από την εκδοθείσα αλήθεια: Η βάση της απαίτησης προκύπτει από το «στιγμιότυπο έκδοσης» (issued snapshot).
+- Μεταβολή υπολοίπου μόνο μέσω εξόφλησης: Σημειώσεις και ροές εργασίας δεν αλλάζουν την οικονομική αλήθεια.
+- Το Ληξιπρόθεσμο (Overdue) είναι υπολογιζόμενο: Αποτελεί σήμα (signal), όχι χειροκίνητα ορισμένη κατάσταση.
+- Διαχωρισμός οικογενειών κατάστασης: Οι καταστάσεις απαίτησης, οι ροές εργασίας και τα σήματα δεν συγχέονται.
 
 ---
 
-## 5. Core concepts (capsule)
+## 4. Εισροές και εκροές (Ανάγνωση + Παρακολούθηση)
 
-- `Receivable`: downstream claim που παράγεται από issued invoice truth.
-- `Outstanding Amount`: το ανοικτό ποσό τώρα (μειώνεται μόνο από applied settlement).
-- `Due Date` → `Overdue` (computed) → `Aging Bucket` (computed grouping).
-- Collection context: `Owner`, `Next Action`, `Expected Payment Date` (operational expectation), `Notes`, `Reminder Events`, `Escalation`.
+Εισροές:
+- Από Τιμολόγηση: Πλαίσιο εκδοθέντος τιμολογίου (σύνολα, ημερομηνία έκδοσης/λήξης, ταυτότητα πελάτη).
+- Από Εξόφληση (Settlement/Cash-in): Εφαρμοσμένες εισερχόμενες πληρωμές που επηρεάζουν το υπόλοιπο.
+- Από Χρήστη (Operational): Υπεύθυνος, σημειώσεις, επόμενη ενέργεια, αναμενόμενη πληρωμή, υπενθυμίσεις.
 
----
-
-## 6. Module surfaces (όχι UI spec)
-
-- `Collections / Receivables View`: primary worklist για follow-up.
-- `Receivable Context Panel / Row Context`: quick triage/update χωρίς deep navigation.
-- `Invoice Detail View` (adjacent): deep inspection surface· το worklist παραμένει primary.
+Εκροές:
+- Προτεραιοποίηση λίστας εργασίας + πλαίσιο παρακολούθησης (επιχειρησιακή αλήθεια).
+- Ορατότητα εξέλιξης απαίτησης (ανοικτή/μερική/εισπραχθείσα/κλειστή) βάσει εξόφλησης.
+- Σήματα προς την Επισκόπηση (υπόλοιπο/καθυστέρηση/πίεση) και δυνατότητα ελέγχου (auditability) προς τους Ελεγκτικούς Μηχανισμούς.
 
 ---
 
-## 7. Core flow (local)
+## 5. Βασικές έννοιες (Σύνοψη)
 
-```mermaid
-flowchart LR
-    II[Issued Invoice context]
-    OR[Open Receivable]
-    CF[Collection Follow-up]
-    ST[Settlement effect<br/>Incoming Payment]
-    CL[Closure]
-
-    II --> OR --> CF --> ST --> CL
-```
-
-Flow capsule:
-- Δημιουργία receivable από issued invoice context.
-- Worklist visibility + overdue/aging prioritization.
-- Follow-up updates (owner/notes/next action/reminders/escalation) χωρίς αλλαγή financial truth.
-- Settlement effect μειώνει outstanding → partial/collected → closure.
+- Απαίτηση (Receivable): Η αξίωση είσπραξης που παράγεται από το εκδοθέν τιμολόγιο.
+- Ανείσπρακτο Υπόλοιπο (Outstanding Amount): Το τρέχον ανοικτό ποσό (μειώνεται μόνο από εφαρμοσμένη εξόφληση).
+- Ημερομηνία Λήξης $\rightarrow$ Ληξιπρόθεσμο (Overdue) (υπολογιζόμενο) $\rightarrow$ Ζώνη Παλαίωσης (Aging Bucket) (υπολογιζόμενη ομαδοποίηση).
+- Πλαίσιο Είσπραξης: Υπεύθυνος, Επόμενη Ενέργεια, Αναμενόμενη Ημερομηνία Πληρωμής, Σημειώσεις, Συμβάντα Υπενθύμισης, Κλιμάκωση (Escalation).
 
 ---
 
-## 8. Module-local rules (anti-drift protections)
+## 6. Επιφάνειες Ενότητας (Module Surfaces)
 
-Κρατούν το module “collections follow-up” και όχι “invoice rewrite” ή “pseudo-cash engine”:
-
-- **Receivables does not own invoice truth**: δεν επιτρέπεται αλλαγή της βάσης απαίτησης μέσω draft/preview ή workflow flags.
-- **Outstanding rule (module view)**: outstanding αλλάζει μόνο από settlement input / applied incoming payments.
-- **Notes/reminders are not settlement**: reminder/contact/note δεν συνεπάγεται paid/collected state.
-- **Expected Payment Date is not Due Date**: δεν ακυρώνει overdue και δεν γίνεται primary overdue date semantics.
-- **Overdue / aging are computed**: δεν υπάρχουν “manual overdue” toggles ως financial truth.
-- **Worklist-first**: το primary surface είναι follow-up worklist, όχι “invoice list”.
+- Προβολή Απαιτήσεων / Εισπράξεων: Πρωτογενής λίστα εργασίας για το follow-up.
+- Πλαίσιο Απαίτησης / Γραμμής (Context Panel): Γρήγορη διαλογή και ενημέρωση χωρίς βαθιά πλοήγηση.
+- Λεπτομέρεια Τιμολογίου (Adjacent): Επιφάνεια βαθιάς επιθεώρησης· η λίστα εργασίας παραμένει το κύριο σημείο εστίασης.
 
 ---
 
-## 9. Lifecycle & status vocabulary (module-specific)
+## 7. Τοπική Ροή Ενότητας (Core Flow)
 
-Το module εκθέτει μόνο module-local vocabulary, συμβατό με το state-family separation του `00A`.
+![diagram](./../../docs/diagrams/_rendered/from_md/05-Receivables-Collections-Module.md/05-Receivables-Collections-Module.md-1.svg)
 
-**Persisted receivable statuses (financial progression)**
-- `Open`
-- `Partially Collected`
-- `Collected`
-- `Closed`
+Δημιουργία απαίτησης από το εκδοθέν τιμολόγιο.
+Ορατότητα στη λίστα εργασίας + προτεραιοποίηση βάσει καθυστέρησης/παλαίωσης.
+Ενημερώσεις παρακολούθησης (σημειώσεις/υπενθυμίσεις) χωρίς αλλαγή της οικονομικής αλήθειας.
+Η επίδραση της εξόφλησης μειώνει το υπόλοιπο $\rightarrow$ μερική/πλήρης είσπραξη $\rightarrow$ κλείσιμο.
 
-**Collection workflow states (operational)**
-- `No Follow-up Yet`
-- `Follow-up Active`
-- `Awaiting Reply`
-- `Expected Payment Logged`
-- `Escalated`
-- `Suspended by Dispute` *(controlled / optional area)*
-- `Resolved`
+### Module diagrams (functionality + state transitions)
 
-**Operational signals (computed/derived)**
-- `Not Due`
-- `Due Soon`
-- `Overdue`
-- `High-Risk Overdue`
-- `No Recent Follow-up`
-- `Expected Date Missed`
+#### Διάγραμμα λειτουργικής ροής - worklist, follow-up, settlement
+![diagram](./diagrams/_rendered/from_mmd/diagrams-modules-receivables-receivables-functional-flow.mmd.png)
 
-**Readiness / escalation states**
-- `Ready for Reminder`
-- `Ready for Escalation`
-- `Monitoring Only`
-
-**UI-only flags (examples)**
-- `Selected for Bulk Action`
-- `Pinned High-Risk`
-- `Inline Validation Error`
-- `Quick Note Draft`
-
-Απαγορεύεται η σύγχυση:
-- receivable status με invoice document status,
-- workflow state με settlement,
-- overdue signal με persisted financial state.
+#### Διάγραμμα καταστάσεων - financial progression, workflow, signals
+![diagram](./diagrams/_rendered/from_mmd/diagrams-modules-receivables-receivables-state-machine.mmd.png)
 
 ---
 
-## 10. Overdue & aging model (module-level)
+## 8. Τοπικοί κανόνες προστασίας (Anti-drift)
 
-Minimal overdue rule:
-- overdue όταν `due date < today` και `outstanding > 0`.
-
-Default aging buckets (v1):
-- `Not Due`, `1–15`, `16–30`, `31–60`, `60+`
-
-Worklist prioritization (capsule):
-- μεγαλύτερο overdue age,
-- μεγαλύτερο outstanding,
-- stale/no follow-up,
-- missed expected payment.
+- Η ενότητα δεν κατέχει την αλήθεια του τιμολογίου: Δεν επιτρέπεται αλλαγή της βάσης της απαίτησης μέσω προσχεδίων ή workflow flags.
+- Κανόνας Υπολοίπου: Το ανείσπρακτο ποσό αλλάζει μόνο από εισροή εξόφλησης / εφαρμοσμένες πληρωμές.
+- Σημειώσεις/Υπενθυμίσεις $\neq$ Εξόφληση: Μια επικοινωνία ή υπενθύμιση δεν συνεπάγεται κατάσταση «εξοφλήθηκε».
+- Αναμενόμενη Ημερομηνία Πληρωμής $\neq$ Ημερομηνία Λήξης: Δεν ακυρώνει το ληξιπρόθεσμο σήμα.
+- Ληξιπρόθεσμα & Παλαίωση: Είναι υπολογιζόμενα μεγέθη (computed), όχι χειροκίνητες ρυθμίσεις.
 
 ---
 
-## 11. Collection tracking & reminder model (module-level)
+## 9. Λεξιλόγιο κύκλου ζωής & καταστάσεων
 
-Minimum follow-up context per receivable:
-- owner
-- last note/contact
-- next action
-- expected payment date
-- workflow state
-- reminder/contact history summary
+Μόνιμες καταστάσεις απαίτησης (Οικονομική εξέλιξη)
+- Ανοικτή (Open)
+- Μερικώς Εισπραχθείσα (Partially Collected)
+- Εισπραχθείσα (Collected)
+- Κλειστή (Closed)
 
-Reminder ladder (v1 default, policy-controlled):
-- `Courtesy Reminder` *(optional, pre-due)*
-- `Due Reminder`
-- `Early Overdue Reminder`
-- `Active Collection Reminder`
-- `Escalation Reminder`
+Καταστάσεις ροής εργασίας είσπραξης (Επιχειρησιακές)
+- Χωρίς Ενέργεια (No Follow-up Yet)
+- Ενεργή Παρακολούθηση (Follow-up Active)
+- Αναμονή Απάντησης (Awaiting Reply)
+- Καταχωρημένη Αναμενόμενη Πληρωμή
+- Σε Κλιμάκωση (Escalated)
+- Σε Αμφισβήτηση (Suspended by Dispute) (ελεγχόμενη περιοχή)
+- Επιλύθηκε (Resolved)
 
-Reminder boundary:
-- reminder history αυξάνει visibility, δεν υποκαθιστά settlement truth.
-
----
-
-## 12. Relations / handoffs με άλλα modules
-
-- Με `Invoicing`: read issued invoice context, non-ownership of invoice truth.
-- Με settlement/cash-in context: applied effects μειώνουν outstanding/οδηγούν closure.
-- Με `Overview`: τροφοδοτεί monitoring signals, χωρίς να γίνεται monitoring layer.
-- Με `Controls`: audit/traceability visibility.
+Λειτουργικά σήματα (Υπολογιζόμενα)
+- Εκτός Λήξης (Not Due)
+- Λήγει Σύντομα (Due Soon)
+- Ληξιπρόθεσμο (Overdue)
+- Υψηλού Κινδύνου (High-Risk Overdue)
+- Στάσιμη Παρακολούθηση (No Recent Follow-up)
 
 ---
 
-## 13. In-scope / Out-of-scope (capsule)
+## 10. Μοντέλο Ληξιπροθέσμων & Παλαίωσης
 
-In-scope:
-- open receivable visibility + worklist prioritization
-- overdue/aging computed signals
-- owner/notes/next action/expected payment context
-- reminders/escalation (follow-up), όχι settlement
-- settlement-driven outstanding & closure visibility
+Κανόνας Ληξιπροθέσμου: Όταν ημερομηνία λήξης < σήμερα και υπόλοιπο > 0.
 
-Out-of-scope:
-- invoice drafting/issue
-- mutation of issued invoice truth/totals
-- mark-as-paid χωρίς settlement input
-- bank reconciliation / accounting engine ownership
+Ζώνες Παλαίωσης (Aging Buckets v1):
+- Εκτός Λήξης, 1–15, 16–30, 31–60, 60+ ημέρες.
+
+Προτεραιοποίηση Λίστας: Μεγαλύτερη καθυστέρηση, μεγαλύτερο ποσό, στάσιμη παρακολούθηση, αστοχία αναμενόμενης πληρωμής.
 
 ---
 
-## 14. v1 limitations / stabilization notes (non-canonical)
+## 11. Μοντέλο Υπενθυμίσεων (v1)
 
-Stabilization targets:
-- καθαρή ευθυγράμμιση `issued totals → receivable base amount → outstanding`
-- αυστηρός διαχωρισμός financial status από workflow status σε όλα τα surfaces
-- σταθεροποίηση vocabulary για owner/next action/expected payment
-- reminder ladder & escalation thresholds (policy)
-- partial collection visibility (worklist vs detail)
-- controlled handling για dispute/suspension/non-standard closure
-- ευθυγράμμιση dashboard metrics με worklist semantics
+Ελάχιστο πλαίσιο: Υπεύθυνος, τελευταία σημείωση/επαφή, επόμενη ενέργεια, αναμενόμενη ημερομηνία, ιστορικό υπενθυμίσεων.
 
----
-
-## 15. Open questions / controlled decisions
-
-- αν το `Expected Payment` vocabulary θα είναι ελεύθερο ή ελεγχόμενο
-- αν το `Promise to Pay` θα είναι ξεχωριστό workflow concept ή μέρος note/expected context
-- αν το `Dispute` θα είναι subflow ή controlled flag στο v1
-- ποιο threshold ενεργοποιεί `High-Risk Overdue`
-- ποια bulk reminder/escalation actions επιτρέπονται στο πρώτο operational release
+Κλίμακα Υπενθυμίσεων (Ladder):
+- Υπενθύμιση Ευγενείας (προαιρετική)
+- Υπενθύμιση Λήξης
+- Πρώτη Υπενθύμιση Καθυστέρησης
+- Ενεργή Διεκδίκηση
+- Υπενθύμιση Κλιμάκωσης
 
 ---
 
-## 16. Τελική διατύπωση module statement
+## 12. Σχέσεις με άλλες ενότητες
 
-Το `Receivables / Collections Module` είναι το canonical revenue-downstream worklist-first follow-up module του Finance Management & Monitoring System v1: παραλαμβάνει issued invoice context, οργανώνει τις ανοικτές απαιτήσεις ως actionable worklist με βάση outstanding/due/overdue/aging, διαχειρίζεται collection context (owner/notes/next action/reminders/escalation) χωρίς να αλλάζει financial truth, και ενημερώνει outstanding/closure μόνο μέσω settlement effect, χωρίς να κατέχει invoice truth ή cash truth.
+Με Τιμολόγηση: Ανάγνωση πλαισίου εκδοθέντος τιμολογίου, μη-ιδιοκτησία της αλήθειας του εγγράφου.
+
+Με Εξόφληση: Τα εφαρμοσμένα αποτελέσματα μειώνουν το υπόλοιπο και οδηγούν στο κλείσιμο.
+
+Με Επισκόπηση: Τροφοδοτεί σήματα εποπτείας (monitoring signals).
+
+Με Ελεγκτικούς Μηχανισμούς: Ορατότητα ιστορικού και ανιχνευσιμότητα (audit).
+
+---
+
+## 13. Περιορισμοί v1 / Σημειώσεις Σταθεροποίησης
+
+- Αυστηρή ευθυγράμμιση: Εκδοθέντα Σύνολα → Βάση Απαίτησης → Ανείσπρακτο Υπόλοιπο.
+- Καθαρός διαχωρισμός οικονομικής κατάστασης από την κατάσταση ροής εργασίας.
+- Σταθεροποίηση του λεξιλογίου για τον «Υπεύθυνο» και την «Αναμενόμενη Πληρωμή».
+- Καθορισμός των ορίων κλιμάκωσης (escalation thresholds).
+
+---
+
+## 14. Τελική κανονιστική δήλωση
+
+Το Receivables / Collections Module είναι η κεντρική ενότητα παρακολούθησης των εσόδων του συστήματος Finance v1: παραλαμβάνει το πλαίσιο του εκδοθέντος τιμολογίου, οργανώνει τις ανοικτές απαιτήσεις ως λειτουργική λίστα εργασίας βάσει υπολοίπου και παλαίωσης, διαχειρίζεται το πλαίσιο είσπραξης (υπεύθυνος/σημειώσεις/υπενθυμίσεις) χωρίς να αλλοιώνει την οικονομική αλήθεια, και ενημερώνει το υπόλοιπο και το κλείσιμο αποκλειστικά μέσω των αποτελεσμάτων εξόφλησης, χωρίς να κατέχει την αλήθεια του τιμολογίου ή του ταμείου.

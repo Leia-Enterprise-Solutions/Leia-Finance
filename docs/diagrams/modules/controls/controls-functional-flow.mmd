@@ -1,0 +1,21 @@
+flowchart TD
+  IN0[Inputs from operational modules]
+  B0[Budget visibility - budgeted, committed, actual paid]
+  A0[Audit trail - events and evidence]
+  E0[Employee cost visibility - aggregation and role aware slices]
+  S0[Control signals - interpreted, not truth]
+  O0[Outputs to Overview - drilldowns and monitoring signals]
+
+  IN0 --> B0 --> S0 --> O0
+  IN0 --> A0 --> S0
+  IN0 --> E0 --> S0
+
+  subgraph Guardrails[Guardrails]
+    G1[Controls does not execute operational actions]
+    G2[Controls does not own transactional truth]
+    G3[Signals are not persisted statuses]
+  end
+
+  S0 -.-> G3
+  IN0 -.-> G2
+  O0 -.-> G1

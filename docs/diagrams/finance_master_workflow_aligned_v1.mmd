@@ -51,7 +51,7 @@ flowchart TD
         R12 --> R13{Approved?}
         R13 -->|No| R13N[Return to draft with comments]
         R13N --> R7
-        R13 -->|Yes| R14[Issue invoice (issued document truth) + create receivable]
+        R13 -->|Yes| R14[Issue invoice - issued document truth + create receivable]
         R11 -->|No| R14
 
         R14 --> R15[Visible in Invoices List and Invoice Detail]
@@ -69,10 +69,10 @@ flowchart TD
         R21 --> R22[Visible in Collections / Receivables worklist]
         R22 --> R23{Receipt registered?}
         R23 -->|No| R24[Remain open receivable]
-        R23 -->|Partial| R25[Register partial receipt (manual v1)]
-        R23 -->|Full| R26[Register full receipt (manual v1)]
+        R23 -->|Partial| R25[Register partial receipt - manual v1]
+        R23 -->|Full| R26[Register full receipt - manual v1]
 
-        R25 --> R27[Settlement effect updates outstanding (via allocation)]
+        R25 --> R27[Settlement effect updates outstanding - via allocation]
         R27 --> R28{Outstanding remains?}
         R28 -->|Yes| R24
         R28 -->|No| R26
@@ -109,7 +109,7 @@ flowchart TD
         P5 --> P6{Approval decision}
         P6 -->|Reject| P7[Request status becomes Rejected]
         P6 -->|Request changes| P8[Return for revision]
-        P6 -->|Approve| P9[Approval outcome becomes Approved (Commitment visible)]
+        P6 -->|Approve| P9[Approval outcome becomes Approved - Commitment visible]
 
         P9 --> P10[Commitment becomes visible in Budget Overview]
         P10 --> P11[Wait for supplier bill / expense document]
@@ -136,7 +136,7 @@ flowchart TD
 
         P22 --> P23{Selected for payment batch?}
         P23 -->|No| P22
-        P23 -->|Yes| P24[Selected / Prepared (UI-only)]
+        P23 -->|Yes| P24[Selected / Prepared - UI-only]
         P24 --> P25{Scheduled for payment?}
         P25 -->|No| P24
         P25 -->|Yes| P26[Execution status becomes Scheduled]
@@ -178,7 +178,7 @@ flowchart TD
 
         B15 --> B16{Budget revision or spend restriction?}
         B16 -->|Revision| B17[Create revised budget version]
-        B16 -->|Restriction| B18[Show restriction signal (visibility-only)]
+        B16 -->|Restriction| B18[Show restriction signal - visibility-only]
         B17 --> B1
         B18 --> B19[Future requests show restriction warning]
 
@@ -203,7 +203,7 @@ flowchart TD
         C7 -->|No| C4
         C7 -->|Yes| C8[Allocate payment to supplier bill]
 
-        C4 --> C9[Send to finance review (adjacent support path)]
+        C4 --> C9[Send to finance review - adjacent support path]
         C9 --> C10{Resolved?}
         C10 -->|No| C11[Remain unreconciled]
         C10 -->|Yes| C12[Allocate to correct record]
